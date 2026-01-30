@@ -14,6 +14,8 @@
         .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
         .nav-item { cursor: pointer; transition: all 0.2s; color: #71717a; }
         .nav-item.active { background: #10b9811a; color: #10b981; }
+        .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .toggle-btn.active { background: #10b981; color: #000; }
         .hidden { display: none; }
     </style>
 </head>
@@ -26,7 +28,7 @@
         </div>
         <nav class="space-y-2 flex-1">
             <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl">
-                <span>Performance</span>
+                <span>Dashboard</span>
             </div>
             <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl">
                 <span>Holdings</span>
@@ -48,7 +50,13 @@
             </header>
 
             <div class="card p-6 mb-8">
-                <h3 class="font-semibold text-zinc-300 mb-6">Portfolio Growth</h3>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="chart-title" class="font-semibold text-zinc-300">Portfolio Growth</h3>
+                    <div class="flex bg-black/40 p-1 rounded-xl">
+                        <button id="btn-growth" onclick="updateChart('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
+                        <button id="btn-profit" onclick="updateChart('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+                    </div>
+                </div>
                 <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
             </div>
 
@@ -86,7 +94,7 @@
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
-                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Parsing your files...</td></tr>
+                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Syncing with Holdings.csv...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -101,24 +109,19 @@
         let perfData = [];
         let rates = { USD: 1, EUR: 1 };
 
-        // Helper to parse numbers even with symbols like $ or ,
         function parseMoney(val) {
             if (!val) return 0;
             if (typeof val === 'number') return val;
             return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
         }
 
-        // Load Performance Data
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
                 perfData = results.data.slice(1).filter(r => r[0] && r[49]);
                 const latest = perfData[perfData.length - 1];
-                
-                // Get rates from Performance.csv (Indices 43 and 45)
                 rates.USD = parseMoney(latest[43]) || 1;
                 rates.EUR = parseMoney(latest[45]) || 1;
-
                 initDashboard();
             }
         });
@@ -138,49 +141,19 @@
             document.getElementById('stat-profit').innerText = '£' + parseMoney(latest[51]).toLocaleString();
             document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
             document.getElementById('stat-fees').innerText = '£' + parseMoney(latest[48]).toLocaleString();
-            renderChart();
+            renderChart('growth');
         }
 
-        function renderHoldings() {
-            Papa.parse(HOLD_CSV, {
-                download: true, 
-                header: true, 
-                skipEmptyLines: true,
-                transformHeader: (h) => h.trim(), // Fixes issues with leading/trailing spaces in CSV headers
-                complete: function(results) {
-                    const tbody = document.getElementById('holdings-table-body');
-                    tbody.innerHTML = '';
-                    
-                    results.data.forEach(row => {
-                        const currency = (row.Currency || 'USD').trim().toUpperCase();
-                        const localVal = parseMoney(row['Local value']);
-                        const price = parseMoney(row.Price);
-                        
-                        let symbol = '$';
-                        let rate = rates.USD;
-                        if (currency === 'EUR') { symbol = '€'; rate = rates.EUR; }
-                        if (currency === 'GBP') { symbol = '£'; rate = 1; }
-
-                        const gbpTotal = localVal * rate;
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-white/5 transition">
-                                <td class="p-4 font-semibold text-white">${row.Company || 'Unknown'}</td>
-                                <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker || '---'}</td>
-                                <td class="p-4 text-right">${row.Shares || 0}</td>
-                                <td class="p-4 text-right">${symbol}${price.toFixed(2)}</td>
-                                <td class="p-4 text-right font-semibold text-emerald-400">£${gbpTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            });
-        }
-
-        function renderChart() {
+        function renderChart(type) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             const labels = perfData.map(r => r[0]);
-            const dataValues = perfData.map(r => parseMoney(r[49]));
+            
+            // Value is index 49, Profit is index 51
+            const dataValues = type === 'growth' ? 
+                perfData.map(r => parseMoney(r[49])) : 
+                perfData.map(r => parseMoney(r[51]));
+            
+            const color = type === 'growth' ? '#10b981' : '#3b82f6';
 
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
@@ -189,12 +162,12 @@
                     labels: labels,
                     datasets: [{
                         data: dataValues,
-                        borderColor: '#10b981',
+                        borderColor: color,
                         borderWidth: 2,
                         pointRadius: 0,
                         tension: 0.3,
                         fill: true,
-                        backgroundColor: 'rgba(16, 185, 129, 0.05)'
+                        backgroundColor: color + '0D'
                     }]
                 },
                 options: {
@@ -205,6 +178,41 @@
                         x: { display: false },
                         y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b', font: { size: 10 } } }
                     }
+                }
+            });
+        }
+
+        function updateChart(type) {
+            document.getElementById('btn-growth').classList.toggle('active', type === 'growth');
+            document.getElementById('btn-profit').classList.toggle('active', type === 'profit');
+            document.getElementById('chart-title').innerText = type === 'growth' ? 'Portfolio Growth' : 'Profit History';
+            renderChart(type);
+        }
+
+        function renderHoldings() {
+            Papa.parse(HOLD_CSV, {
+                download: true, header: true, skipEmptyLines: true,
+                transformHeader: h => h.trim(),
+                complete: function(results) {
+                    const tbody = document.getElementById('holdings-table-body');
+                    tbody.innerHTML = '';
+                    results.data.forEach(row => {
+                        const currency = (row.Currency || 'USD').trim().toUpperCase();
+                        const localVal = parseMoney(row['Local value']);
+                        const price = parseMoney(row.Price);
+                        let symbol = '$'; let rate = rates.USD;
+                        if (currency === 'EUR') { symbol = '€'; rate = rates.EUR; }
+                        if (currency === 'GBP') { symbol = '£'; rate = 1; }
+                        const gbpTotal = localVal * rate;
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-white/5 transition">
+                                <td class="p-4 font-semibold text-white">${row.Company || 'Unknown'}</td>
+                                <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker || '---'}</td>
+                                <td class="p-4 text-right">${row.Shares || 0}</td>
+                                <td class="p-4 text-right">${symbol}${price.toFixed(2)}</td>
+                                <td class="p-4 text-right font-semibold text-emerald-400">£${gbpTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>`;
+                    });
                 }
             });
         }
