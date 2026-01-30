@@ -3,57 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Portfolio</title>
+    <title>Portfolio Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #ffffff; }
+        .chart-gradient { background: linear-gradient(180deg, rgba(79, 70, 229, 0.1) 0%, rgba(0, 0, 0, 0) 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans">
+<body class="p-6 md:p-12">
 
-    <div class="max-w-xl mx-auto py-10 px-4">
-        <h1 class="text-2xl font-bold mb-6">My Portfolio</h1>
-        
-        <div id="status" class="text-sm text-gray-500 mb-4 italic">Connecting to GitHub...</div>
-
-        <div id="portfolio-container" class="space-y-3">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+            <div>
+                <p class="text-zinc-500 font-medium mb-1">Total Balance</p>
+                <h1 id="total-value" class="text-5xl font-bold tracking-tight">£0.00</h1>
+                <div id="profit-badge" class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                    <span id="profit-text">Calculating...</span>
+                </div>
             </div>
+            <div class="text-right">
+                <p class="text-zinc-500 text-sm">Last Update</p>
+                <p id="last-date" class="font-medium text-zinc-300">--/--/----</p>
+            </div>
+        </header>
+
+        <div class="glass-card rounded-3xl p-6 mb-10">
+            <div class="h-[300px] w-full">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Net Profit</p>
+                <p id="net-profit" class="text-2xl font-semibold">£0.00</p>
+            </div>
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Deposits</p>
+                <p id="deposits" class="text-2xl font-semibold text-zinc-300">£0.00</p>
+            </div>
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Dividends & Fees</p>
+                <p id="div-fees" class="text-2xl font-semibold text-zinc-300">£0.00</p>
+            </div>
+        </div>
     </div>
 
-   <script>
-    const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/data.csv';
+    <script>
+        const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/data.csv';
 
-    Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            const data = results.data;
-            const container = document.getElementById('portfolio-container');
-            const status = document.getElementById('status');
-
-            if (data.length > 0) {
-                status.innerText = "Data found! Displaying columns...";
-                container.innerHTML = ''; 
-
-                // Get the actual names of your columns from the first row
-                const columns = Object.keys(data[0]);
-                
-                data.forEach(row => {
-                    // This pulls whatever is in your 1st and 2nd columns
-                    const col1 = row[columns[0]]; 
-                    const col2 = row[columns[1]];
-
-                    container.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between mb-2">
-                            <span class="font-semibold">${col1}</span>
-                            <span class="text-blue-600 font-mono">${col2}</span>
-                        </div>
-                    `;
-                });
-            } else {
-                status.innerText = "The file was found, but it looks empty.";
+        Papa.parse(CSV_URL, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                // Filter out empty rows at the end of the file
+                const cleanData = results.data.filter(row => row['Net Total Value GBP'] && row['Net Total Value GBP'] !== "");
+                initDashboard(cleanData);
             }
+        });
+
+        function initDashboard(data) {
+            const latest = data[data.length - 1];
+            
+            // Set Stats
+            document.getElementById('total-value').innerText = `£${parseFloat(latest['Net Total Value GBP']).toLocaleString()}`;
+            document.getElementById('last-date').innerText = latest.Date;
+            document.getElementById('deposits').innerText = `£${parseFloat(latest['Cumulative Deposits']).toLocaleString()}`;
+            document.getElementById('div-fees').innerText = `£${parseFloat(latest['Dividends & Fees']).toLocaleString()}`;
+            
+            const profit = parseFloat(latest['Net Profit']);
+            const profitEl = document.getElementById('net-profit');
+            const badge = document.getElementById('profit-badge');
+            
+            profitEl.innerText = `£${profit.toLocaleString()}`;
+            profitEl.classList.add(profit >= 0 ? 'text-emerald-400' : 'text-rose-400');
+            badge.classList.add(profit >= 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10');
+            badge.classList.add(profit >= 0 ? 'text-emerald-400' : 'text-rose-400');
+            document.getElementById('profit-text').innerText = (profit >= 0 ? '↑ ' : '↓ ') + profit.toLocaleString() + " Total Return";
+
+            // Chart Logic
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(r => r.Date),
+                    datasets: [{
+                        data: data.map(r => parseFloat(r['Net Total Value GBP'])),
+                        borderColor: '#10b981',
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: gradient
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { 
+                            position: 'right',
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#71717a', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
         }
-    });
-</script>
+    </script>
 </body>
 </html>
