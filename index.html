@@ -11,7 +11,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E14; color: #FFFFFF; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); }
-        .chart-container { height: 350px; width: 100%; }
+        .toggle-btn { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .toggle-btn.active { background: #10b981; color: #000; border-color: #10b981; font-weight: 700; }
     </style>
 </head>
 <body class="p-4 md:p-10 min-h-screen">
@@ -19,115 +20,123 @@
     <div class="max-w-6xl mx-auto">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
             <div>
-                <p class="text-zinc-500 text-sm font-medium mb-1">Total Net Value</p>
+                <p class="text-zinc-500 text-sm font-medium mb-1">Portfolio Overview</p>
                 <div class="flex items-baseline gap-4">
                     <h1 id="hero-value" class="text-5xl font-bold tracking-tight">£0.00</h1>
                     <span id="profit-badge" class="px-3 py-1 rounded-full text-xs font-bold">--</span>
                 </div>
             </div>
             <div class="text-left md:text-right">
-                <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Portfolio Status</p>
-                <p id="update-date" class="text-zinc-300 text-sm">Synchronizing...</p>
+                <p id="update-date" class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Last Updated: --</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div class="lg:col-span-2 glass rounded-3xl p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-semibold text-zinc-300">Growth Over Time (GBP)</h3>
-                    <div class="flex gap-2">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Live Data</span>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
+        <div class="glass rounded-3xl p-6 mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <h3 id="chart-title" class="font-semibold text-zinc-300">Net Total Value Over Time</h3>
+                
+                <div class="flex bg-black/40 p-1 rounded-xl">
+                    <button id="toggle-growth" onclick="updateChartType('growth')" class="toggle-btn active px-4 py-1.5 rounded-lg text-xs uppercase tracking-wider">Growth</button>
+                    <button id="toggle-profit" onclick="updateChartType('profit')" class="toggle-btn px-4 py-1.5 rounded-lg text-xs uppercase tracking-wider ml-1">Profit</button>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <div class="glass rounded-3xl p-6">
-                    <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4">Account Summary</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between">
-                            <span class="text-zinc-400">Net Profit</span>
-                            <span id="stat-profit" class="font-bold text-emerald-400">£0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-zinc-400">Cumulative Deposits</span>
-                            <span id="stat-deposits" class="font-bold text-zinc-200">£0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-zinc-400">Fees & Dividends</span>
-                            <span id="stat-fees" class="font-bold text-zinc-200">£0.00</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="h-[350px] w-full">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
 
-                <div class="glass rounded-3xl p-6">
-                    <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4">Major Holdings</h3>
-                    <div id="holdings-list" class="space-y-3">
-                        </div>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Total Deposits</p>
+                <p id="stat-deposits" class="text-2xl font-bold text-zinc-100">£0.00</p>
+            </div>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Dividends & Fees</p>
+                <p id="stat-fees" class="text-2xl font-bold text-zinc-100">£0.00</p>
+            </div>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Current Net Profit</p>
+                <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
             </div>
         </div>
     </div>
 
     <script>
-        // POINT THIS TO YOUR FILE
         const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
+        let chart;
+        let portfolioData = [];
 
         Papa.parse(CSV_URL, {
             download: true,
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
-                // Filter out any rows that don't have a date or value
-                const data = results.data.filter(r => r.Date && r['Net Total Value GBP']);
-                renderPortfolio(data);
-            },
-            error: function(err) {
-                console.error("CSV Load Error:", err);
-                document.getElementById('update-date').innerText = "Error: File not found.";
+                portfolioData = results.data.filter(r => r.Date && r['Net Total Value GBP']);
+                initDashboard();
             }
         });
 
-        function renderPortfolio(data) {
-            const latest = data[data.length - 1];
+        function initDashboard() {
+            const latest = portfolioData[portfolioData.length - 1];
             
-            // 1. Update Hero Numbers
-            const netVal = parseFloat(latest['Net Total Value GBP']);
-            const profit = parseFloat(latest['Net Profit']);
-            
-            document.getElementById('hero-value').innerText = `£${netVal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            // Top Stats
+            document.getElementById('hero-value').innerText = `£${parseFloat(latest['Net Total Value GBP']).toLocaleString()}`;
             document.getElementById('update-date').innerText = `Last Updated: ${latest.Date}`;
-            document.getElementById('stat-profit').innerText = `£${profit.toLocaleString()}`;
+            document.getElementById('stat-profit').innerText = `£${parseFloat(latest['Net Profit']).toLocaleString()}`;
             document.getElementById('stat-deposits').innerText = `£${parseFloat(latest['Cumulative Deposits']).toLocaleString()}`;
             document.getElementById('stat-fees').innerText = `£${parseFloat(latest['Dividends & Fees']).toLocaleString()}`;
 
+            const profit = parseFloat(latest['Net Profit']);
             const badge = document.getElementById('profit-badge');
-            badge.innerText = (profit >= 0 ? '+' : '') + `£${profit.toLocaleString()}`;
+            badge.innerText = (profit >= 0 ? '↑ ' : '↓ ') + `£${Math.abs(profit).toLocaleString()}`;
             badge.className = profit >= 0 ? 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400' : 'px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400';
 
-            // 2. Performance Chart
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
-            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-            gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+            createChart('growth');
+        }
 
-            new Chart(ctx, {
+        function createChart(type) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Formatting Month Names for X-Axis
+            const labels = portfolioData.map(r => {
+                const dateParts = r.Date.split('/');
+                const dateObj = new Date(dateParts[2], dateParts[0] - 1, dateParts[1]);
+                return dateObj.toLocaleString('default', { month: 'short', year: '2-digit' });
+            });
+
+            const growthData = portfolioData.map(r => parseFloat(r['Net Total Value GBP']));
+            const profitData = portfolioData.map(r => parseFloat(r['Net Profit']));
+
+            const datasetConfig = {
+                growth: {
+                    label: 'Total Value (GBP)',
+                    data: growthData,
+                    color: '#10b981',
+                    fill: 'rgba(16, 185, 129, 0.1)'
+                },
+                profit: {
+                    label: 'Net Profit (GBP)',
+                    data: profitData,
+                    color: '#6366f1',
+                    fill: 'rgba(99, 102, 241, 0.1)'
+                }
+            };
+
+            const activeConfig = datasetConfig[type];
+
+            chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(r => r.Date),
+                    labels: labels,
                     datasets: [{
-                        data: data.map(r => parseFloat(r['Net Total Value GBP'])),
-                        borderColor: '#10b981',
+                        data: activeConfig.data,
+                        borderColor: activeConfig.color,
                         borderWidth: 2,
                         pointRadius: 0,
+                        tension: 0.3,
                         fill: true,
-                        backgroundColor: gradient,
-                        tension: 0.3
+                        backgroundColor: activeConfig.fill
                     }]
                 },
                 options: {
@@ -135,29 +144,34 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { display: false },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#52525b', 
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 8 // Shows months clearly
+                            } 
+                        },
                         y: { 
                             position: 'right',
-                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                            grid: { color: 'rgba(255,255,255,0.03)' },
                             ticks: { color: '#52525b', font: { size: 10 } }
                         }
                     }
                 }
             });
+        }
 
-            // 3. Mini Holdings View (Samples from your CSV)
-            const list = document.getElementById('holdings-list');
-            const sampleStocks = ['AAPL', 'GOOGL', 'MCD', 'KO'];
-            sampleStocks.forEach(s => {
-                if(latest[s]) {
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
-                            <span class="text-sm font-medium text-zinc-300">${s}</span>
-                            <span class="text-sm font-bold text-zinc-100">$${latest[s]}</span>
-                        </div>
-                    `;
-                }
-            });
+        function updateChartType(type) {
+            // Update Buttons
+            document.getElementById('toggle-growth').classList.toggle('active', type === 'growth');
+            document.getElementById('toggle-profit').classList.toggle('active', type === 'profit');
+            document.getElementById('chart-title').innerText = type === 'growth' ? 'Net Total Value Over Time' : 'Net Profit Over Time';
+
+            // Destroy and recreate chart with new data
+            chart.destroy();
+            createChart(type);
         }
     </script>
 </body>
