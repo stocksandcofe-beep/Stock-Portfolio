@@ -60,8 +60,8 @@
                 <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="card p-6 border-l-4 border-emerald-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Net Profit</p>
                     <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
                 </div>
@@ -72,6 +72,21 @@
                 <div class="card p-6">
                     <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Dividends & Fees</p>
                     <p id="stat-fees" class="text-2xl font-bold">£0.00</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Price Return</p>
+                    <p id="stat-price-return" class="text-2xl font-bold">£0.00</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Income Return</p>
+                    <p id="stat-income-return" class="text-2xl font-bold">£0.00</p>
+                </div>
+                <div class="card p-6 border-l-4 border-blue-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">TWR (Return %)</p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
             </div>
         </div>
@@ -94,7 +109,7 @@
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
-                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Syncing with Holdings.csv...</td></tr>
+                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Syncing files...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -110,7 +125,7 @@
         let rates = { USD: 1, EUR: 1 };
 
         function parseMoney(val) {
-            if (!val) return 0;
+            if (!val || val === "") return 0;
             if (typeof val === 'number') return val;
             return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
         }
@@ -118,7 +133,7 @@
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
-                perfData = results.data.slice(1).filter(r => r[0] && r[49]);
+                perfData = results.data.slice(1).filter(r => r[0] && r[47]);
                 const latest = perfData[perfData.length - 1];
                 rates.USD = parseMoney(latest[43]) || 1;
                 rates.EUR = parseMoney(latest[45]) || 1;
@@ -136,25 +151,53 @@
 
         function initDashboard() {
             const latest = perfData[perfData.length - 1];
-            document.getElementById('hero-val').innerText = '£' + parseMoney(latest[49]).toLocaleString(undefined, {minimumFractionDigits: 2});
+            const netProfit = parseMoney(latest[51]);
+            const incomeReturn = parseMoney(latest[48]);
+            const priceReturn = netProfit - incomeReturn;
+
+            // Update UI
+            document.getElementById('hero-val').innerText = '£' + parseMoney(latest[47]).toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
-            document.getElementById('stat-profit').innerText = '£' + parseMoney(latest[51]).toLocaleString();
+            document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
             document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
-            document.getElementById('stat-fees').innerText = '£' + parseMoney(latest[48]).toLocaleString();
+            document.getElementById('stat-fees').innerText = '£' + incomeReturn.toLocaleString();
+            
+            // New Stats
+            document.getElementById('stat-price-return').innerText = '£' + priceReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('stat-income-return').innerText = '£' + incomeReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            // TWR Calculation
+            let twrFactor = 1;
+            let firstVal = 0;
+            for (let i = 0; i < perfData.length; i++) {
+                const currVal = parseMoney(perfData[i][47]);
+                const currDep = parseMoney(perfData[i][50]);
+                if (i === 0) {
+                    firstVal = currVal;
+                    continue;
+                }
+                const prevVal = parseMoney(perfData[i-1][47]);
+                const prevDep = parseMoney(perfData[i-1][50]);
+                const deposit = currDep - prevDep;
+                if (prevVal > 0) {
+                    const hpr = (currVal - deposit) / prevVal;
+                    twrFactor *= hpr;
+                }
+            }
+            const twrPercent = (twrFactor - 1) * 100;
+            document.getElementById('stat-twr').innerText = twrPercent.toFixed(2) + '%';
+
             renderChart('growth');
         }
 
         function renderChart(type) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             const labels = perfData.map(r => r[0]);
-            
-            // Value is index 49, Profit is index 51
             const dataValues = type === 'growth' ? 
-                perfData.map(r => parseMoney(r[49])) : 
+                perfData.map(r => parseMoney(r[47])) : 
                 perfData.map(r => parseMoney(r[51]));
             
             const color = type === 'growth' ? '#10b981' : '#3b82f6';
-
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
