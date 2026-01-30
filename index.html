@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Stock Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">My Stock Portfolio</h1>
+        
+        <div id="portfolio-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p>Loading portfolio data...</p>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'YOUR_COPIED_RAW_URL_HERE';
+
+        function displayData(data) {
+            const container = document.getElementById('portfolio-container');
+            container.innerHTML = ''; // Clear loading text
+
+            data.forEach(stock => {
+                if(!stock.Ticker) return; // Skip empty rows
+                
+                const card = `
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                        <h2 class="text-xl font-bold">${stock.Ticker}</h2>
+                        <p class="text-gray-600">Shares: ${stock.Shares}</p>
+                        <p class="text-green-600 font-semibold">$${stock.Price}</p>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        Papa.parse(CSV_URL, {
+            download: true,
+            header: true,
+            complete: function(results) {
+                displayData(results.data);
+            }
+        });
+    </script>
+</body>
+</html>
