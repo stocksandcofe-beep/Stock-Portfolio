@@ -94,18 +94,21 @@
         <div id="page-holdings" class="hidden">
             <header class="mb-10">
                 <h1 class="text-4xl font-bold tracking-tight">Your Assets</h1>
-                <p class="text-zinc-500 mt-2">Current portfolio weights and live conversions.</p>
+                <p class="text-zinc-500 mt-2">Real-time performance and portfolio allocation.</p>
             </header>
             
             <div class="card overflow-hidden">
                 <table class="w-full text-left">
-                    <thead class="bg-zinc-900/50 text-zinc-500 text-xs uppercase tracking-widest font-bold">
+                    <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase tracking-widest font-bold">
                         <tr>
                             <th class="p-4">Company</th>
                             <th class="p-4">Ticker</th>
                             <th class="p-4 text-right">Shares</th>
                             <th class="p-4 text-right">Price</th>
                             <th class="p-4 text-right">£ Value</th>
+                            <th class="p-4 text-right">P/L (£)</th>
+                            <th class="p-4 text-right">P/L (%)</th>
+                            <th class="p-4 text-right">Allocation</th>
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
@@ -122,6 +125,7 @@
         let chartInstance;
         let perfData = [];
         let rates = { USD: 1, EUR: 1 };
+        let totalPortfolioValue = 0;
 
         function parseMoney(val) {
             if (!val || val === "") return 0;
@@ -132,11 +136,11 @@
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
-                // Indices 0: Date, 47: Total Val, 48: Divs, 50: Deposits, 51: Profit
                 perfData = results.data.slice(1).filter(r => r[0] && r[47]);
                 const latest = perfData[perfData.length - 1];
                 rates.USD = parseMoney(latest[43]) || 1;
                 rates.EUR = parseMoney(latest[45]) || 1;
+                totalPortfolioValue = parseMoney(latest[47]);
                 initDashboard();
             }
         });
@@ -155,46 +159,28 @@
             const incomeReturn = parseMoney(latest[48]);
             const priceReturn = netProfit - incomeReturn;
 
-            document.getElementById('hero-val').innerText = '£' + parseMoney(latest[47]).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('hero-val').innerText = '£' + totalPortfolioValue.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
             document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
             document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
             document.getElementById('stat-fees').innerText = '£' + incomeReturn.toLocaleString();
-            
             document.getElementById('stat-price-return').innerText = '£' + priceReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('stat-income-return').innerText = '£' + incomeReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            // --- TWR CALCULATION (User Methodology) ---
+            // TWR
             let cumulativeFactor = 1;
-            
-            // Initial Period
-            const v0 = parseMoney(perfData[0][47]);
             const d0 = parseMoney(perfData[0][50]);
-            if (d0 > 0) cumulativeFactor *= (v0 / d0);
-
-            // Sub-periods
+            if (d0 > 0) cumulativeFactor *= (parseMoney(perfData[0][47]) / d0);
             for (let i = 1; i < perfData.length; i++) {
                 const vi = parseMoney(perfData[i][47]);
                 const di = parseMoney(perfData[i][50]);
                 const vi_prev = parseMoney(perfData[i-1][47]);
                 const di_prev = parseMoney(perfData[i-1][50]);
-                
-                const deposit = di - di_prev;
-                const denominator = vi_prev + deposit;
-                
-                if (denominator > 0) {
-                    cumulativeFactor *= (vi / denominator);
-                }
+                const denominator = vi_prev + (di - di_prev);
+                if (denominator > 0) cumulativeFactor *= (vi / denominator);
             }
-            
-            const hpr = cumulativeFactor - 1;
-            
-            // Annualization
-            const startDate = new Date(perfData[0][0]);
-            const endDate = new Date(perfData[perfData.length - 1][0]);
-            const diffDays = Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)) || 1;
-            
-            const annualizedTWR = (Math.pow(1 + hpr, 365 / diffDays) - 1) * 100;
+            const diffDays = Math.ceil(Math.abs(new Date(perfData[perfData.length - 1][0]) - new Date(perfData[0][0])) / (1000 * 60 * 60 * 24)) || 1;
+            const annualizedTWR = (Math.pow(cumulativeFactor, 365 / diffDays) - 1) * 100;
             document.getElementById('stat-twr').innerText = annualizedTWR.toFixed(2) + '%';
 
             renderChart('growth');
@@ -205,7 +191,6 @@
             const labels = perfData.map(r => r[0]);
             const dataValues = type === 'growth' ? perfData.map(r => parseMoney(r[47])) : perfData.map(r => parseMoney(r[51]));
             const color = type === 'growth' ? '#10b981' : '#3b82f6';
-            
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -251,17 +236,37 @@
                         const currency = (row.Currency || 'USD').trim().toUpperCase();
                         const localVal = parseMoney(row['Local value']);
                         const price = parseMoney(row.Price);
-                        let symbol = '$'; let rate = rates.USD;
+                        const localCost = parseMoney(row['Cost basis']);
+                        
+                        let rate = rates.USD; let symbol = '$';
                         if (currency === 'EUR') { symbol = '€'; rate = rates.EUR; }
                         if (currency === 'GBP') { symbol = '£'; rate = 1; }
-                        const gbpTotal = localVal * rate;
+
+                        const gbpValue = localVal * rate;
+                        const gbpCost = localCost * rate;
+                        const gbpProfit = gbpValue - gbpCost;
+                        const profitPercent = gbpCost !== 0 ? (gbpProfit / gbpCost) * 100 : 0;
+                        const allocation = totalPortfolioValue !== 0 ? (gbpValue / totalPortfolioValue) * 100 : 0;
+
+                        const colorClass = gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
                         tbody.innerHTML += `
-                            <tr class="hover:bg-white/5 transition">
+                            <tr class="hover:bg-white/5 transition text-sm">
                                 <td class="p-4 font-semibold text-white">${row.Company || 'Unknown'}</td>
                                 <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker || '---'}</td>
                                 <td class="p-4 text-right">${row.Shares || 0}</td>
                                 <td class="p-4 text-right">${symbol}${price.toFixed(2)}</td>
-                                <td class="p-4 text-right font-semibold text-emerald-400">£${gbpTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-medium">£${gbpValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-semibold ${colorClass}">£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-bold ${colorClass}">${profitPercent.toFixed(2)}%</td>
+                                <td class="p-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span class="text-xs text-zinc-400">${allocation.toFixed(1)}%</span>
+                                        <div class="w-16 bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                            <div class="bg-emerald-500 h-full" style="width: ${allocation}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>`;
                     });
                 }
