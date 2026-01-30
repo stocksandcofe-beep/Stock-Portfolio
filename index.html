@@ -85,7 +85,7 @@
                     <p id="stat-income-return" class="text-2xl font-bold">£0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-blue-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">TWR (Return %)</p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">TWR (Annualized)</p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
             </div>
@@ -94,7 +94,7 @@
         <div id="page-holdings" class="hidden">
             <header class="mb-10">
                 <h1 class="text-4xl font-bold tracking-tight">Your Assets</h1>
-                <p class="text-zinc-500 mt-2">Asset values converted to GBP using live CSV rates.</p>
+                <p class="text-zinc-500 mt-2">Current portfolio weights and live conversions.</p>
             </header>
             
             <div class="card overflow-hidden">
@@ -109,7 +109,6 @@
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
-                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Syncing files...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -133,6 +132,7 @@
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
+                // Indices 0: Date, 47: Total Val, 48: Divs, 50: Deposits, 51: Profit
                 perfData = results.data.slice(1).filter(r => r[0] && r[47]);
                 const latest = perfData[perfData.length - 1];
                 rates.USD = parseMoney(latest[43]) || 1;
@@ -155,37 +155,47 @@
             const incomeReturn = parseMoney(latest[48]);
             const priceReturn = netProfit - incomeReturn;
 
-            // Update UI
             document.getElementById('hero-val').innerText = '£' + parseMoney(latest[47]).toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
             document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
             document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
             document.getElementById('stat-fees').innerText = '£' + incomeReturn.toLocaleString();
             
-            // New Stats
             document.getElementById('stat-price-return').innerText = '£' + priceReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('stat-income-return').innerText = '£' + incomeReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            // TWR Calculation
-            let twrFactor = 1;
-            let firstVal = 0;
-            for (let i = 0; i < perfData.length; i++) {
-                const currVal = parseMoney(perfData[i][47]);
-                const currDep = parseMoney(perfData[i][50]);
-                if (i === 0) {
-                    firstVal = currVal;
-                    continue;
-                }
-                const prevVal = parseMoney(perfData[i-1][47]);
-                const prevDep = parseMoney(perfData[i-1][50]);
-                const deposit = currDep - prevDep;
-                if (prevVal > 0) {
-                    const hpr = (currVal - deposit) / prevVal;
-                    twrFactor *= hpr;
+            // --- TWR CALCULATION (User Methodology) ---
+            let cumulativeFactor = 1;
+            
+            // Initial Period
+            const v0 = parseMoney(perfData[0][47]);
+            const d0 = parseMoney(perfData[0][50]);
+            if (d0 > 0) cumulativeFactor *= (v0 / d0);
+
+            // Sub-periods
+            for (let i = 1; i < perfData.length; i++) {
+                const vi = parseMoney(perfData[i][47]);
+                const di = parseMoney(perfData[i][50]);
+                const vi_prev = parseMoney(perfData[i-1][47]);
+                const di_prev = parseMoney(perfData[i-1][50]);
+                
+                const deposit = di - di_prev;
+                const denominator = vi_prev + deposit;
+                
+                if (denominator > 0) {
+                    cumulativeFactor *= (vi / denominator);
                 }
             }
-            const twrPercent = (twrFactor - 1) * 100;
-            document.getElementById('stat-twr').innerText = twrPercent.toFixed(2) + '%';
+            
+            const hpr = cumulativeFactor - 1;
+            
+            // Annualization
+            const startDate = new Date(perfData[0][0]);
+            const endDate = new Date(perfData[perfData.length - 1][0]);
+            const diffDays = Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)) || 1;
+            
+            const annualizedTWR = (Math.pow(1 + hpr, 365 / diffDays) - 1) * 100;
+            document.getElementById('stat-twr').innerText = annualizedTWR.toFixed(2) + '%';
 
             renderChart('growth');
         }
@@ -193,11 +203,9 @@
         function renderChart(type) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             const labels = perfData.map(r => r[0]);
-            const dataValues = type === 'growth' ? 
-                perfData.map(r => parseMoney(r[47])) : 
-                perfData.map(r => parseMoney(r[51]));
-            
+            const dataValues = type === 'growth' ? perfData.map(r => parseMoney(r[47])) : perfData.map(r => parseMoney(r[51]));
             const color = type === 'growth' ? '#10b981' : '#3b82f6';
+            
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
