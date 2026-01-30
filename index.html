@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
         <div id="page-holdings" class="hidden">
             <header class="mb-10">
                 <h1 class="text-4xl font-bold tracking-tight">Your Assets</h1>
-                <p class="text-zinc-500 mt-2">Live conversion based on latest market rates.</p>
+                <p class="text-zinc-500 mt-2">Asset values converted to GBP using live CSV rates.</p>
             </header>
             
             <div class="card overflow-hidden">
@@ -86,7 +86,7 @@
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
-                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Syncing with Holdings.csv...</td></tr>
+                        <tr><td colspan="5" class="p-10 text-center text-zinc-600">Parsing your files...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -99,19 +99,25 @@
         
         let chartInstance;
         let perfData = [];
-        let rates = { USD: 1, EUR: 1, GBP: 1 };
+        let rates = { USD: 1, EUR: 1 };
 
-        // 1. Load Performance Data and extract latest rates
+        // Helper to parse numbers even with symbols like $ or ,
+        function parseMoney(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
+        }
+
+        // Load Performance Data
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
-                // Skip header, filter empty rows
                 perfData = results.data.slice(1).filter(r => r[0] && r[49]);
-                
-                // Get latest rates from the last row (Indices based on your Performance.csv)
                 const latest = perfData[perfData.length - 1];
-                rates.USD = parseFloat(latest[43]) || 1;
-                rates.EUR = parseFloat(latest[45]) || 1;
+                
+                // Get rates from Performance.csv (Indices 43 and 45)
+                rates.USD = parseMoney(latest[43]) || 1;
+                rates.EUR = parseMoney(latest[45]) || 1;
 
                 initDashboard();
             }
@@ -127,42 +133,43 @@
 
         function initDashboard() {
             const latest = perfData[perfData.length - 1];
-            // Uses indices to avoid duplicate name issues
-            document.getElementById('hero-val').innerText = '£' + parseFloat(latest[49]).toLocaleString();
+            document.getElementById('hero-val').innerText = '£' + parseMoney(latest[49]).toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
-            document.getElementById('stat-profit').innerText = '£' + parseFloat(latest[51]).toLocaleString();
-            document.getElementById('stat-deposits').innerText = '£' + parseFloat(latest[50]).toLocaleString();
-            document.getElementById('stat-fees').innerText = '£' + parseFloat(latest[48]).toLocaleString();
+            document.getElementById('stat-profit').innerText = '£' + parseMoney(latest[51]).toLocaleString();
+            document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
+            document.getElementById('stat-fees').innerText = '£' + parseMoney(latest[48]).toLocaleString();
             renderChart();
         }
 
         function renderHoldings() {
             Papa.parse(HOLD_CSV, {
-                download: true, header: true, skipEmptyLines: true,
+                download: true, 
+                header: true, 
+                skipEmptyLines: true,
+                transformHeader: (h) => h.trim(), // Fixes issues with leading/trailing spaces in CSV headers
                 complete: function(results) {
                     const tbody = document.getElementById('holdings-table-body');
                     tbody.innerHTML = '';
                     
                     results.data.forEach(row => {
-                        const currency = row.Currency ? row.Currency.trim().toUpperCase() : 'USD';
-                        const localValue = parseFloat(row['Local value']) || 0;
-                        const price = parseFloat(row.Price) || 0;
+                        const currency = (row.Currency || 'USD').trim().toUpperCase();
+                        const localVal = parseMoney(row['Local value']);
+                        const price = parseMoney(row.Price);
                         
-                        // Determine Symbol and Rate
                         let symbol = '$';
                         let rate = rates.USD;
                         if (currency === 'EUR') { symbol = '€'; rate = rates.EUR; }
                         if (currency === 'GBP') { symbol = '£'; rate = 1; }
 
-                        const gbpValue = localValue * rate;
+                        const gbpTotal = localVal * rate;
 
                         tbody.innerHTML += `
                             <tr class="hover:bg-white/5 transition">
-                                <td class="p-4 font-semibold text-white">${row.Company}</td>
-                                <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker}</td>
-                                <td class="p-4 text-right">${row.Shares}</td>
+                                <td class="p-4 font-semibold text-white">${row.Company || 'Unknown'}</td>
+                                <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker || '---'}</td>
+                                <td class="p-4 text-right">${row.Shares || 0}</td>
                                 <td class="p-4 text-right">${symbol}${price.toFixed(2)}</td>
-                                <td class="p-4 text-right font-semibold text-emerald-400">£${gbpValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-semibold text-emerald-400">£${gbpTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
                         `;
                     });
@@ -170,11 +177,10 @@
             });
         }
 
-        // Dashboard Chart (Original Visuals Restored)
         function renderChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
             const labels = perfData.map(r => r[0]);
-            const dataValues = perfData.map(r => parseFloat(r[49]));
+            const dataValues = perfData.map(r => parseMoney(r[49]));
 
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
