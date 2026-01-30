@@ -7,53 +7,75 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #ffffff; }
-        .chart-gradient { background: linear-gradient(180deg, rgba(79, 70, 229, 0.1) 0%, rgba(0, 0, 0, 0) 100%); }
-        .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E14; color: #FFFFFF; }
+        .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); }
+        .chart-container { height: 350px; width: 100%; }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-4 md:p-10 min-h-screen">
 
-    <div class="max-w-5xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
             <div>
-                <p class="text-zinc-500 font-medium mb-1">Total Balance</p>
-                <h1 id="total-value" class="text-5xl font-bold tracking-tight">£0.00</h1>
-                <div id="profit-badge" class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
-                    <span id="profit-text">Calculating...</span>
+                <p class="text-zinc-500 text-sm font-medium mb-1">Total Net Value</p>
+                <div class="flex items-baseline gap-4">
+                    <h1 id="hero-value" class="text-5xl font-bold tracking-tight">£0.00</h1>
+                    <span id="profit-badge" class="px-3 py-1 rounded-full text-xs font-bold">--</span>
                 </div>
             </div>
-            <div class="text-right">
-                <p class="text-zinc-500 text-sm">Last Update</p>
-                <p id="last-date" class="font-medium text-zinc-300">--/--/----</p>
+            <div class="text-left md:text-right">
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Portfolio Status</p>
+                <p id="update-date" class="text-zinc-300 text-sm">Synchronizing...</p>
             </div>
-        </header>
+        </div>
 
-        <div class="glass-card rounded-3xl p-6 mb-10">
-            <div class="h-[300px] w-full">
-                <canvas id="mainChart"></canvas>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 glass rounded-3xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-semibold text-zinc-300">Growth Over Time (GBP)</h3>
+                    <div class="flex gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Live Data</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
             </div>
-        </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-            <div class="glass-card p-6 rounded-2xl">
-                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Net Profit</p>
-                <p id="net-profit" class="text-2xl font-semibold">£0.00</p>
-            </div>
-            <div class="glass-card p-6 rounded-2xl">
-                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Deposits</p>
-                <p id="deposits" class="text-2xl font-semibold text-zinc-300">£0.00</p>
-            </div>
-            <div class="glass-card p-6 rounded-2xl">
-                <p class="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-2">Dividends & Fees</p>
-                <p id="div-fees" class="text-2xl font-semibold text-zinc-300">£0.00</p>
+            <div class="space-y-6">
+                <div class="glass rounded-3xl p-6">
+                    <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4">Account Summary</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-zinc-400">Net Profit</span>
+                            <span id="stat-profit" class="font-bold text-emerald-400">£0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-zinc-400">Cumulative Deposits</span>
+                            <span id="stat-deposits" class="font-bold text-zinc-200">£0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-zinc-400">Fees & Dividends</span>
+                            <span id="stat-fees" class="font-bold text-zinc-200">£0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-6">
+                    <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4">Major Holdings</h3>
+                    <div id="holdings-list" class="space-y-3">
+                        </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // POINT THIS TO YOUR FILE
         const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
 
         Papa.parse(CSV_URL, {
@@ -61,34 +83,36 @@
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
-                // Filter out empty rows at the end of the file
-                const cleanData = results.data.filter(row => row['Net Total Value GBP'] && row['Net Total Value GBP'] !== "");
-                initDashboard(cleanData);
+                // Filter out any rows that don't have a date or value
+                const data = results.data.filter(r => r.Date && r['Net Total Value GBP']);
+                renderPortfolio(data);
+            },
+            error: function(err) {
+                console.error("CSV Load Error:", err);
+                document.getElementById('update-date').innerText = "Error: File not found.";
             }
         });
 
-        function initDashboard(data) {
+        function renderPortfolio(data) {
             const latest = data[data.length - 1];
             
-            // Set Stats
-            document.getElementById('total-value').innerText = `£${parseFloat(latest['Net Total Value GBP']).toLocaleString()}`;
-            document.getElementById('last-date').innerText = latest.Date;
-            document.getElementById('deposits').innerText = `£${parseFloat(latest['Cumulative Deposits']).toLocaleString()}`;
-            document.getElementById('div-fees').innerText = `£${parseFloat(latest['Dividends & Fees']).toLocaleString()}`;
-            
+            // 1. Update Hero Numbers
+            const netVal = parseFloat(latest['Net Total Value GBP']);
             const profit = parseFloat(latest['Net Profit']);
-            const profitEl = document.getElementById('net-profit');
-            const badge = document.getElementById('profit-badge');
             
-            profitEl.innerText = `£${profit.toLocaleString()}`;
-            profitEl.classList.add(profit >= 0 ? 'text-emerald-400' : 'text-rose-400');
-            badge.classList.add(profit >= 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10');
-            badge.classList.add(profit >= 0 ? 'text-emerald-400' : 'text-rose-400');
-            document.getElementById('profit-text').innerText = (profit >= 0 ? '↑ ' : '↓ ') + profit.toLocaleString() + " Total Return";
+            document.getElementById('hero-value').innerText = `£${netVal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('update-date').innerText = `Last Updated: ${latest.Date}`;
+            document.getElementById('stat-profit').innerText = `£${profit.toLocaleString()}`;
+            document.getElementById('stat-deposits').innerText = `£${parseFloat(latest['Cumulative Deposits']).toLocaleString()}`;
+            document.getElementById('stat-fees').innerText = `£${parseFloat(latest['Dividends & Fees']).toLocaleString()}`;
 
-            // Chart Logic
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            const badge = document.getElementById('profit-badge');
+            badge.innerText = (profit >= 0 ? '+' : '') + `£${profit.toLocaleString()}`;
+            badge.className = profit >= 0 ? 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400' : 'px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400';
+
+            // 2. Performance Chart
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
             gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
             gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
@@ -99,11 +123,11 @@
                     datasets: [{
                         data: data.map(r => parseFloat(r['Net Total Value GBP'])),
                         borderColor: '#10b981',
-                        borderWidth: 3,
+                        borderWidth: 2,
                         pointRadius: 0,
-                        tension: 0.4,
                         fill: true,
-                        backgroundColor: gradient
+                        backgroundColor: gradient,
+                        tension: 0.3
                     }]
                 },
                 options: {
@@ -114,10 +138,24 @@
                         x: { display: false },
                         y: { 
                             position: 'right',
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#71717a', font: { size: 10 } }
+                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                            ticks: { color: '#52525b', font: { size: 10 } }
                         }
                     }
+                }
+            });
+
+            // 3. Mini Holdings View (Samples from your CSV)
+            const list = document.getElementById('holdings-list');
+            const sampleStocks = ['AAPL', 'GOOGL', 'MCD', 'KO'];
+            sampleStocks.forEach(s => {
+                if(latest[s]) {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
+                            <span class="text-sm font-medium text-zinc-300">${s}</span>
+                            <span class="text-sm font-bold text-zinc-100">$${latest[s]}</span>
+                        </div>
+                    `;
                 }
             });
         }
