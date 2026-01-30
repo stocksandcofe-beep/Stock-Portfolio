@@ -18,48 +18,42 @@
             </div>
     </div>
 
-    <script>
-        // Make sure this filename matches exactly what is in your repo
-        const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
+   <script>
+    const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/data.csv';
 
-        const status = document.getElementById('status');
-        const container = document.getElementById('portfolio-container');
+    Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            const data = results.data;
+            const container = document.getElementById('portfolio-container');
+            const status = document.getElementById('status');
 
-        Papa.parse(CSV_URL, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                if (results.data && results.data.length > 0) {
-                    status.innerText = "Data loaded successfully!";
-                    renderData(results.data);
-                } else {
-                    status.innerText = "Connected, but the CSV file looks empty.";
-                }
-            },
-            error: function(err) {
-                status.innerText = "Error: Could not reach the CSV file. Check your URL.";
-                console.error(err);
+            if (data.length > 0) {
+                status.innerText = "Data found! Displaying columns...";
+                container.innerHTML = ''; 
+
+                // Get the actual names of your columns from the first row
+                const columns = Object.keys(data[0]);
+                
+                data.forEach(row => {
+                    // This pulls whatever is in your 1st and 2nd columns
+                    const col1 = row[columns[0]]; 
+                    const col2 = row[columns[1]];
+
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between mb-2">
+                            <span class="font-semibold">${col1}</span>
+                            <span class="text-blue-600 font-mono">${col2}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                status.innerText = "The file was found, but it looks empty.";
             }
-        });
-
-        function renderData(data) {
-            container.innerHTML = '';
-            data.forEach(row => {
-                // This looks for common column names. 
-                // Adjust 'Ticker' and 'Price' to match your Excel exactly!
-                const name = row['Ticker'] || row['Date'] || Object.values(row)[0];
-                const value = row['Price'] || row['Performance'] || Object.values(row)[1];
-
-                const card = `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between">
-                        <span class="font-semibold">${name}</span>
-                        <span class="text-blue-600">${value}</span>
-                    </div>
-                `;
-                container.innerHTML += card;
-            });
         }
-    </script>
+    });
+</script>
 </body>
 </html>
