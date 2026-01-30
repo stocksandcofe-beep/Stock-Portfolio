@@ -3,47 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Stock Portfolio</title>
+    <title>Stock Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6">My Stock Portfolio</h1>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <div class="max-w-xl mx-auto py-10 px-4">
+        <h1 class="text-2xl font-bold mb-6">My Portfolio</h1>
         
-        <div id="portfolio-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <p>Loading portfolio data...</p>
-        </div>
+        <div id="status" class="text-sm text-gray-500 mb-4 italic">Connecting to GitHub...</div>
+
+        <div id="portfolio-container" class="space-y-3">
+            </div>
     </div>
 
     <script>
-        const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/refs/heads/main/Performance.csv';
+        // Make sure this filename matches exactly what is in your repo
+        const CSV_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
 
-        function displayData(data) {
-            const container = document.getElementById('portfolio-container');
-            container.innerHTML = ''; // Clear loading text
+        const status = document.getElementById('status');
+        const container = document.getElementById('portfolio-container');
 
-            data.forEach(stock => {
-                if(!stock.Ticker) return; // Skip empty rows
-                
+        Papa.parse(CSV_URL, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                if (results.data && results.data.length > 0) {
+                    status.innerText = "Data loaded successfully!";
+                    renderData(results.data);
+                } else {
+                    status.innerText = "Connected, but the CSV file looks empty.";
+                }
+            },
+            error: function(err) {
+                status.innerText = "Error: Could not reach the CSV file. Check your URL.";
+                console.error(err);
+            }
+        });
+
+        function renderData(data) {
+            container.innerHTML = '';
+            data.forEach(row => {
+                // This looks for common column names. 
+                // Adjust 'Ticker' and 'Price' to match your Excel exactly!
+                const name = row['Ticker'] || row['Date'] || Object.values(row)[0];
+                const value = row['Price'] || row['Performance'] || Object.values(row)[1];
+
                 const card = `
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <h2 class="text-xl font-bold">${stock.Ticker}</h2>
-                        <p class="text-gray-600">Shares: ${stock.Shares}</p>
-                        <p class="text-green-600 font-semibold">$${stock.Price}</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between">
+                        <span class="font-semibold">${name}</span>
+                        <span class="text-blue-600">${value}</span>
                     </div>
                 `;
                 container.innerHTML += card;
             });
         }
-
-        Papa.parse(CSV_URL, {
-            download: true,
-            header: true,
-            complete: function(results) {
-                displayData(results.data);
-            }
-        });
     </script>
 </body>
 </html>
