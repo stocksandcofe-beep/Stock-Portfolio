@@ -12,10 +12,10 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; color: #FFFFFF; }
         .sidebar { background-color: #15191C; border-right: 1px solid #2B2F36; }
         .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
-        .toggle-btn { transition: all 0.2s; border: 1px solid transparent; color: #71717a; }
+        .nav-item { cursor: pointer; transition: all 0.2s; }
+        .nav-item.active { background: #10b9811a; color: #10b981; }
         .toggle-btn.active { background: #10b981; color: #000; font-weight: 700; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #2B2F36; border-radius: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -26,63 +26,57 @@
             <span class="text-xl font-bold tracking-tight">Portfolio</span>
         </div>
         <nav class="space-y-2 flex-1">
-            <div class="flex items-center gap-3 text-emerald-400 font-medium bg-emerald-500/10 p-3 rounded-xl cursor-default">
+            <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl">
                 <span>Dashboard</span>
             </div>
-            <div class="flex items-center gap-3 text-zinc-500 p-3 hover:text-white transition cursor-pointer">
+            <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl text-zinc-500 hover:text-white">
                 <span>Holdings</span>
             </div>
         </nav>
-        <div class="mt-auto p-4 bg-zinc-900/50 rounded-xl text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
-            Live CSV Source
-        </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-6 md:p-10 custom-scroll">
+    <main class="flex-1 overflow-y-auto p-6 md:p-10">
         
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-            <div>
-                <p class="text-zinc-500 text-sm font-medium mb-1">Net Total Value</p>
-                <div class="flex items-baseline gap-4">
+        <div id="page-dashboard">
+            <header class="flex justify-between items-end mb-10">
+                <div>
+                    <p class="text-zinc-500 text-sm mb-1">Net Total Value</p>
                     <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
-                    <div id="profit-pill" class="px-3 py-1 rounded-full text-xs font-bold flex items-center">
-                        <span id="hero-profit">--</span>
+                </div>
+                <div class="text-right"><p id="date-label" class="text-zinc-500 text-sm">--/--/----</p></div>
+            </header>
+
+            <div class="card p-6 mb-8">
+                <div class="flex justify-between mb-8">
+                    <h3 id="chart-title" class="font-semibold text-zinc-300">Performance</h3>
+                    <div class="flex bg-black/40 p-1 rounded-xl">
+                        <button id="btn-growth" onclick="updateChart('growth')" class="toggle-btn active px-4 py-1 rounded-lg text-[10px] uppercase">Growth</button>
+                        <button id="btn-profit" onclick="updateChart('profit')" class="toggle-btn px-4 py-1 rounded-lg text-[10px] uppercase ml-1">Profit</button>
                     </div>
                 </div>
-            </div>
-            <div class="text-right border-l border-zinc-800 pl-6 hidden md:block">
-                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Last Update</p>
-                <p id="date-label" class="text-zinc-200 font-medium text-sm">--/--/----</p>
-            </div>
-        </header>
-
-        <div class="card p-6 mb-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <h3 id="chart-title" class="font-semibold text-zinc-300">Net Total Value Over Time</h3>
-                
-                <div class="flex bg-black/40 p-1 rounded-xl">
-                    <button id="btn-growth" onclick="updateChart('growth')" class="toggle-btn active px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-widest">Growth</button>
-                    <button id="btn-profit" onclick="updateChart('profit')" class="toggle-btn px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-widest ml-1">Profit</button>
-                </div>
-            </div>
-
-            <div class="h-[320px] w-full">
-                <canvas id="mainChart"></canvas>
+                <div class="h-[320px]"><canvas id="mainChart"></canvas></div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card p-6">
-                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Net Profit</p>
-                <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
-            </div>
-            <div class="card p-6">
-                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Deposits</p>
-                <p id="stat-deposits" class="text-2xl font-bold text-zinc-100">£0.00</p>
-            </div>
-            <div class="card p-6">
-                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Dividends & Fees</p>
-                <p id="stat-fees" class="text-2xl font-bold text-zinc-100">£0.00</p>
+        <div id="page-holdings" class="hidden">
+            <header class="mb-10">
+                <h1 class="text-4xl font-bold tracking-tight">Current Holdings</h1>
+                <p class="text-zinc-500 mt-2">Asset breakdown based on latest CSV data.</p>
+            </header>
+            
+            <div class="card overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-zinc-900/50 text-zinc-500 text-xs uppercase tracking-widest font-bold">
+                        <tr>
+                            <th class="p-4">Ticker</th>
+                            <th class="p-4 text-right">Quantity</th>
+                            <th class="p-4 text-right">Current Price</th>
+                            <th class="p-4 text-right">Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
+                        </tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -102,51 +96,62 @@
             }
         });
 
+        function showPage(pageId) {
+            document.getElementById('page-dashboard').classList.toggle('hidden', pageId !== 'dashboard');
+            document.getElementById('page-holdings').classList.toggle('hidden', pageId !== 'holdings');
+            document.getElementById('nav-dash').classList.toggle('active', pageId === 'dashboard');
+            document.getElementById('nav-holdings').classList.toggle('active', pageId === 'holdings');
+            if(pageId === 'holdings') renderHoldings();
+        }
+
         function initUI() {
             const latest = globalData[globalData.length - 1];
-            
-            // Text values
             document.getElementById('hero-val').innerText = '£' + parseFloat(latest['Net Total Value GBP']).toLocaleString();
             document.getElementById('date-label').innerText = latest.Date;
-            document.getElementById('stat-profit').innerText = '£' + parseFloat(latest['Net Profit']).toLocaleString();
-            document.getElementById('stat-deposits').innerText = '£' + parseFloat(latest['Cumulative Deposits']).toLocaleString();
-            document.getElementById('stat-fees').innerText = '£' + parseFloat(latest['Dividends & Fees']).toLocaleString();
-
-            const profit = parseFloat(latest['Net Profit']);
-            const pill = document.getElementById('profit-pill');
-            document.getElementById('hero-profit').innerText = (profit >= 0 ? '+' : '') + '£' + profit.toLocaleString();
-            pill.className = profit >= 0 ? 'bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold' : 'bg-rose-500/10 text-rose-400 px-3 py-1 rounded-full text-xs font-bold';
-
             renderChart('growth');
+        }
+
+        function renderHoldings() {
+            const latest = globalData[globalData.length - 1];
+            const tbody = document.getElementById('holdings-table-body');
+            tbody.innerHTML = '';
+            
+            // Your CSV has Ticker, then Quantity, then Value. 
+            // We loop through the headers to find the stock names.
+            const headers = Object.keys(latest);
+            const stocks = ["WKL", "AAPL", "CL", "CNI", "GOOGL", "KO", "MCD", "NKE", "PGR", "TJX", "UL", "V", "WM", "WMT"];
+
+            stocks.forEach(ticker => {
+                const qtyIndex = headers.indexOf(ticker) + 1;
+                const valIndex = headers.indexOf(ticker) + 2;
+                const qty = latest[headers[qtyIndex]];
+                const totalVal = latest[headers[valIndex]];
+                const price = latest[ticker];
+
+                if (qty && parseFloat(qty) > 0) {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-white/5 transition">
+                            <td class="p-4 font-bold text-white">${ticker}</td>
+                            <td class="p-4 text-right">${qty}</td>
+                            <td class="p-4 text-right">$${parseFloat(price).toFixed(2)}</td>
+                            <td class="p-4 text-right font-semibold text-emerald-400">$${parseFloat(totalVal).toLocaleString()}</td>
+                        </tr>
+                    `;
+                }
+            });
         }
 
         function renderChart(type) {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            
-            // Format labels to show MONTH and YEAR (e.g., Aug 20)
             const labels = globalData.map(r => {
-                const parts = r.Date.split('/');
-                const d = new Date(parts[2], parts[0] - 1, parts[1]);
-                return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+                const p = r.Date.split('/');
+                return new Date(p[2], p[0]-1, p[1]).toLocaleString('default', {month:'short', year:'2-digit'});
             });
-
-            const datasets = {
-                growth: {
-                    data: globalData.map(r => parseFloat(r['Net Total Value GBP'])),
-                    color: '#10b981',
-                    label: 'Net Total Value'
-                },
-                profit: {
-                    data: globalData.map(r => parseFloat(r['Net Profit'])),
-                    color: '#6366f1',
-                    label: 'Net Profit'
-                }
-            };
-
-            const config = datasets[type];
+            const config = type === 'growth' ? 
+                { data: globalData.map(r => parseFloat(r['Net Total Value GBP'])), color: '#10b981' } : 
+                { data: globalData.map(r => parseFloat(r['Net Profit'])), color: '#6366f1' };
 
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -158,37 +163,17 @@
                         pointRadius: 0,
                         tension: 0.3,
                         fill: true,
-                        backgroundColor: (context) => {
-                            const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 320);
-                            gradient.addColorStop(0, config.color + '33'); // 20% opacity
-                            gradient.addColorStop(1, config.color + '00'); // 0% opacity
-                            return gradient;
-                        }
+                        backgroundColor: config.color + '11'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { 
-                            grid: { display: false },
-                            ticks: { color: '#52525b', autoSkip: true, maxTicksLimit: 12, font: { size: 10 } } 
-                        },
-                        y: { 
-                            position: 'right',
-                            grid: { color: 'rgba(255,255,255,0.03)' },
-                            ticks: { color: '#52525b', font: { size: 10 } }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, 
+                scales: { x: { grid: { display: false }, ticks: { color: '#52525b', maxTicksLimit: 12 } }, y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' } } } }
             });
         }
 
         function updateChart(type) {
             document.getElementById('btn-growth').classList.toggle('active', type === 'growth');
             document.getElementById('btn-profit').classList.toggle('active', type === 'profit');
-            document.getElementById('chart-title').innerText = type === 'growth' ? 'Net Total Value Over Time' : 'Net Profit Over Time';
             renderChart(type);
         }
     </script>
