@@ -94,7 +94,7 @@
         <div id="page-holdings" class="hidden">
             <header class="mb-10">
                 <h1 class="text-4xl font-bold tracking-tight">Your Assets</h1>
-                <p class="text-zinc-500 mt-2">Real-time performance and portfolio allocation.</p>
+                <p class="text-zinc-500 mt-2">Detailed breakdown of profit/loss and weightings.</p>
             </header>
             
             <div class="card overflow-hidden">
@@ -125,11 +125,12 @@
         let chartInstance;
         let perfData = [];
         let rates = { USD: 1, EUR: 1 };
-        let totalPortfolioValue = 0;
+        let totalValAtLatestDate = 0;
 
         function parseMoney(val) {
             if (!val || val === "") return 0;
             if (typeof val === 'number') return val;
+            // Cleans strings like "$1,200.50" or "£500"
             return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
         }
 
@@ -140,7 +141,7 @@
                 const latest = perfData[perfData.length - 1];
                 rates.USD = parseMoney(latest[43]) || 1;
                 rates.EUR = parseMoney(latest[45]) || 1;
-                totalPortfolioValue = parseMoney(latest[47]);
+                totalValAtLatestDate = parseMoney(latest[47]);
                 initDashboard();
             }
         });
@@ -159,7 +160,7 @@
             const incomeReturn = parseMoney(latest[48]);
             const priceReturn = netProfit - incomeReturn;
 
-            document.getElementById('hero-val').innerText = '£' + totalPortfolioValue.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('hero-val').innerText = '£' + totalValAtLatestDate.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
             document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
             document.getElementById('stat-deposits').innerText = '£' + parseMoney(latest[50]).toLocaleString();
@@ -232,21 +233,31 @@
                 complete: function(results) {
                     const tbody = document.getElementById('holdings-table-body');
                     tbody.innerHTML = '';
+                    
+                    // Sum up values first for accurate allocation denominator
+                    let calculatedTotalValue = 0;
+                    results.data.forEach(row => {
+                        const currency = (row.Currency || 'USD').trim().toUpperCase();
+                        let rate = (currency === 'EUR') ? rates.EUR : (currency === 'USD' ? rates.USD : 1);
+                        calculatedTotalValue += parseMoney(row['Local value']) * rate;
+                    });
+
                     results.data.forEach(row => {
                         const currency = (row.Currency || 'USD').trim().toUpperCase();
                         const localVal = parseMoney(row['Local value']);
-                        const price = parseMoney(row.Price);
-                        const localCost = parseMoney(row['Cost basis']);
+                        const currentPrice = parseMoney(row.Price);
+                        const costBasisPerShare = parseMoney(row['Cost basis']); // Assuming price paid per share
+                        const shares = parseMoney(row.Shares);
                         
-                        let rate = rates.USD; let symbol = '$';
-                        if (currency === 'EUR') { symbol = '€'; rate = rates.EUR; }
-                        if (currency === 'GBP') { symbol = '£'; rate = 1; }
+                        let rate = (currency === 'EUR') ? rates.EUR : (currency === 'USD' ? rates.USD : 1);
+                        let symbol = (currency === 'EUR') ? '€' : (currency === 'USD' ? '$' : '£');
 
+                        // CALCULATIONS
                         const gbpValue = localVal * rate;
-                        const gbpCost = localCost * rate;
+                        const gbpCost = (shares * costBasisPerShare) * rate; // Total cost in GBP
                         const gbpProfit = gbpValue - gbpCost;
                         const profitPercent = gbpCost !== 0 ? (gbpProfit / gbpCost) * 100 : 0;
-                        const allocation = totalPortfolioValue !== 0 ? (gbpValue / totalPortfolioValue) * 100 : 0;
+                        const allocation = calculatedTotalValue !== 0 ? (gbpValue / calculatedTotalValue) * 100 : 0;
 
                         const colorClass = gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
 
@@ -254,8 +265,8 @@
                             <tr class="hover:bg-white/5 transition text-sm">
                                 <td class="p-4 font-semibold text-white">${row.Company || 'Unknown'}</td>
                                 <td class="p-4 text-xs font-bold text-zinc-500">${row.Ticker || '---'}</td>
-                                <td class="p-4 text-right">${row.Shares || 0}</td>
-                                <td class="p-4 text-right">${symbol}${price.toFixed(2)}</td>
+                                <td class="p-4 text-right">${shares}</td>
+                                <td class="p-4 text-right">${symbol}${currentPrice.toFixed(2)}</td>
                                 <td class="p-4 text-right font-medium">£${gbpValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 <td class="p-4 text-right font-semibold ${colorClass}">£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 <td class="p-4 text-right font-bold ${colorClass}">${profitPercent.toFixed(2)}%</td>
