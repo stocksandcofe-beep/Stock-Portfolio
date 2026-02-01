@@ -281,7 +281,7 @@
             renderChart(type);
         }
 
-       function renderHoldings() {
+     function renderHoldings() {
     Papa.parse(HOLD_CSV, {
         download: true, header: true, skipEmptyLines: true,
         complete: function(results) {
@@ -289,31 +289,39 @@
             tbody.innerHTML = '';
             
             results.data.forEach(row => {
+                const ticker = getCol(row, ['Ticker', 'Symbol']);
                 const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
-                if (shares <= 0) return;
+                if (!ticker || shares === 0) return;
 
                 const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
-                // Performance file provides rates like 0.86 (USD to GBP)
-                const rate = (currency === 'GBP') ? 1 : (currency === 'EUR' ? rates.EUR : rates.USD);
+                
+                // FIX: Swapping the rates because your CSV has them labeled inversely
+                // USD is using the 'EUR Rate' column (0.73)
+                // EUR is using the 'USD Rate' column (0.86)
+                let rate = 1;
+                if (currency === 'USD') rate = rates.EUR; 
+                if (currency === 'EUR') rate = rates.USD;
+                
                 const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
                 
-                // 1. Current Market Value in GBP
+                // Current Value in GBP
                 const mktPrice = cleanNum(getCol(row, ['Price']));
-                const currentValGBP = (shares * mktPrice) * rate; 
+                const currentValGBP = (shares * mktPrice) * rate;
 
-                // 2. Cost Basis (Assumed to be in GBP from CSV)
+                // Cost Basis in GBP
                 const costGBP = cleanNum(getCol(row, ['Total Cost']));
 
-                // 3. P/L Calculations
+                // Profit/Loss
                 const gbpProfit = currentValGBP - costGBP;
                 const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
+                
                 const weight = totalValAtLatestDate > 0 ? (currentValGBP / totalValAtLatestDate) * 100 : 0;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                         <td class="p-4">
                             <div class="font-bold text-white">${getCol(row, ['Company', 'Name'])}</div>
-                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol'])}</div>
+                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
                         </td>
                         <td class="p-4 text-right font-mono">${shares}</td>
                         <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
