@@ -22,16 +22,6 @@
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
         th.sortable:hover { color: white; cursor: pointer; }
-
-        /* Tooltip styles */
-        .tooltip { position: relative; display: inline-block; cursor: help; margin-left: 4px; color: #71717a; }
-        .tooltip .tooltiptext {
-            visibility: hidden; width: 180px; background-color: #1e2327; color: #fff; text-align: center;
-            border-radius: 6px; padding: 8px; position: absolute; z-index: 50; bottom: 125%; left: 50%;
-            margin-left: -90px; opacity: 0; transition: opacity 0.3s; font-size: 10px; line-height: 1.4;
-            border: 1px solid #2B2F36; pointer-events: none; text-transform: none; font-weight: normal;
-        }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -84,27 +74,33 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR</p><p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p><p id="stat-sharpe" class="text-2xl font-bold">0.00</p></div>
-                <div class="card p-6 border-l-4 border-amber-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta</p><p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p></div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR</p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p>
+                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="card p-6 border-l-4 border-amber-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta</p>
+                    <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
+                </div>
             </div>
         </div>
 
         <div id="page-holdings" class="hidden">
             <header class="mb-10"><h1 class="text-4xl font-bold tracking-tight">Holdings</h1></header>
             <div class="card overflow-x-auto">
-                <table class="w-full text-left min-w-[1000px]">
+                <table class="w-full text-left min-w-[950px]">
                     <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
-                                BEP <div class="tooltip">? <span class="tooltiptext">Break-Even Price: The average price paid per share including all transaction fees.</span></div> ↕
-                            </th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Mkt Price ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">GBP Value ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">P/L (£) ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">P/L (%) ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                         </tr>
                     </thead>
@@ -175,39 +171,55 @@
                 if (currentPeriod === 'ly') return d.getFullYear() === latestDate.getFullYear() - 1;
                 return true;
             });
+
             const start = filtered[0], end = filtered[filtered.length - 1];
             const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
             const pDep = cleanNum(end[50]) - cleanNum(start[50]);
+            
             document.getElementById('hero-val').innerText = '£' + cleanNum(end[47]).toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = end[0];
             document.getElementById('stat-profit').innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString();
             document.getElementById('stat-total-return').innerText = (cleanNum(start[47]) + pDep !== 0 ? (pProfit / (cleanNum(start[47]) + pDep)) * 100 : 0).toFixed(2) + '%';
+
             calculateMetrics(filtered);
             renderChart(filtered);
         }
 
         function calculateMetrics(data) {
             let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+            
             for (let i = 1; i < data.length; i++) {
-                const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+                const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]);
+                const flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
                 const denom = prevVal + flow;
-                if (denom > 0) { const r = (currVal / denom) - 1; cumFactor *= (1 + r); dailyRets.push(r); }
+                if (denom > 0) {
+                    const r = (currVal / denom) - 1;
+                    cumFactor *= (1 + r);
+                    dailyRets.push(r);
+                }
                 const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
                 if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+
                 if (currVal > peak) peak = currVal;
                 const dd = (currVal - peak) / peak;
                 if (dd < maxDD) maxDD = dd;
             }
+
             const years = Math.max((parseDate(data[data.length-1][0]) - parseDate(data[0][0])) / (31557600000), 0.1);
             document.getElementById('stat-twr').innerText = ((Math.pow(cumFactor, 1/years) - 1) * 100).toFixed(2) + '%';
             document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+            
             if(dailyRets.length > 1) {
                 const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
                 const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
                 document.getElementById('stat-sharpe').innerText = sd !== 0 ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+                
                 const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
                 let num = 0, den = 0;
-                for(let i=0; i<dailyRets.length; i++) { num += (dailyRets[i]-mean)*(spyRets[i]-mMean); den += Math.pow(spyRets[i]-mMean, 2); }
+                for(let i=0; i<dailyRets.length; i++) {
+                    num += (dailyRets[i]-mean)*(spyRets[i]-mMean);
+                    den += Math.pow(spyRets[i]-mMean, 2);
+                }
                 document.getElementById('stat-beta').innerText = den !== 0 ? (num/den).toFixed(2) : "0.00";
             }
         }
@@ -228,9 +240,18 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => '£' + (ctx.parsed.y / 1000).toFixed(1) + 'k' } } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => '£' + (ctx.parsed.y / 1000).toFixed(1) + 'k' } }
+                    },
                     scales: {
-                        x: { ticks: { color: '#52525b', maxRotation: 0, autoSkip: true, callback: function(val) { return parseDate(this.getLabelForValue(val)).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }); } }, grid: { display: false } },
+                        x: { 
+                            ticks: {
+                                color: '#52525b', maxRotation: 0, autoSkip: true,
+                                callback: function(val) { return parseDate(this.getLabelForValue(val)).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }); }
+                            },
+                            grid: { display: false }
+                        },
                         y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b', callback: (v) => '£' + (v/1000).toFixed(0) + 'k' } }
                     }
                 }
@@ -274,7 +295,6 @@
                             <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
                         </td>
                         <td class="p-4 text-right font-mono text-zinc-400">${cleanNum(getCol(row, ['Shares']))}</td>
-                        <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['BEP Price'])).toFixed(2)}</td>
                         <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
                         <td class="p-4 text-right font-medium text-white">£${curVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                         <td class="p-4 text-right font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profit >= 0 ? '+' : ''}£${profit.toLocaleString()}</td>
