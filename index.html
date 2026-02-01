@@ -17,6 +17,48 @@
         .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
         .toggle-btn.active { background: #10b981; color: #000; }
         .hidden { display: none; }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            background: #2B2F36;
+            color: #71717a;
+            border-radius: 50%;
+            font-size: 10px;
+            margin-left: 6px;
+            cursor: help;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #1c2127;
+            color: #d4d4d8;
+            text-align: left;
+            border-radius: 8px;
+            padding: 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border: 1px solid #3f3f46;
+            font-size: 11px;
+            font-weight: 400;
+            text-transform: none;
+            line-height: 1.5;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -54,15 +96,42 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-rose-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p>
+                    <p id="stat-total-return" class="text-2xl font-bold">0.00%</p>
+                </div>
+                <div class="card p-6 border-l-4 border-rose-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p>
+                    <p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p>
+                </div>
+                <div class="card p-6 border-l-4 border-emerald-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
+                    <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR (Annualized)</p><p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p><p id="stat-sharpe" class="text-2xl font-bold">0.00</p></div>
-                <div class="card p-6 border-l-4 border-amber-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta (vs S&P 500)</p><p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p></div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">
+                        True-Weighted Return (TWR)
+                        <span class="tooltip">? <span class="tooltiptext">Measures the compound growth rate of the portfolio, excluding the impact of cash inflows/outflows like deposits.</span></span>
+                    </p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">
+                        Sharpe Ratio
+                        <span class="tooltip">? <span class="tooltiptext">Measures risk-adjusted return. It shows how much excess return you receive for the extra volatility you endure.</span></span>
+                    </p>
+                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="card p-6 border-l-4 border-amber-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">
+                        Beta
+                        <span class="tooltip">? <span class="tooltiptext">Measures the portfolio's volatility sensitivity relative to the S&P 500. A beta of 1.0 matches the market.</span></span>
+                    </p>
+                    <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
+                </div>
             </div>
         </div>
 
