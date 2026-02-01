@@ -1,160 +1,287 @@
-<div id="page-dashboard">
-    <header class="flex justify-between items-end mb-10">
-        <div>
-            <p class="text-zinc-500 text-sm mb-1">Total Net Value</p>
-            <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
-        </div>
-        <div class="text-right">
-            <p id="date-label" class="text-zinc-500 text-sm">--/--/----</p>
-        </div>
-    </header>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; color: #FFFFFF; }
+        .sidebar { background-color: #15191C; border-right: 1px solid #2B2F36; }
+        .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
+        .nav-item { cursor: pointer; transition: all 0.2s; color: #71717a; }
+        .nav-item.active { background: #10b9811a; color: #10b981; }
+        .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 700; color: #71717a; }
+        .toggle-btn.active { background: #10b981; color: #000; }
+        .period-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e2327; color: #a1a1aa; border: 1px solid #2B2F36; }
+        .period-btn.active { border-color: #10b981; color: #10b981; background: #10b9810d; }
+        .hidden { display: none; }
+        .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
+        .logo-img { width: 100%; height: 100%; object-fit: contain; }
+        .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; margin-left: 6px; cursor: help; }
+        .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: #1c2127; color: #d4d4d8; text-align: left; border-radius: 8px; padding: 10px; position: absolute; z-index: 10; bottom: 150%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.2s; border: 1px solid #3f3f46; font-size: 11px; text-transform: none; line-height: 1.5; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
 
-    <div class="flex gap-2 mb-6">
-        <button id="p-all" onclick="changePeriod('all')" class="toggle-btn active px-4 py-2 border border-zinc-800">Since Inception</button>
-        <button id="p-ytd" onclick="changePeriod('ytd')" class="toggle-btn px-4 py-2 border border-zinc-800">YTD</button>
-        <button id="p-1y" onclick="changePeriod('1y')" class="toggle-btn px-4 py-2 border border-zinc-800">1Y</button>
-        <button id="p-ly" onclick="changePeriod('ly')" class="toggle-btn px-4 py-2 border border-zinc-800">Last Year</button>
-    </div>
+    <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="logo-container"><img src="logo.png" alt="Logo" class="logo-img"></div>
+            <span class="text-xl font-bold tracking-tight">Portfolio</span>
+        </div>
+        <nav class="space-y-2 flex-1">
+            <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl"><span>Dashboard</span></div>
+            <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl"><span>Holdings</span></div>
+        </nav>
+    </aside>
 
-    <div class="card p-6 mb-8">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="font-semibold text-zinc-300">Portfolio Growth</h3>
-            <div class="flex bg-black/40 p-1 rounded-xl">
-                <button id="btn-growth" onclick="updateChartType('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
-                <button id="btn-profit" onclick="updateChartType('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+        <div id="page-dashboard">
+            <header class="flex justify-between items-end mb-8">
+                <div>
+                    <p class="text-zinc-500 text-sm mb-1">Total Net Value</p>
+                    <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
+                </div>
+                <div class="text-right">
+                    <p id="date-label" class="text-zinc-500 text-sm">--/--/----</p>
+                </div>
+            </header>
+
+            <div class="flex gap-2 mb-8">
+                <button id="p-all" onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
+                <button id="p-ytd" onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
+                <button id="p-1y" onclick="updatePeriod('1y')" class="period-btn px-4 py-2">1Y</button>
+                <button id="p-ly" onclick="updatePeriod('ly')" class="period-btn px-4 py-2">Last Year</button>
+            </div>
+
+            <div class="card p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-semibold text-zinc-300">Portfolio Growth</h3>
+                    <div class="flex bg-black/40 p-1 rounded-xl">
+                        <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
+                        <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+                    </div>
+                </div>
+                <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p>
+                    <p id="stat-total-return" class="text-2xl font-bold">0.00%</p>
+                </div>
+                <div class="card p-6 border-l-4 border-rose-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p>
+                    <p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p>
+                </div>
+                <div class="card p-6 border-l-4 border-emerald-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
+                    <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR<span class="tooltip">?<span class="tooltiptext">Time-Weighted Return: Portfolio growth excluding deposit impacts.</span></span></p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio<span class="tooltip">?<span class="tooltiptext">Risk-adjusted return. Volatility vs Performance.</span></span></p>
+                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="card p-6 border-l-4 border-amber-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta<span class="tooltip">?<span class="tooltiptext">Sensitivity relative to the S&P 500.</span></span></p>
+                    <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
+                </div>
             </div>
         </div>
-        <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
-    </div>
-    
-    </div>
 
-<script>
-    // ... (Keep existing variables like PERF_CSV, HOLD_CSV, chartInstance, perfData) ...
-    let currentPeriod = 'all';
-    let currentChartType = 'growth';
+        <div id="page-holdings" class="hidden">
+            <header class="mb-10"><h1 class="text-4xl font-bold tracking-tight">Holdings</h1></header>
+            <div class="card overflow-x-auto">
+                <table class="w-full text-left min-w-[950px]">
+                    <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
+                        <tr>
+                            <th class="p-4">Company</th><th class="p-4 text-right">Shares</th><th class="p-4 text-right">Mkt Price</th><th class="p-4 text-right">GBP Value</th><th class="p-4 text-right">P/L (£)</th><th class="p-4 text-right">P/L (%)</th><th class="p-4 text-right">Allocation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-    // Helper: Parse MM/DD/YYYY from your CSV
-    function parseDate(dateStr) {
-        const parts = dateStr.split('/');
-        return new Date(parts[2], parts[0] - 1, parts[1]);
-    }
+    <script>
+        const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
+        const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
+        
+        let chartInstance, rawPerfData = [], headerRow = [], currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
 
-    function changePeriod(period) {
-        currentPeriod = period;
-        // Update button UI
-        ['all', 'ytd', '1y', 'ly'].forEach(p => {
-            document.getElementById(`p-${p}`).classList.toggle('active', p === period);
-        });
-        updateDashboard();
-    }
-
-    function updateChartType(type) {
-        currentChartType = type;
-        document.getElementById('btn-growth').classList.toggle('active', type === 'growth');
-        document.getElementById('btn-profit').classList.toggle('active', type === 'profit');
-        updateDashboard();
-    }
-
-    function updateDashboard() {
-        if (!perfData.length) return;
-
-        const latestDate = parseDate(perfData[perfData.length - 1][0]);
-        const latestYear = latestDate.getFullYear();
-
-        // Filter data based on period
-        const filteredData = perfData.filter(row => {
-            const d = parseDate(row[0]);
-            if (currentPeriod === 'ytd') return d.getFullYear() === latestYear;
-            if (currentPeriod === '1y') {
-                const oneYearAgo = new Date(latestDate);
-                oneYearAgo.setFullYear(latestDate.getFullYear() - 1);
-                return d >= oneYearAgo;
+        function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
+        function getCol(row, keys) {
+            const rKeys = Object.keys(row);
+            for (let k of keys) { 
+                const f = rKeys.find(rk => rk.toLowerCase().trim() === k.toLowerCase().trim());
+                if (f) return row[f];
             }
-            if (currentPeriod === 'ly') return d.getFullYear() === (latestYear - 1);
-            return true; // Since Inception
+            return null;
+        }
+
+        // Parse DD/MM/YYYY or MM/DD/YYYY based on your CSV
+        function parseDate(dStr) {
+            const p = dStr.split('/');
+            return new Date(p[2], p[0]-1, p[1]);
+        }
+
+        Papa.parse(PERF_CSV, {
+            download: true, header: false, skipEmptyLines: true,
+            complete: function(results) {
+                headerRow = results.data[0];
+                rawPerfData = results.data.slice(1).filter(r => r[0] && r[47]);
+                totalValLatest = cleanNum(rawPerfData[rawPerfData.length-1][47]);
+                initDashboard();
+            }
         });
 
-        if (filteredData.length === 0) return;
+        function showPage(pageId) {
+            document.getElementById('page-dashboard').classList.toggle('hidden', pageId !== 'dashboard');
+            document.getElementById('page-holdings').classList.toggle('hidden', pageId !== 'holdings');
+            document.getElementById('nav-dash').classList.toggle('active', pageId === 'dashboard');
+            document.getElementById('nav-holdings').classList.toggle('active', pageId === 'holdings');
+            if(pageId === 'holdings') renderHoldings();
+        }
 
-        // Calculate Metrics for the specific period
-        const latest = filteredData[filteredData.length - 1];
-        const start = filteredData[0];
-        
-        const netProfit = cleanNum(latest[51]) - cleanNum(start[51]);
-        const startValue = cleanNum(start[47]);
-        const endValue = cleanNum(latest[47]);
-        const deposits = cleanNum(latest[50]) - cleanNum(start[50]);
+        function updatePeriod(p) {
+            currentPeriod = p;
+            ['all', 'ytd', '1y', 'ly'].forEach(id => document.getElementById('p-'+id).classList.toggle('active', id === p));
+            initDashboard();
+        }
 
-        // UI Updates
-        document.getElementById('hero-val').innerText = '£' + endValue.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
-        
-        // Return Calculation for the period
-        const totalReturn = deposits !== 0 || startValue !== 0 ? (netProfit / (startValue + deposits)) * 100 : 0;
-        document.getElementById('stat-total-return').innerText = totalReturn.toFixed(2) + '%';
+        function updateChartMode(m) {
+            currentChartMode = m;
+            document.getElementById('btn-growth').classList.toggle('active', m === 'growth');
+            document.getElementById('btn-profit').classList.toggle('active', m === 'profit');
+            initDashboard();
+        }
 
-        // TWR, Sharpe, and Max Drawdown logic should now use 'filteredData'
-        calculateAdvancedMetrics(filteredData);
+        function initDashboard() {
+            if (!rawPerfData.length) return;
+            
+            const latestEntry = rawPerfData[rawPerfData.length - 1];
+            const latestDate = parseDate(latestEntry[0]);
+            const latestYear = latestDate.getFullYear();
 
-        // Render Chart
-        renderMainChart(filteredData);
-    }
+            const filtered = rawPerfData.filter(r => {
+                const d = parseDate(r[0]);
+                if (currentPeriod === 'ytd') return d.getFullYear() === latestYear;
+                if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDate.getFullYear() - 1);
+                if (currentPeriod === 'ly') return d.getFullYear() === latestYear - 1;
+                return true;
+            });
 
-    function renderMainChart(dataSubset) {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        const labels = dataSubset.map(r => r[0]);
-        const dataPoints = currentChartType === 'growth' 
-            ? dataSubset.map(r => cleanNum(r[47])) 
-            : dataSubset.map(r => cleanNum(r[51]));
+            const start = filtered[0], end = filtered[filtered.length - 1];
+            const periodProfit = cleanNum(end[51]) - cleanNum(start[51]);
+            const periodDeposits = cleanNum(end[50]) - cleanNum(start[50]);
+            const startVal = cleanNum(start[47]);
+            const endVal = cleanNum(end[47]);
 
-        if (chartInstance) chartInstance.destroy();
+            document.getElementById('hero-val').innerText = '£' + endVal.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('date-label').innerText = end[0];
+            document.getElementById('stat-profit').innerText = (periodProfit >= 0 ? '+' : '') + '£' + periodProfit.toLocaleString();
+            document.getElementById('stat-total-return').innerText = (startVal + periodDeposits !== 0 ? (periodProfit / (startVal + periodDeposits)) * 100 : 0).toFixed(2) + '%';
 
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: dataPoints,
-                    borderColor: currentChartType === 'growth' ? '#10b981' : '#3b82f6',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.2,
-                    fill: true,
-                    backgroundColor: 'rgba(16,185,129,0.05)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#52525b',
-                            maxRotation: 0,
-                            autoSkip: true,
-                            callback: function(value, index, values) {
-                                // X-axis label by Month
-                                const date = parseDate(this.getLabelForValue(value));
-                                return date.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+            calculateMetrics(filtered);
+            renderChart(filtered);
+        }
+
+        function calculateMetrics(data) {
+            let cumFactor = 1, dailyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+            for (let i = 1; i < data.length; i++) {
+                const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]);
+                const flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+                const denom = prevVal + flow;
+                if (denom > 0) {
+                    const r = (currVal / denom) - 1;
+                    cumFactor *= (1 + r);
+                    dailyRets.push(r);
+                }
+                if (currVal > peak) peak = currVal;
+                const dd = (currVal - peak) / peak;
+                if (dd < maxDD) maxDD = dd;
+            }
+            const years = Math.max((parseDate(data[data.length-1][0]) - parseDate(data[0][0])) / (31557600000), 0.1);
+            document.getElementById('stat-twr').innerText = ((Math.pow(cumFactor, 1/years) - 1) * 100).toFixed(2) + '%';
+            document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+            
+            const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+            const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
+            document.getElementById('stat-sharpe').innerText = sd !== 0 ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(r => r[0]),
+                    datasets: [{
+                        data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
+                        borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
+                        borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true,
+                        backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: {
+                                color: '#52525b', maxRotation: 0, autoSkip: true,
+                                callback: function(val, index) {
+                                    const d = parseDate(this.getLabelForValue(val));
+                                    return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+                                }
                             }
                         },
-                        grid: { display: false }
-                    },
-                    y: {
-                        position: 'right',
-                        grid: { color: 'rgba(255,255,255,0.03)' },
-                        ticks: { color: '#52525b', font: { size: 10 } }
+                        y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b', font: { size: 10 } } }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Wrap your existing calculation logic in this helper
-    function calculateAdvancedMetrics(data) {
-        // ... (Insert your existing loop for cumFactor, dailyReturns, maxDD, etc. here)
-        // Ensure it loops through 'data' (the subset) instead of 'perfData'
-    }
-</script>
+        function renderHoldings() {
+            Papa.parse(HOLD_CSV, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: function(results) {
+                    const tbody = document.getElementById('holdings-table-body');
+                    tbody.innerHTML = '';
+                    results.data.forEach(row => {
+                        const ticker = getCol(row, ['Ticker']), shares = cleanNum(getCol(row, ['Shares']));
+                        if (!ticker || shares === 0) return;
+                        const curVal = cleanNum(getCol(row, ['Current Value'])), profit = cleanNum(getCol(row, ['Total Unrealised P/L']));
+                        const symbol = ticker === 'WKL' ? '€' : (ticker === 'UL' ? '£' : '$');
+                        const weight = totalValLatest > 0 ? (curVal / totalValLatest) * 100 : 0;
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+                                <td class="p-4"><div class="font-bold text-white">${getCol(row,['Company'])}</div><div class="text-[10px] text-zinc-500 font-mono">${ticker}</div></td>
+                                <td class="p-4 text-right font-mono">${shares}</td>
+                                <td class="p-4 text-right">${symbol}${cleanNum(getCol(row,['Current Price'])).toFixed(2)}</td>
+                                <td class="p-4 text-right font-medium">£${curVal.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                                <td class="p-4 text-right font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${profit.toLocaleString()}</td>
+                                <td class="p-4 text-right font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${getCol(row,['% Return'])}</td>
+                                <td class="p-4 text-right"><div class="flex items-center justify-end gap-3"><span>${weight.toFixed(1)}%</span><div class="w-12 bg-zinc-800 h-1 rounded-full"><div class="bg-emerald-500 h-full" style="width:${weight}%"></div></div></div></td>
+                            </tr>`;
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
