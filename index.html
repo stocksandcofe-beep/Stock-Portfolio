@@ -104,11 +104,17 @@
             <header class="mb-10"><h1 class="text-4xl font-bold tracking-tight">Holdings</h1></header>
             <div class="card overflow-x-auto">
                 <table class="w-full text-left min-w-[950px]">
-                    <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
-                        <tr>
-                            <th class="p-4">Company</th><th class="p-4 text-right">Shares</th><th class="p-4 text-right">Mkt Price</th><th class="p-4 text-right">GBP Value</th><th class="p-4 text-right">P/L (£)</th><th class="p-4 text-right">P/L (%)</th><th class="p-4 text-right">Allocation</th>
-                        </tr>
-                    </thead>
+                   <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
+    <tr>
+        <th class="p-4">Company</th>
+        <th class="p-4 text-right">Shares</th>
+        <th class="p-4 text-right">Mkt Price</th>
+        <th class="p-4 text-right">GBP Value</th>
+        <th class="p-4 text-right">P/L (£)</th>
+        <th class="p-4 text-right">P/L (%)</th>
+        <th class="p-4 text-right">Allocation</th>
+    </tr>
+</thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
                 </table>
             </div>
@@ -282,32 +288,59 @@
     });
 }
 
-        function renderHoldings() {
-            Papa.parse(HOLD_CSV, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    const tbody = document.getElementById('holdings-table-body');
-                    tbody.innerHTML = '';
-                    results.data.forEach(row => {
-                        const ticker = getCol(row, ['Ticker']), shares = cleanNum(getCol(row, ['Shares']));
-                        if (!ticker || shares === 0) return;
-                        const curVal = cleanNum(getCol(row, ['Current Value'])), profit = cleanNum(getCol(row, ['Total Unrealised P/L']));
-                        const symbol = ticker === 'WKL' ? '€' : (ticker === 'UL' ? '£' : '$');
-                        const weight = totalValLatest > 0 ? (curVal / totalValLatest) * 100 : 0;
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                                <td class="p-4"><div class="font-bold text-white">${getCol(row,['Company'])}</div><div class="text-[10px] text-zinc-500 font-mono">${ticker}</div></td>
-                                <td class="p-4 text-right font-mono">${shares}</td>
-                                <td class="p-4 text-right">${symbol}${cleanNum(getCol(row,['Current Price'])).toFixed(2)}</td>
-                                <td class="p-4 text-right font-medium">£${curVal.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                                <td class="p-4 text-right font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${profit.toLocaleString()}</td>
-                                <td class="p-4 text-right font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${getCol(row,['% Return'])}</td>
-                                <td class="p-4 text-right"><div class="flex items-center justify-end gap-3"><span>${weight.toFixed(1)}%</span><div class="w-12 bg-zinc-800 h-1 rounded-full"><div class="bg-emerald-500 h-full" style="width:${weight}%"></div></div></div></td>
-                            </tr>`;
-                    });
-                }
+       function renderHoldings() {
+    Papa.parse(HOLD_CSV, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            const tbody = document.getElementById('holdings-table-body');
+            tbody.innerHTML = '';
+            
+            results.data.forEach(row => {
+                const ticker = getCol(row, ['Ticker']);
+                const shares = cleanNum(getCol(row, ['Shares']));
+                
+                if (!ticker || shares === 0) return;
+
+                const curVal = cleanNum(getCol(row, ['Current Value']));
+                const profit = cleanNum(getCol(row, ['Total Unrealised P/L']));
+                const returnPct = getCol(row, ['% Return']);
+                
+                let symbol = '$';
+                if (ticker === 'WKL') symbol = '€';
+                if (ticker === 'UL') symbol = '£';
+
+                // Calculate Allocation Percentage
+                const weight = totalValLatest > 0 ? (curVal / totalValLatest) * 100 : 0;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+                        <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
+                            <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+                        </td>
+                        
+                        <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
+                        <td class="p-4 text-right text-zinc-300">${symbol}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
+                        <td class="p-4 text-right font-medium text-white">£${curVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        
+                        <td class="p-4 text-right font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${profit >= 0 ? '+' : ''}£${profit.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                        </td>
+                        
+                        <td class="p-4 text-right font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${returnPct}
+                        </td>
+
+                        <td class="p-4 text-right font-medium text-zinc-300">
+                            ${weight.toFixed(1)}%
+                        </td>
+                    </tr>`;
             });
         }
+    });
+}
     </script>
 </body>
 </html>
