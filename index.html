@@ -287,37 +287,33 @@
         complete: function(results) {
             const tbody = document.getElementById('holdings-table-body');
             tbody.innerHTML = '';
+            
             results.data.forEach(row => {
                 const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
                 if (shares <= 0) return;
 
                 const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
-                // Get the current exchange rate from the performance file data
+                // Performance file provides rates like 0.86 (USD to GBP)
                 const rate = (currency === 'GBP') ? 1 : (currency === 'EUR' ? rates.EUR : rates.USD);
                 const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
                 
-                // 1. Current Market Value
+                // 1. Current Market Value in GBP
                 const mktPrice = cleanNum(getCol(row, ['Price']));
-                const currentValLocal = shares * mktPrice;
-                const currentValGBP = currentValLocal * rate; // Performance file rates are USD/GBP (e.g. 0.86)
+                const currentValGBP = (shares * mktPrice) * rate; 
 
-                // 2. Cost Basis
-                const totalCostLocal = cleanNum(getCol(row, ['Total Cost']));
-                // We assume Total Cost in CSV is in the local currency (USD for GOOGL)
-                const costGBP = (currency === 'GBP') ? totalCostLocal : totalCostLocal * rate; 
+                // 2. Cost Basis (Assumed to be in GBP from CSV)
+                const costGBP = cleanNum(getCol(row, ['Total Cost']));
 
                 // 3. P/L Calculations
-                // If your broker shows £1,378.24, we calculate the total gain in GBP
                 const gbpProfit = currentValGBP - costGBP;
                 const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
-                
                 const weight = totalValAtLatestDate > 0 ? (currentValGBP / totalValAtLatestDate) * 100 : 0;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                         <td class="p-4">
-                            <div class="font-bold text-white">${getCol(row, ['Company', 'Name']) || 'Unknown'}</div>
-                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol']) || '---'}</div>
+                            <div class="font-bold text-white">${getCol(row, ['Company', 'Name'])}</div>
+                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol'])}</div>
                         </td>
                         <td class="p-4 text-right font-mono">${shares}</td>
                         <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
