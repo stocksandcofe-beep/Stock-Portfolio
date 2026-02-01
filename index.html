@@ -18,6 +18,23 @@
         .toggle-btn.active { background: #10b981; color: #000; }
         .hidden { display: none; }
 
+        /* Logo styling */
+        .logo-container {
+            width: 32px;
+            height: 32px;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #1e2327;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
         /* Tooltip Styles */
         .tooltip {
             position: relative;
@@ -64,8 +81,10 @@
 <body class="flex h-screen overflow-hidden">
 
     <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
-        <div class="flex items-center gap-2 mb-10">
-            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-black font-bold italic">P</div>
+        <div class="flex items-center gap-3 mb-10">
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo" class="logo-img">
+            </div>
             <span class="text-xl font-bold tracking-tight">Portfolio</span>
         </div>
         <nav class="space-y-2 flex-1">
@@ -151,6 +170,7 @@
     </main>
 
     <script>
+        // ... (Same PapaParse and Chart logic from previous version) ...
         const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
         const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
         
