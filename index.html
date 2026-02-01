@@ -223,38 +223,64 @@
         }
 
         function renderChart(data) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(r => r[0]),
-                    datasets: [{
-                        data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
-                        borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                        borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true,
-                        backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { 
-                            grid: { display: false },
-                            ticks: {
-                                color: '#52525b', maxRotation: 0, autoSkip: true,
-                                callback: function(val, index) {
-                                    const d = parseDate(this.getLabelForValue(val));
-                                    return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
-                                }
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(r => r[0]),
+            datasets: [{
+                data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
+                borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
+                borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true,
+                backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                // Tooltip also shows "k" format
+                                label += '£' + (context.parsed.y / 1000).toFixed(1) + 'k';
                             }
-                        },
-                        y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b', font: { size: 10 } } }
+                            return label;
+                        }
                     }
                 }
-            });
+            },
+            scales: {
+                x: { 
+                    grid: { display: false },
+                    ticks: {
+                        color: '#52525b', maxRotation: 0, autoSkip: true,
+                        callback: function(val, index) {
+                            const d = parseDate(this.getLabelForValue(val));
+                            return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+                        }
+                    }
+                },
+                y: { 
+                    position: 'right', 
+                    grid: { color: 'rgba(255,255,255,0.03)' }, 
+                    ticks: { 
+                        color: '#52525b', 
+                        font: { size: 10 },
+                        // NEW: Formats 18000 to 18k
+                        callback: function(value) {
+                            return '£' + (value / 1000).toFixed(0) + 'k';
+                        }
+                    } 
+                }
+            }
         }
+    });
+}
 
         function renderHoldings() {
             Papa.parse(HOLD_CSV, {
