@@ -88,7 +88,7 @@
             <span class="text-xl font-bold tracking-tight">Portfolio</span>
         </div>
         <nav class="space-y-2 flex-1">
-            <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl"><span>Portfolio Performance</span></div>
+            <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl"><span>Dashboard</span></div>
             <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl"><span>Holdings</span></div>
         </nav>
     </aside>
@@ -281,8 +281,7 @@
             renderChart(type);
         }
 
-        function renderHoldings() {
-            function renderHoldings() {
+       function renderHoldings() {
     Papa.parse(HOLD_CSV, {
         download: true, header: true, skipEmptyLines: true,
         complete: function(results) {
