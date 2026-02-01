@@ -281,50 +281,44 @@
             renderChart(type);
         }
 
-     function renderHoldings() {
+   function renderHoldings() {
     Papa.parse(HOLD_CSV, {
-        download: true, header: true, skipEmptyLines: true,
+        download: true,
+        header: true,
+        skipEmptyLines: true,
         complete: function(results) {
             const tbody = document.getElementById('holdings-table-body');
             tbody.innerHTML = '';
             
             results.data.forEach(row => {
-                const ticker = getCol(row, ['Ticker', 'Symbol']);
-                const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
+                const ticker = getCol(row, ['Ticker']);
+                const shares = cleanNum(getCol(row, ['Shares']));
+                
+                // Skip rows with no ticker or zero shares
                 if (!ticker || shares === 0) return;
 
-                const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
+                // 1. Pull values directly from the new CSV columns
+                const currentPrice = cleanNum(getCol(row, ['Current Price']));
+                const currentValGBP = cleanNum(getCol(row, ['Current Value']));
+                const gbpProfit = cleanNum(getCol(row, ['Total Unrealised P/L']));
+                const returnPct = cleanNum(getCol(row, ['% Return']));
                 
-                // FIX: Swapping the rates because your CSV has them labeled inversely
-                // USD is using the 'EUR Rate' column (0.73)
-                // EUR is using the 'USD Rate' column (0.86)
-                let rate = 1;
-                if (currency === 'USD') rate = rates.EUR; 
-                if (currency === 'EUR') rate = rates.USD;
-                
-                const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
-                
-                // Current Value in GBP
-                const mktPrice = cleanNum(getCol(row, ['Price']));
-                const currentValGBP = (shares * mktPrice) * rate;
+                // 2. Determine the currency symbol for the local Market Price
+                let symbol = '$';
+                if (ticker === 'WKL') symbol = '€';
+                if (ticker === 'UL') symbol = '£';
 
-                // Cost Basis in GBP
-                const costGBP = cleanNum(getCol(row, ['Total Cost']));
-
-                // Profit/Loss
-                const gbpProfit = currentValGBP - costGBP;
-                const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
-                
+                // 3. Calculate portfolio weight based on the total value from Performance.csv
                 const weight = totalValAtLatestDate > 0 ? (currentValGBP / totalValAtLatestDate) * 100 : 0;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                         <td class="p-4">
-                            <div class="font-bold text-white">${getCol(row, ['Company', 'Name'])}</div>
+                            <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
                             <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
                         </td>
                         <td class="p-4 text-right font-mono">${shares}</td>
-                        <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
+                        <td class="p-4 text-right">${symbol}${currentPrice.toFixed(2)}</td>
                         <td class="p-4 text-right font-medium">£${currentValGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                         <td class="p-4 text-right font-semibold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                             ${gbpProfit >= 0 ? '+' : ''}£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}
