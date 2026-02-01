@@ -282,39 +282,66 @@
         }
 
         function renderHoldings() {
-            Papa.parse(HOLD_CSV, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    const tbody = document.getElementById('holdings-table-body');
-                    tbody.innerHTML = '';
-                    results.data.forEach(row => {
-                        const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
-                        if (shares <= 0) return;
-                        const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
-                        const rate = (currency === 'GBP') ? 1 : (currency === 'EUR' ? rates.EUR : rates.USD);
-                        const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
-                        const mktPrice = cleanNum(getCol(row, ['Price']));
-                        const currentValGBP = (shares * mktPrice) / rate;
-                        const totalCostLocal = cleanNum(getCol(row, ['Total Cost']));
-                        const costGBP = (currency === 'GBP') ? totalCostLocal : totalCostLocal / rate;
-                        const gbpProfit = currentValGBP - costGBP;
-                        const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
-                        const weight = totalValAtLatestDate > 0 ? (currentValGBP / totalValAtLatestDate) * 100 : 0;
+            function renderHoldings() {
+    Papa.parse(HOLD_CSV, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+            const tbody = document.getElementById('holdings-table-body');
+            tbody.innerHTML = '';
+            results.data.forEach(row => {
+                const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
+                if (shares <= 0) return;
 
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                                <td class="p-4"><div class="font-bold text-white">${getCol(row, ['Company', 'Name']) || 'Unknown'}</div><div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol']) || '---'}</div></td>
-                                <td class="p-4 text-right font-mono">${shares}</td>
-                                <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
-                                <td class="p-4 text-right font-medium">£${currentValGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                <td class="p-4 text-right font-semibold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                <td class="p-4 text-right font-bold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${returnPct.toFixed(2)}%</td>
-                                <td class="p-4 text-right"><div class="flex items-center justify-end gap-3"><span>${weight.toFixed(1)}%</span><div class="w-12 bg-zinc-800 h-1 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${weight}%"></div></div></div></td>
-                            </tr>`;
-                    });
-                }
+                const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
+                // Get the current exchange rate from the performance file data
+                const rate = (currency === 'GBP') ? 1 : (currency === 'EUR' ? rates.EUR : rates.USD);
+                const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
+                
+                // 1. Current Market Value
+                const mktPrice = cleanNum(getCol(row, ['Price']));
+                const currentValLocal = shares * mktPrice;
+                const currentValGBP = currentValLocal * rate; // Performance file rates are USD/GBP (e.g. 0.86)
+
+                // 2. Cost Basis
+                const totalCostLocal = cleanNum(getCol(row, ['Total Cost']));
+                // We assume Total Cost in CSV is in the local currency (USD for GOOGL)
+                const costGBP = (currency === 'GBP') ? totalCostLocal : totalCostLocal * rate; 
+
+                // 3. P/L Calculations
+                // If your broker shows £1,378.24, we calculate the total gain in GBP
+                const gbpProfit = currentValGBP - costGBP;
+                const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
+                
+                const weight = totalValAtLatestDate > 0 ? (currentValGBP / totalValAtLatestDate) * 100 : 0;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+                        <td class="p-4">
+                            <div class="font-bold text-white">${getCol(row, ['Company', 'Name']) || 'Unknown'}</div>
+                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol']) || '---'}</div>
+                        </td>
+                        <td class="p-4 text-right font-mono">${shares}</td>
+                        <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
+                        <td class="p-4 text-right font-medium">£${currentValGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 text-right font-semibold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${gbpProfit >= 0 ? '+' : ''}£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                        </td>
+                        <td class="p-4 text-right font-bold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(2)}%
+                        </td>
+                        <td class="p-4 text-right">
+                            <div class="flex items-center justify-end gap-3">
+                                <span>${weight.toFixed(1)}%</span>
+                                <div class="w-12 bg-zinc-800 h-1 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full" style="width: ${weight}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
             });
         }
+    });
+}
     </script>
 </body>
 </html>
