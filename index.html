@@ -54,13 +54,13 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
                 <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR (Annualized)</p><p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-rose-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p></div>
+                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR (Annualized)</p><p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p></div>
                 <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p><p id="stat-sharpe" class="text-2xl font-bold">0.00</p></div>
                 <div class="card p-6 border-l-4 border-amber-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta (vs S&P 500)</p><p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p></div>
             </div>
@@ -132,41 +132,34 @@
 
             const values = perfData.map(r => cleanNum(r[47]));
             const deposits = perfData.map(r => cleanNum(r[50]));
-            const spIndex = headerRow.findIndex(h => h.trim().toUpperCase() === 'S&P500');
+            const spIndex = headerRow.findIndex(h => h.trim().toUpperCase() === 'S&P500' || h.trim().toUpperCase() === 'S&P 500');
             const marketPrices = spIndex !== -1 ? perfData.map(r => cleanNum(r[spIndex])) : [];
             
             let cumFactor = 1, dailyReturns = [], marketReturns = [], peak = values[0], maxDD = 0;
 
             for (let i = 1; i < perfData.length; i++) {
-                // Portfolio Returns
                 const denom = values[i-1] + (deposits[i] - deposits[i-1]);
                 if (denom > 0) {
                     const r = (values[i] / denom) - 1;
                     cumFactor *= (1 + r);
                     dailyReturns.push(r);
-                    
-                    // Market Returns (S&P 500)
                     if (marketPrices.length > 0 && marketPrices[i-1] !== 0) {
                         marketReturns.push((marketPrices[i] / marketPrices[i-1]) - 1);
                     }
                 }
-                // Max Drawdown
                 if (values[i] > peak) peak = values[i];
                 const dd = (values[i] - peak) / peak;
                 if (dd < maxDD) maxDD = dd;
             }
 
-            // TWR Annualized
             const years = (new Date(latest[0]) - new Date(perfData[0][0])) / (1000*60*60*24*365.25) || 1;
             document.getElementById('stat-twr').innerText = ((Math.pow(cumFactor, 1 / years) - 1) * 100).toFixed(2) + '%';
             document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
 
-            // Sharpe Ratio
             const meanRet = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
             const stdDev = Math.sqrt(dailyReturns.map(x => Math.pow(x - meanRet, 2)).reduce((a, b) => a + b, 0) / dailyReturns.length);
             document.getElementById('stat-sharpe').innerText = (stdDev !== 0 ? ((meanRet * 252) - 0.04) / (stdDev * Math.sqrt(252)) : 0).toFixed(2);
 
-            // BETA Calculation (Covariance / Variance)
             if (marketReturns.length > 0) {
                 const meanM = marketReturns.reduce((a, b) => a + b, 0) / marketReturns.length;
                 let num = 0, den = 0;
@@ -176,7 +169,6 @@
                 }
                 document.getElementById('stat-beta').innerText = (den !== 0 ? num / den : 0).toFixed(2);
             }
-
             renderChart('growth');
         }
 
