@@ -54,15 +54,33 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Deposits</p><p id="stat-deposits" class="text-2xl font-bold">£0.00</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Dividends & Fees</p><p id="stat-fees" class="text-2xl font-bold">£0.00</p></div>
+                <div class="card p-6 border-l-4 border-emerald-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
+                    <p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p>
+                    <p id="stat-total-return" class="text-2xl font-bold">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR (Annualized)</p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Price Return</p><p id="stat-price-return" class="text-2xl font-bold">£0.00</p></div>
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Income Return</p><p id="stat-income-return" class="text-2xl font-bold">£0.00</p></div>
-                <div class="card p-6 border-l-4 border-blue-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR (Annualized)</p><p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p></div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Maximum Drawdown</p>
+                    <p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p>
+                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta</p>
+                    <p id="stat-beta" class="text-2xl font-bold">0.00</p>
+                </div>
             </div>
         </div>
 
@@ -98,7 +116,6 @@
             return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
         }
 
-        // Logic to find column names regardless of spaces or case
         function getCol(row, keys) {
             const rowKeys = Object.keys(row);
             for (let key of keys) {
@@ -113,7 +130,6 @@
             complete: function(results) {
                 perfData = results.data.slice(1).filter(r => r[0] && r[47]);
                 const latest = perfData[perfData.length - 1];
-                // Column 43 = USD rate, Column 45 = EUR rate
                 rates.USD = cleanNum(latest[43]); 
                 rates.EUR = cleanNum(latest[45]);
                 totalValAtLatestDate = cleanNum(latest[47]);
@@ -130,28 +146,69 @@
         function initDashboard() {
             const latest = perfData[perfData.length - 1];
             const netProfit = cleanNum(latest[51]);
-            const incomeReturn = cleanNum(latest[48]);
-            
+            const cumulativeDeposits = cleanNum(latest[50]);
+
+            // Simple Metrics
             document.getElementById('hero-val').innerText = '£' + totalValAtLatestDate.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = latest[0];
             document.getElementById('stat-profit').innerText = '£' + netProfit.toLocaleString();
-            document.getElementById('stat-deposits').innerText = '£' + cleanNum(latest[50]).toLocaleString();
-            document.getElementById('stat-fees').innerText = '£' + incomeReturn.toLocaleString();
-            document.getElementById('stat-price-return').innerText = '£' + (netProfit - incomeReturn).toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('stat-income-return').innerText = '£' + incomeReturn.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('stat-total-return').innerText = (cumulativeDeposits !== 0 ? (netProfit / cumulativeDeposits) * 100 : 0).toFixed(2) + '%';
+
+            // ADVANCED CALCULATIONS
+            const values = perfData.map(r => cleanNum(r[47]));
+            const deposits = perfData.map(r => cleanNum(r[50]));
             
-            // TWR Calculation
+            // 1. TWR and Daily Returns for Sharpe
             let cumFactor = 1;
-            const d0 = cleanNum(perfData[0][50]);
-            if (d0 > 0) cumFactor *= (cleanNum(perfData[0][47]) / d0);
-            for (let i = 1; i < perfData.length; i++) {
-                const v = cleanNum(perfData[i][47]), d = cleanNum(perfData[i][50]);
-                const v_p = cleanNum(perfData[i-1][47]), d_p = cleanNum(perfData[i-1][50]);
-                const denom = v_p + (d - d_p);
-                if (denom > 0) cumFactor *= (v / denom);
+            let dailyReturns = [];
+            let peak = values[0];
+            let maxDD = 0;
+
+            if (deposits[0] > 0) {
+                let firstReturn = (values[0] / deposits[0]) - 1;
+                cumFactor *= (1 + firstReturn);
+                dailyReturns.push(firstReturn);
             }
-            const days = Math.ceil(Math.abs(new Date(perfData[perfData.length-1][0]) - new Date(perfData[0][0])) / 86400000) || 1;
-            document.getElementById('stat-twr').innerText = ((Math.pow(cumFactor, 365 / days) - 1) * 100).toFixed(2) + '%';
+
+            for (let i = 1; i < perfData.length; i++) {
+                const v = values[i];
+                const vPrev = values[i-1];
+                const cashFlow = deposits[i] - deposits[i-1];
+                const denom = vPrev + cashFlow;
+                
+                if (denom > 0) {
+                    const r = (v / denom) - 1;
+                    cumFactor *= (1 + r);
+                    dailyReturns.push(r);
+                }
+
+                // Max Drawdown tracking
+                if (v > peak) peak = v;
+                const dd = (v - peak) / peak;
+                if (dd < maxDD) maxDD = dd;
+            }
+
+            // Time-Weighted Return (Annualized)
+            const startDate = new Date(perfData[0][0]);
+            const endDate = new Date(perfData[perfData.length - 1][0]);
+            const years = (endDate - startDate) / (1000 * 60 * 60 * 24 * 365.25) || 1;
+            const annTWR = (Math.pow(cumFactor, 1 / years) - 1) * 100;
+            document.getElementById('stat-twr').innerText = annTWR.toFixed(2) + '%';
+
+            // Maximum Drawdown
+            document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+
+            // Sharpe Ratio (Assuming 4% Risk Free Rate)
+            const meanRet = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
+            const stdDev = Math.sqrt(dailyReturns.map(x => Math.pow(x - meanRet, 2)).reduce((a, b) => a + b, 0) / dailyReturns.length);
+            const annSharpe = (stdDev !== 0) ? ((meanRet * 252) - 0.04) / (stdDev * Math.sqrt(252)) : 0;
+            document.getElementById('stat-sharpe').innerText = annSharpe.toFixed(2);
+
+            // Beta (Estimated sensitivity based on portfolio volatility relative to 15% market volatility)
+            const portVol = stdDev * Math.sqrt(252);
+            const estBeta = (portVol / 0.15) * 0.85; // Assumes 0.85 correlation to market
+            document.getElementById('stat-beta').innerText = estBeta.toFixed(2);
+
             renderChart('growth');
         }
 
@@ -181,29 +238,17 @@
                 complete: function(results) {
                     const tbody = document.getElementById('holdings-table-body');
                     tbody.innerHTML = '';
-                    
                     results.data.forEach(row => {
                         const shares = cleanNum(getCol(row, ['Shares', 'Qty']));
                         if (shares <= 0) return;
-
                         const currency = (getCol(row, ['Currency']) || 'USD').toUpperCase();
                         const rate = (currency === 'GBP') ? 1 : (currency === 'EUR' ? rates.EUR : rates.USD);
                         const symbol = (currency === 'GBP') ? '£' : (currency === 'EUR' ? '€' : '$');
                         
-                        // CURRENT VALUE CALCULATION
                         const mktPrice = cleanNum(getCol(row, ['Price']));
                         const currentValGBP = (shares * mktPrice) / rate;
-
-                        // COST CALCULATION (Using your Total Cost column)
-                        // If GOOGL total cost is $1363.50, we need the GBP cost at purchase to get 129%
-                        // To keep it simple and accurate to your broker, we use the math you provided:
-                        // Profit = Current £ Value - GBP Cost Basis
-                        
                         const totalCostLocal = cleanNum(getCol(row, ['Total Cost']));
-                        
-                        // IMPORTANT: For GOOGL to hit 129%, your £1393.97 is being compared to a cost of ~£608.
-                        // If your CSV "Total Cost" is $1363.50, we calculate GBP cost:
-                        const costGBP = totalCostLocal / rate;
+                        const costGBP = (currency === 'GBP') ? totalCostLocal : totalCostLocal / rate;
 
                         const gbpProfit = currentValGBP - costGBP;
                         const returnPct = costGBP !== 0 ? (gbpProfit / costGBP) * 100 : 0;
@@ -211,20 +256,13 @@
 
                         tbody.innerHTML += `
                             <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                                <td class="p-4">
-                                    <div class="font-bold text-white">${getCol(row, ['Company', 'Name']) || 'Unknown'}</div>
-                                    <div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol']) || '---'}</div>
-                                </td>
+                                <td class="p-4"><div class="font-bold text-white">${getCol(row, ['Company', 'Name']) || 'Unknown'}</div><div class="text-[10px] text-zinc-500 font-mono uppercase">${getCol(row, ['Ticker', 'Symbol']) || '---'}</div></td>
                                 <td class="p-4 text-right font-mono">${shares}</td>
                                 <td class="p-4 text-right">${symbol}${mktPrice.toFixed(2)}</td>
-                                <td class="p-4 text-right font-medium text-zinc-300">£${currentValGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                <td class="p-4 text-right font-semibold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                    £${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}
-                                </td>
-                                <td class="p-4 text-right font-bold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                    ${returnPct.toFixed(2)}%
-                                </td>
-                                <td class="p-4 text-right"><div class="flex items-center justify-end gap-3"><span>${weight.toFixed(1)}%</span><div class="w-12 bg-zinc-800 h-1 rounded-full"><div class="bg-emerald-500 h-full" style="width: ${weight}%"></div></div></div></td>
+                                <td class="p-4 text-right font-medium">£${currentValGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-semibold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${gbpProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                <td class="p-4 text-right font-bold ${gbpProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${returnPct.toFixed(2)}%</td>
+                                <td class="p-4 text-right"><div class="flex items-center justify-end gap-3"><span>${weight.toFixed(1)}%</span><div class="w-12 bg-zinc-800 h-1 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${weight}%"></div></div></div></td>
                             </tr>`;
                     });
                 }
