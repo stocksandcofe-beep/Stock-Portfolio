@@ -14,15 +14,16 @@
         .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
         .nav-item { cursor: pointer; transition: all 0.2s; color: #71717a; }
         .nav-item.active { background: #10b9811a; color: #10b981; }
-        .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 700; color: #71717a; }
-        .toggle-btn.active { background: #10b981; color: #000; }
         .period-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e2327; color: #a1a1aa; border: 1px solid #2B2F36; }
         .period-btn.active { border-color: #10b981; color: #10b981; background: #10b9810d; }
+        .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 700; color: #71717a; }
+        .toggle-btn.active { background: #10b981; color: #000; }
         .hidden { display: none; }
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
         th.sortable:hover { color: white; cursor: pointer; }
 
+        /* Tooltip Logic */
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; font-style: normal; margin-left: 6px; }
         .tooltip .tooltiptext {
             visibility: hidden; width: 220px; background-color: #1e2327; color: #fff; text-align: center;
@@ -30,12 +31,15 @@
             font-size: 11px; line-height: 1.4; border: 1px solid #2B2F36; pointer-events: none; text-transform: none; font-weight: normal;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
+        /* Dashboard tooltips pop UP */
         .dash-tooltip .tooltiptext { bottom: 125%; left: 50%; margin-left: -110px; }
+        /* Holdings tooltips pop DOWN to avoid clipping */
         .hold-tooltip .tooltiptext { top: 125%; right: 0; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
 
-        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: opacity 0.2s; }
-        .refresh-btn:hover { opacity: 0.9; }
+        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+        .refresh-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .refresh-btn:active { transform: translateY(0); }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -58,9 +62,49 @@
                     <p class="text-zinc-500 text-sm mb-1">Total Net Value</p>
                     <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
                 </div>
-                <div class="text-right"><p id="date-label" class="text-zinc-500 text-sm">--/--/----</p></div>
+                <div class="text-right">
+                    <p id="date-label" class="text-zinc-500 text-sm">--/--/----</p>
+                </div>
             </header>
-            <div class="card p-6 mb-8 h-[350px]"><canvas id="mainChart"></canvas></div>
+
+            <div class="flex gap-2 mb-8">
+                <button id="p-all" onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
+                <button id="p-ytd" onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
+                <button id="p-1y" onclick="updatePeriod('1y')" class="period-btn px-4 py-2">1Y</button>
+                <button id="p-ly" onclick="updatePeriod('ly')" class="period-btn px-4 py-2">Last Year</button>
+            </div>
+
+            <div class="card p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-semibold text-zinc-300">Portfolio Growth</h3>
+                    <div class="flex bg-black/40 p-1 rounded-xl">
+                        <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
+                        <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+                    </div>
+                </div>
+                <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-rose-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Max Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR <span class="tooltip dash-tooltip">? <span class="tooltiptext">Time-Weighted Return: Measures compound growth by removing the impact of cash inflows/outflows.</span></span></p>
+                    <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
+                </div>
+                <div class="card p-6">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio <span class="tooltip dash-tooltip">? <span class="tooltiptext">Risk-adjusted return. Higher is better; it shows if your returns are due to skill vs excess risk.</span></span></p>
+                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="card p-6 border-l-4 border-amber-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip dash-tooltip">? <span class="tooltiptext">Volatility relative to S&P 500. 1.0 means it moves with the market.</span></span></p>
+                    <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
+                </div>
+            </div>
         </div>
 
         <div id="page-holdings" class="hidden">
@@ -78,8 +122,12 @@
                             <th class="p-4 text-right text-emerald-400 font-bold">Live Price 🟢</th>
                             <th class="p-4 text-right">Market Price ↕</th>
                             <th class="p-4 text-right">£ Value ↕</th>
-                            <th class="p-4 text-right">£ P/L ↕</th>
-                            <th class="p-4 text-right">% P/L ↕</th>
+                            <th class="p-4 text-right">
+                                £ P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Live Unrealised P/L. Includes both stock price gain and Currency FX impact.</span></span> ↕
+                            </th>
+                            <th class="p-4 text-right">
+                                % P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Total GBP return percentage (Stock % + FX %).</span></span> ↕
+                            </th>
                             <th class="p-4 text-right">Allocation ↕</th>
                         </tr>
                     </thead>
@@ -108,6 +156,7 @@
         }
         function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
 
+        // Initial Load
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
@@ -140,7 +189,7 @@
             const btn = document.querySelector('.refresh-btn');
             btn.innerText = 'Refreshing...';
             fetchLivePrices(false);
-            setTimeout(() => { btn.innerText = 'Refresh Live Prices'; }, 1000);
+            setTimeout(() => { btn.innerText = 'Refresh Live Prices'; }, 800);
         }
 
         function showPage(pageId) {
@@ -153,20 +202,58 @@
 
         function updatePeriod(p) {
             currentPeriod = p;
+            ['all', 'ytd', '1y', 'ly'].forEach(id => document.getElementById('p-'+id).classList.toggle('active', id === p));
             initDashboard();
         }
 
         function updateChartMode(m) {
             currentChartMode = m;
+            document.getElementById('btn-growth').classList.toggle('active', m === 'growth');
+            document.getElementById('btn-profit').classList.toggle('active', m === 'profit');
             initDashboard();
         }
 
         function initDashboard() {
             if (!rawPerfData.length) return;
-            const end = rawPerfData[rawPerfData.length - 1];
+            const latestDate = parseDate(rawPerfData[rawPerfData.length - 1][0]);
+            const filtered = rawPerfData.filter(r => {
+                const d = parseDate(r[0]);
+                if (currentPeriod === 'ytd') return d.getFullYear() === latestDate.getFullYear();
+                if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDate.getFullYear() - 1);
+                if (currentPeriod === 'ly') return d.getFullYear() === latestDate.getFullYear() - 1;
+                return true;
+            });
+            const end = filtered[filtered.length - 1];
             document.getElementById('hero-val').innerText = '£' + cleanNum(end[47]).toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = end[0];
-            renderChart(rawPerfData);
+            calculateMetrics(filtered);
+            renderChart(filtered);
+        }
+
+        function calculateMetrics(data) {
+            let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+            for (let i = 1; i < data.length; i++) {
+                const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+                const denom = prevVal + flow;
+                if (denom > 0) { const r = (currVal / denom) - 1; cumFactor *= (1 + r); dailyRets.push(r); }
+                const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
+                if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+                if (currVal > peak) peak = currVal;
+                const dd = (currVal - peak) / peak;
+                if (dd < maxDD) maxDD = dd;
+            }
+            const years = Math.max((parseDate(data[data.length-1][0]) - parseDate(data[0][0])) / (31557600000), 0.1);
+            document.getElementById('stat-twr').innerText = ((Math.pow(cumFactor, 1/years) - 1) * 100).toFixed(2) + '%';
+            document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+            if(dailyRets.length > 1) {
+                const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+                const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
+                document.getElementById('stat-sharpe').innerText = sd !== 0 ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+                const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
+                let num = 0, den = 0;
+                for(let i=0; i<dailyRets.length; i++) { num += (dailyRets[i]-mean)*(spyRets[i]-mMean); den += Math.pow(spyRets[i]-mMean, 2); }
+                document.getElementById('stat-beta').innerText = den !== 0 ? (num/den).toFixed(2) : "0.00";
+            }
         }
 
         function renderChart(data) {
@@ -178,10 +265,19 @@
                     labels: data.map(r => r[0]),
                     datasets: [{
                         data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
-                        borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true
+                        borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
+                        borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true,
+                        backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#52525b', maxRotation: 0, autoSkip: true }, grid: { display: false } },
+                        y: { position: 'right', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b' } }
+                    }
+                }
             });
         }
 
@@ -216,34 +312,18 @@
                 const histPriceLocal = cleanNum(getCol(row, ['Current Price']));
                 
                 const liveData = livePriceMap[ticker];
-                
-                // 1. Current Price to use
                 const activePriceLocal = liveData ? liveData.price : histPriceLocal;
                 const activeRate = liveData ? liveData.rate : 1.0;
                 
-                // 2. Percent Return Calculation (Purely Price vs Price)
-                // This ignores FX to give you the "Stock Performance"
-                let percReturn = ((activePriceLocal / bepLocal) - 1) * 100;
+                // COST: Using static CSV to lock in original GBP cost
+                const staticValueGBP = cleanNum(getCol(row, ['Current Value']));
+                const staticPLGBP = cleanNum(getCol(row, ['Total Unrealised P/L']));
+                const costGBP = staticValueGBP - staticPLGBP; 
                 
-                // 3. Value Calculation (GBP)
-                let curValueGBP = (shares * activePriceLocal) * activeRate;
-                
-                // 4. P/L Calculation (GBP)
-                // We use your STATIC "Current Value" and "Total Unrealised P/L" 
-                // to work backward to your GBP Cost if Live data isn't perfect,
-                // OR calculate fresh:
-                let staticValueGBP = cleanNum(getCol(row, ['Current Value']));
-                let staticPLGBP = cleanNum(getCol(row, ['Total Unrealised P/L']));
-                let costGBP = staticValueGBP - staticPLGBP;
-                
-                let profitGBP = curValueGBP - costGBP;
-                
-                // Override with Static data if Live isn't available to keep it consistent
-                if (!liveData) {
-                    percReturn = cleanNum(getCol(row, ['% Return']).replace('%',''));
-                    profitGBP = staticPLGBP;
-                    curValueGBP = staticValueGBP;
-                }
+                // LIVE VALUE & P/L (Includes FX)
+                const curValueGBP = (shares * activePriceLocal) * activeRate;
+                const profitGBP = curValueGBP - costGBP;
+                const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
 
                 const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
                 let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
@@ -256,9 +336,7 @@
                         </td>
                         <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
                         <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
-                        <td class="p-4 text-right font-bold text-emerald-400">
-                            ${liveData ? sym + activePriceLocal.toFixed(2) : '--'}
-                        </td>
+                        <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
                         <td class="p-4 text-right text-zinc-300">${sym}${histPriceLocal.toFixed(2)}</td>
                         <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                         <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
