@@ -116,8 +116,8 @@
                             <th class="p-4 text-right text-emerald-400 font-bold">Live Price 🟢</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Total live unrealised profit or loss in GBP.</span></span> ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Total return percentage (Stock movement + FX impact).</span></span> ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                         </tr>
                     </thead>
@@ -250,7 +250,10 @@
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(r => r[0]),
+                    labels: data.map(r => {
+                        const d = parseDate(r[0]);
+                        return d.toLocaleString('default', { month: 'short' });
+                    }),
                     datasets: [{
                         data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
                         borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
@@ -258,7 +261,33 @@
                         backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            position: 'right',
+                            ticks: {
+                                color: '#71717a',
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return '£' + (value / 1000).toFixed(0) + 'k';
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.03)' }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#71717a',
+                                font: { size: 10 },
+                                autoSkip: true,
+                                maxTicksLimit: 12
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
             });
         }
 
