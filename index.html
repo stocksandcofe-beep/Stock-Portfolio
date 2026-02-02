@@ -14,10 +14,10 @@
         .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
         .nav-item { cursor: pointer; transition: all 0.2s; color: #71717a; }
         .nav-item.active { background: #10b9811a; color: #10b981; }
-        .period-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e2327; color: #a1a1aa; border: 1px solid #2B2F36; }
-        .period-btn.active { border-color: #10b981; color: #10b981; background: #10b9810d; }
         .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 700; color: #71717a; }
         .toggle-btn.active { background: #10b981; color: #000; }
+        .period-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e2327; color: #a1a1aa; border: 1px solid #2B2F36; }
+        .period-btn.active { border-color: #10b981; color: #10b981; background: #10b9810d; }
         .hidden { display: none; }
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
@@ -34,7 +34,7 @@
         .hold-tooltip .tooltiptext { top: 125%; right: 0; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
 
-        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: opacity 0.2s; }
         .refresh-btn:hover { opacity: 0.9; }
     </style>
 </head>
@@ -112,13 +112,13 @@
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right">BEP Price ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">BEP <span class="tooltip hold-tooltip">? <span class="tooltiptext">Break-Even Price including all fees.</span></span> ↕</th>
                             <th class="p-4 text-right text-emerald-400 font-bold">Live Price 🟢</th>
-                            <th class="p-4 text-right">Market Price ↕</th>
-                            <th class="p-4 text-right">£ Value ↕</th>
-                            <th class="p-4 text-right">£ P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Includes Stock & FX impact.</span></span> ↕</th>
-                            <th class="p-4 text-right">% P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Total GBP return percentage.</span></span> ↕</th>
-                            <th class="p-4 text-right">Allocation ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Includes both stock gain and FX impact.</span></span> ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L <span class="tooltip hold-tooltip">? <span class="tooltiptext">Total return in GBP.</span></span> ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
@@ -293,12 +293,15 @@
                 const liveData = livePriceMap[ticker];
                 const activePriceLocal = liveData ? liveData.price : histPriceLocal;
                 const activeRate = liveData ? liveData.rate : 1.0;
+                
                 const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
                 const curValueGBP = (shares * activePriceLocal) * activeRate;
                 const profitGBP = curValueGBP - costGBP;
                 const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
                 const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
+                
                 let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
+                
                 tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                     <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);"><div class="font-bold text-white">${getCol(row, ['Company'])}</div><div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div></td>
                     <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
