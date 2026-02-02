@@ -31,13 +31,8 @@
             font-size: 11px; line-height: 1.4; border: 1px solid #2B2F36; pointer-events: none; text-transform: none; font-weight: normal;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
-        
-        /* Dashboard tooltips pop up */
         .dash-tooltip .tooltiptext { bottom: 125%; left: 50%; margin-left: -110px; }
-        
-        /* Holdings tooltips pop down */
         .hold-tooltip .tooltiptext { top: 125%; right: 0; }
-        
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
     </style>
 </head>
@@ -115,7 +110,7 @@
         <div id="page-holdings" class="hidden">
             <header class="mb-10"><h1 class="text-4xl font-bold tracking-tight">Holdings</h1></header>
             <div class="card overflow-x-auto">
-                <table class="w-full text-left min-w-[1100px]">
+                <table class="w-full text-left min-w-[1200px]">
                     <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
@@ -123,9 +118,10 @@
                             <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
                                 BEP <span class="tooltip hold-tooltip">? <span class="tooltiptext">Break-Even Price: The average price paid per share including all transaction fees.</span></span> ↕
                             </th>
+                            <th class="p-4 text-right text-emerald-400 font-bold">Live Price 🟢</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">Value ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">Net P/L ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                         </tr>
@@ -139,8 +135,9 @@
     <script>
         const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
         const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
+        const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
         
-        let chartInstance, rawPerfData = [], currentHoldingsData = [], currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
+        let chartInstance, rawPerfData = [], currentHoldingsData = [], livePriceMap = {}, currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
         let sortDir = -1, lastSortKey = '';
 
         function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
@@ -157,14 +154,29 @@
             return new Date(p[2], p[0]-1, p[1]);
         }
 
+        // Initialize App
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
                 rawPerfData = results.data.slice(1).filter(r => r[0] && r[47]);
                 totalValLatest = cleanNum(rawPerfData[rawPerfData.length-1][47]);
                 initDashboard();
+                fetchLivePrices(); // Load live prices in background
             }
         });
+
+        function fetchLivePrices() {
+            Papa.parse(LIVE_CSV, {
+                download: true, header: false, skipEmptyLines: true,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        const ticker = row[0]?.toUpperCase().trim();
+                        const price = cleanNum(row[1]);
+                        if (ticker) livePriceMap[ticker] = price;
+                    });
+                }
+            });
+        }
 
         function showPage(pageId) {
             document.getElementById('page-dashboard').classList.toggle('hidden', pageId !== 'dashboard');
@@ -260,7 +272,6 @@
         }
 
         function fetchHoldings() {
-            if (currentHoldingsData.length > 0) { displayHoldings(currentHoldingsData); return; }
             Papa.parse(HOLD_CSV, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
@@ -286,8 +297,11 @@
             const tbody = document.getElementById('holdings-table-body');
             tbody.innerHTML = '';
             data.forEach(row => {
-                const ticker = getCol(row, ['Ticker']), curVal = cleanNum(getCol(row, ['Current Value'])), profit = cleanNum(getCol(row, ['Total Unrealised P/L']));
+                const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
+                const curVal = cleanNum(getCol(row, ['Current Value'])), profit = cleanNum(getCol(row, ['Total Unrealised P/L']));
                 const weight = totalValLatest > 0 ? (curVal / totalValLatest) * 100 : 0;
+                const livePrice = livePriceMap[ticker] || null;
+                
                 let sym = ticker === 'WKL' ? '€' : (ticker === 'UL' ? '£' : '$');
                 tbody.innerHTML += `
                     <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
@@ -297,6 +311,9 @@
                         </td>
                         <td class="p-4 text-right font-mono text-zinc-400">${cleanNum(getCol(row, ['Shares']))}</td>
                         <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['BEP Price'])).toFixed(2)}</td>
+                        <td class="p-4 text-right font-bold text-emerald-400">
+                            ${livePrice ? sym + livePrice.toFixed(2) : '--'}
+                        </td>
                         <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
                         <td class="p-4 text-right font-medium text-white">£${curVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                         <td class="p-4 text-right font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profit >= 0 ? '+' : ''}£${profit.toLocaleString()}</td>
