@@ -225,51 +225,111 @@
     const valStart = cleanNum(start[47]);
     totalValLatest = valEnd;
 
-    // Period-specific metrics
     const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
     const pDep = cleanNum(end[50]) - cleanNum(start[50]);
     const baseValue = valStart + pDep;
     const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-    // 1. Update Hero Value & Date Range
+    // 1. Hero and Date
     document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
     document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-    // 2. Sync Hero Badge & Total Return Card
-    const badge = document.getElementById('hero-badge');
-    const totalReturnCard = document.getElementById('stat-total-return');
-    badge.classList.remove('hidden');
+    // 2. Total Return Card Logic
+    const trCard = document.getElementById('stat-total-return').parentElement;
+    const trVal = document.getElementById('stat-total-return');
+    trVal.innerText = Math.abs(periodReturnPerc).toFixed(2) + '%';
     
+    if (periodReturnPerc >= 0) {
+        trVal.className = "text-2xl font-bold text-emerald-400";
+        trCard.className = "card p-6 border-l-4 border-emerald-500";
+    } else {
+        trVal.className = "text-2xl font-bold text-rose-400";
+        trCard.className = "card p-6 border-l-4 border-rose-500";
+    }
+
+    // 3. Net Profit Card Logic
+    const npCard = document.getElementById('stat-profit').parentElement;
+    const npVal = document.getElementById('stat-profit');
+    npVal.innerText = '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 2});
+    
+    if (pProfit >= 0) {
+        npVal.className = "text-2xl font-bold text-emerald-400";
+        npCard.className = "card p-6 border-l-4 border-emerald-500";
+    } else {
+        npVal.className = "text-2xl font-bold text-rose-400";
+        npCard.className = "card p-6 border-l-4 border-rose-500";
+    }
+
+    // 4. Hero Badge (directional indicator)
+    const badge = document.getElementById('hero-badge');
     let displayPerc;
     if (currentPeriod === 'all') {
-        document.getElementById('hero-title').innerText = "Total Net Value";
         const totalProfit = cleanNum(end[51]);
         const costBasis = valEnd - totalProfit;
         displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
     } else {
-        document.getElementById('hero-title').innerText = "Balance at Period End";
         displayPerc = periodReturnPerc;
     }
-
-    // Badge still uses arrows for clarity, but the Cards below do not
     badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
     badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
-    
-    totalReturnCard.innerText = displayPerc.toFixed(2) + '%';
-    totalReturnCard.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    badge.classList.remove('hidden');
 
-    // 3. Update Net Profit Card (Clean Currency, No +/- Symbols)
-    const profitCard = document.getElementById('stat-profit');
-    profitCard.innerText = '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 2});
-    
-    if (pProfit >= 0) {
-        profitCard.classList.replace('text-rose-400', 'text-emerald-400');
-    } else {
-        profitCard.classList.replace('text-emerald-400', 'text-rose-400');
-    }
-    
     calculateMetrics(filtered);
     renderChart(filtered);
+}
+
+function calculateMetrics(data) {
+    let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+    
+    for (let i = 1; i < data.length; i++) {
+        const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+        const denom = prevVal + flow;
+        if (denom > 0) { 
+            const r = (currVal / denom) - 1; 
+            cumFactor *= (1 + r); 
+            dailyRets.push(r); 
+        }
+        const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
+        if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+        
+        if (currVal > peak) peak = currVal;
+        const dd = peak !== 0 ? (currVal - peak) / peak : 0;
+        if (dd < maxDD) maxDD = dd;
+    }
+
+    // 5. Max Drawdown Card Logic (Always Rose/Red as it represents a drop)
+    const ddCard = document.getElementById('stat-max-dd').parentElement;
+    const ddVal = document.getElementById('stat-max-dd');
+    ddVal.innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
+    ddCard.className = "card p-6 border-l-4 border-rose-500";
+
+    // 6. TWR Card (Locked Blue)
+    const twrVal = (cumFactor - 1) * 100;
+    const twrEl = document.getElementById('stat-twr');
+    twrEl.innerText = Math.abs(twrVal).toFixed(2) + '%';
+    twrEl.parentElement.className = "card p-6 border-l-4 border-blue-500";
+
+    // 7. Sharpe Ratio (Locked Grey/Zinc)
+    const sharpeEl = document.getElementById('stat-sharpe');
+    if(dailyRets.length > 1) {
+        const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+        const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
+        sharpeEl.innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+    }
+    sharpeEl.parentElement.className = "card p-6 border-l-4 border-zinc-500";
+    
+    // 8. Beta Logic (No change to original styling)
+    const betaEl = document.getElementById('stat-beta');
+    if(dailyRets.length > 1 && spyRets.length > 0) {
+        const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+        const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
+        let num = 0, den = 0;
+        for(let i=0; i<dailyRets.length; i++) { 
+            num += (dailyRets[i]-mean)*(spyRets[i]-mMean); 
+            den += Math.pow(spyRets[i]-mMean, 2); 
+        }
+        betaEl.innerText = (den !== 0) ? (num/den).toFixed(2) : "0.00";
+    }
 }
 
 function calculateMetrics(data) {
