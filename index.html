@@ -29,9 +29,9 @@
         
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; margin-left: 6px; }
         .tooltip .tooltiptext {
-            visibility: hidden; width: 220px; background-color: #1e2327; color: #fff; text-align: center;
+            visibility: hidden; width: 240px; background-color: #1e2327; color: #fff; text-align: center;
             border-radius: 6px; padding: 10px; position: absolute; z-index: 100; opacity: 0; transition: opacity 0.2s; 
-            font-size: 11px; border: 1px solid #2B2F36; pointer-events: none;
+            font-size: 11px; border: 1px solid #2B2F36; pointer-events: none; bottom: 125%; left: 50%; transform: translateX(-50%);
         }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
         .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; }
@@ -99,7 +99,11 @@
                     <p id="stat-sharpe" class="text-2xl font-bold text-zinc-400">0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-amber-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip">? <span class="tooltiptext">Volatility relative to S&P 500.</span></span></p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta 
+                        <span class="tooltip">? 
+                            <span class="tooltiptext">Measures an asset's systematic risk or volatility compared to the overall market (usually the S&P 500). It indicates how much a stock's price is expected to move relative to market shifts. A beta of 1.0 indicates the asset moves in line with the market; >1.0 means it is more volatile, and <1.0 suggests lower volatility.</span>
+                        </span>
+                    </p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
                 </div>
             </div>
@@ -116,8 +120,8 @@
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right sortable flex items-center justify-end" onclick="sortHoldings('BEP Price')">
-                                BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break Even Price.</span></span>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
+                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break Even Price.</span></span></div>
                             </th>
                             <th class="p-4 text-right text-emerald-400">Live Price</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
