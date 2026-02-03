@@ -11,7 +11,7 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; color: #FFFFFF; }
         .sidebar { background-color: #15191C; border-right: 1px solid #2B2F36; }
-        .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; }
+        .card { background-color: #15191C; border: 1px solid #2B2F36; border-radius: 16px; transition: all 0.3s ease; }
         .nav-item { cursor: pointer; transition: all 0.2s; color: #71717a; }
         .nav-item.active { background: #10b9811a; color: #10b981; }
         .toggle-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 700; color: #71717a; }
@@ -19,27 +19,22 @@
         .period-btn { cursor: pointer; transition: all 0.2s; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e2327; color: #a1a1aa; border: 1px solid #2B2F36; }
         .period-btn.active { border-color: #10b981; color: #10b981; background: #10b9810d; }
         .hidden { display: none; }
-        .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
-        .logo-img { width: 100%; height: 100%; object-fit: contain; }
-        th.sortable:hover { color: white; cursor: pointer; }
         
-        /* New badge style */
         #hero-badge { font-size: 14px; padding: 4px 10px; border-radius: 20px; font-weight: 700; margin-left: 12px; display: inline-flex; align-items: center; }
         .badge-up { background: rgba(16, 185, 129, 0.15); color: #10b981; }
         .badge-down { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
 
-        .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; font-style: normal; margin-left: 6px; }
+        .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
+        .logo-img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; margin-left: 6px; }
         .tooltip .tooltiptext {
             visibility: hidden; width: 220px; background-color: #1e2327; color: #fff; text-align: center;
             border-radius: 6px; padding: 10px; position: absolute; z-index: 100; opacity: 0; transition: opacity 0.2s; 
-            font-size: 11px; line-height: 1.4; border: 1px solid #2B2F36; pointer-events: none; text-transform: none; font-weight: normal;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            font-size: 11px; border: 1px solid #2B2F36; pointer-events: none;
         }
-        .dash-tooltip .tooltiptext { bottom: 125%; left: 50%; margin-left: -110px; }
-        .hold-tooltip .tooltiptext { top: 125%; right: 0; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: opacity 0.2s; }
-        .refresh-btn:hover { opacity: 0.9; }
+        .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -87,22 +82,22 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card p-6"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-rose-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Max Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-rose-400">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-emerald-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold text-emerald-400">£0.00</p></div>
+                <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-rose-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Max Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold">0.00%</p></div>
+                <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold">£0.00</p></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card p-6">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR <span class="tooltip dash-tooltip">? <span class="tooltiptext">Time-Weighted Return for the selected period.</span></span></p>
+                <div class="card p-6 border-l-4 border-blue-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR <span class="tooltip">? <span class="tooltiptext">Time-Weighted Return.</span></span></p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
-                <div class="card p-6">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio <span class="tooltip dash-tooltip">? <span class="tooltiptext">Risk-adjusted return for this period.</span></span></p>
-                    <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
+                <div class="card p-6 border-l-4 border-zinc-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio <span class="tooltip">? <span class="tooltiptext">Risk-adjusted return.</span></span></p>
+                    <p id="stat-sharpe" class="text-2xl font-bold text-zinc-400">0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-amber-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip dash-tooltip">? <span class="tooltiptext">Volatility relative to the S&P 500.</span></span></p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip">? <span class="tooltiptext">Volatility relative to S&P 500.</span></span></p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
                 </div>
             </div>
@@ -117,15 +112,15 @@
                 <table class="w-full text-left min-w-[1200px]">
                     <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
                         <tr>
-                            <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">BEP <span class="tooltip hold-tooltip">? <span class="tooltiptext">Break-Even Price including all fees.</span></span> ↕</th>
-                            <th class="p-4 text-right text-emerald-400 font-bold">Live Price 🟢</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('% Return')">% P/L ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
+                            <th class="p-4">Company</th>
+                            <th class="p-4 text-right">Shares</th>
+                            <th class="p-4 text-right">BEP</th>
+                            <th class="p-4 text-right text-emerald-400">Live Price</th>
+                            <th class="p-4 text-right">Market Price</th>
+                            <th class="p-4 text-right">£ Value</th>
+                            <th class="p-4 text-right">£ P/L</th>
+                            <th class="p-4 text-right">% P/L</th>
+                            <th class="p-4 text-right">Allocation</th>
                         </tr>
                     </thead>
                     <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
@@ -140,7 +135,6 @@
         const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
         
         let chartInstance, rawPerfData = [], currentHoldingsData = [], livePriceMap = {}, currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
-        let sortDir = -1, lastSortKey = '';
 
         function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
         function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
@@ -175,13 +169,6 @@
             });
         }
 
-        function refreshLivePrices() {
-            const btn = document.querySelector('.refresh-btn');
-            btn.innerText = 'Refreshing...';
-            fetchLivePrices(false);
-            setTimeout(() => { btn.innerText = 'Refresh Live Prices'; }, 800);
-        }
-
         function showPage(pageId) {
             document.getElementById('page-dashboard').classList.toggle('hidden', pageId !== 'dashboard');
             document.getElementById('page-holdings').classList.toggle('hidden', pageId !== 'holdings');
@@ -203,160 +190,76 @@
             initDashboard();
         }
 
-   function initDashboard() {
-    if (!rawPerfData.length) return;
-    const latestDataRow = rawPerfData[rawPerfData.length - 1];
-    const latestDateInFullSet = parseDate(latestDataRow[0]);
+        function initDashboard() {
+            if (!rawPerfData.length) return;
+            const latestDataRow = rawPerfData[rawPerfData.length - 1];
+            const latestDateInFullSet = parseDate(latestDataRow[0]);
 
-    const filtered = rawPerfData.filter(r => {
-        const d = parseDate(r[0]);
-        if (currentPeriod === 'ytd') return d.getFullYear() === latestDateInFullSet.getFullYear();
-        if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDateInFullSet.getFullYear() - 1);
-        if (currentPeriod === 'ly') return d.getFullYear() === latestDateInFullSet.getFullYear() - 1;
-        return true;
-    });
+            const filtered = rawPerfData.filter(r => {
+                const d = parseDate(r[0]);
+                if (currentPeriod === 'ytd') return d.getFullYear() === latestDateInFullSet.getFullYear();
+                if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDateInFullSet.getFullYear() - 1);
+                if (currentPeriod === 'ly') return d.getFullYear() === latestDateInFullSet.getFullYear() - 1;
+                return true;
+            });
 
-    if (!filtered.length) return;
+            if (!filtered.length) return;
+            const start = filtered[0];
+            const end = filtered[filtered.length - 1];
+            
+            const valEnd = cleanNum(end[47]);
+            const valStart = cleanNum(start[47]);
+            totalValLatest = valEnd;
 
-    const start = filtered[0];
-    const end = filtered[filtered.length - 1];
-    
-    const valEnd = cleanNum(end[47]);
-    const valStart = cleanNum(start[47]);
-    totalValLatest = valEnd;
+            const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
+            const pDep = cleanNum(end[50]) - cleanNum(start[50]);
+            const baseValue = valStart + pDep;
+            const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-    const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
-    const pDep = cleanNum(end[50]) - cleanNum(start[50]);
-    const baseValue = valStart + pDep;
-    const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
+            document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-    // 1. Hero and Date
-    document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
-    document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
+            // TOTAL RETURN CARD
+            const trCard = document.getElementById('stat-total-return').parentElement;
+            const trVal = document.getElementById('stat-total-return');
+            
+            // NET PROFIT CARD
+            const npCard = document.getElementById('stat-profit').parentElement;
+            const npVal = document.getElementById('stat-profit');
 
-    // 2. Total Return Card Logic
-    const trCard = document.getElementById('stat-total-return').parentElement;
-    const trVal = document.getElementById('stat-total-return');
-    trVal.innerText = Math.abs(periodReturnPerc).toFixed(2) + '%';
-    
-    if (periodReturnPerc >= 0) {
-        trVal.className = "text-2xl font-bold text-emerald-400";
-        trCard.className = "card p-6 border-l-4 border-emerald-500";
-    } else {
-        trVal.className = "text-2xl font-bold text-rose-400";
-        trCard.className = "card p-6 border-l-4 border-rose-500";
-    }
+            // Logic for Since Inception vs Filters
+            let displayPerc;
+            if (currentPeriod === 'all') {
+                document.getElementById('hero-title').innerText = "Total Net Value";
+                const totalProfit = cleanNum(end[51]);
+                const costBasis = valEnd - totalProfit;
+                displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
+            } else {
+                document.getElementById('hero-title').innerText = "Balance at Period End";
+                displayPerc = periodReturnPerc;
+            }
 
-    // 3. Net Profit Card Logic
-    const npCard = document.getElementById('stat-profit').parentElement;
-    const npVal = document.getElementById('stat-profit');
-    npVal.innerText = '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 2});
-    
-    if (pProfit >= 0) {
-        npVal.className = "text-2xl font-bold text-emerald-400";
-        npCard.className = "card p-6 border-l-4 border-emerald-500";
-    } else {
-        npVal.className = "text-2xl font-bold text-rose-400";
-        npCard.className = "card p-6 border-l-4 border-rose-500";
-    }
+            // Apply Return UI
+            const trPrefix = displayPerc < 0 ? '-' : '';
+            trVal.innerText = trPrefix + Math.abs(displayPerc).toFixed(2) + '%';
+            trCard.className = `card p-6 border-l-4 ${displayPerc >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
+            trVal.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-    // 4. Hero Badge (directional indicator)
-    const badge = document.getElementById('hero-badge');
-    let displayPerc;
-    if (currentPeriod === 'all') {
-        const totalProfit = cleanNum(end[51]);
-        const costBasis = valEnd - totalProfit;
-        displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
-    } else {
-        displayPerc = periodReturnPerc;
-    }
-    badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
-    badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
-    badge.classList.remove('hidden');
+            // Apply Profit UI
+            const npPrefix = pProfit < 0 ? '-' : '';
+            npVal.innerText = npPrefix + '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 2});
+            npCard.className = `card p-6 border-l-4 ${pProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
+            npVal.className = `text-2xl font-bold ${pProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-    calculateMetrics(filtered);
-    renderChart(filtered);
-}
+            // Badge
+            const badge = document.getElementById('hero-badge');
+            badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
+            badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
+            badge.classList.remove('hidden');
 
-function calculateMetrics(data) {
-    let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
-    
-    for (let i = 1; i < data.length; i++) {
-        const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
-        const denom = prevVal + flow;
-        if (denom > 0) { 
-            const r = (currVal / denom) - 1; 
-            cumFactor *= (1 + r); 
-            dailyRets.push(r); 
+            calculateMetrics(filtered);
+            renderChart(filtered);
         }
-        const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
-        if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
-        
-        if (currVal > peak) peak = currVal;
-        const dd = peak !== 0 ? (currVal - peak) / peak : 0;
-        if (dd < maxDD) maxDD = dd;
-    }
-
-    // 5. Max Drawdown Card Logic (Always Rose/Red as it represents a drop)
-    const ddCard = document.getElementById('stat-max-dd').parentElement;
-    const ddVal = document.getElementById('stat-max-dd');
-    ddVal.innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
-    ddCard.className = "card p-6 border-l-4 border-rose-500";
-
-    // 6. TWR Card (Locked Blue)
-    const twrVal = (cumFactor - 1) * 100;
-    const twrEl = document.getElementById('stat-twr');
-    twrEl.innerText = Math.abs(twrVal).toFixed(2) + '%';
-    twrEl.parentElement.className = "card p-6 border-l-4 border-blue-500";
-
-    // 7. Sharpe Ratio (Locked Grey/Zinc)
-    const sharpeEl = document.getElementById('stat-sharpe');
-    if(dailyRets.length > 1) {
-        const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
-        const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
-        sharpeEl.innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
-    }
-    sharpeEl.parentElement.className = "card p-6 border-l-4 border-zinc-500";
-    
-    // 8. Beta Logic (No change to original styling)
-    const betaEl = document.getElementById('stat-beta');
-    if(dailyRets.length > 1 && spyRets.length > 0) {
-        const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
-        const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
-        let num = 0, den = 0;
-        for(let i=0; i<dailyRets.length; i++) { 
-            num += (dailyRets[i]-mean)*(spyRets[i]-mMean); 
-            den += Math.pow(spyRets[i]-mMean, 2); 
-        }
-        betaEl.innerText = (den !== 0) ? (num/den).toFixed(2) : "0.00";
-    }
-}
-
-function calculateMetrics(data) {
-    let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
-    
-    for (let i = 1; i < data.length; i++) {
-        const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
-        const denom = prevVal + flow;
-        if (denom > 0) { 
-            const r = (currVal / denom) - 1; 
-            cumFactor *= (1 + r); 
-            dailyRets.push(r); 
-        }
-        const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
-        if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
-        
-        if (currVal > peak) peak = currVal;
-        const dd = peak !== 0 ? (currVal - peak) / peak : 0;
-        if (dd < maxDD) maxDD = dd;
-    }
-
-    // 4. Update Max Drawdown (Clean Percentage, No Symbol)
-    const ddCard = document.getElementById('stat-max-dd');
-    ddCard.innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
-
-    // ... rest of Sharpe/Beta logic ...
-}
 
         function calculateMetrics(data) {
             let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
@@ -370,17 +273,23 @@ function calculateMetrics(data) {
                 const dd = peak !== 0 ? (currVal - peak) / peak : 0;
                 if (dd < maxDD) maxDD = dd;
             }
-            const years = Math.max((parseDate(data[data.length-1][0]) - parseDate(data[0][0])) / (31557600000), 0.01);
-            let twrValue = (years > 1.05) ? (Math.pow(cumFactor, 1/years) - 1) * 100 : (cumFactor - 1) * 100;
-            document.getElementById('stat-twr').innerText = twrValue.toFixed(2) + '%';
-            document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+
+            document.getElementById('stat-max-dd').innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
+            
+            const twrVal = (cumFactor - 1) * 100;
+            document.getElementById('stat-twr').innerText = Math.abs(twrVal).toFixed(2) + '%';
+            
             if(dailyRets.length > 1) {
                 const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
                 const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
                 document.getElementById('stat-sharpe').innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+                
                 const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
                 let num = 0, den = 0;
-                for(let i=0; i<dailyRets.length; i++) { num += (dailyRets[i]-mean)*(spyRets[i]-mMean); den += Math.pow(spyRets[i]-mMean, 2); }
+                for(let i=0; i<dailyRets.length; i++) { 
+                    num += (dailyRets[i]-mean)*(spyRets[i]-mMean); 
+                    den += Math.pow(spyRets[i]-mMean, 2); 
+                }
                 document.getElementById('stat-beta').innerText = (den !== 0) ? (num/den).toFixed(2) : "0.00";
             }
         }
@@ -417,16 +326,6 @@ function calculateMetrics(data) {
             }});
         }
 
-        function sortHoldings(key) {
-            if (lastSortKey === key) sortDir *= -1; else { sortDir = -1; lastSortKey = key; }
-            currentHoldingsData.sort((a, b) => {
-                let vA = getCol(a, [key]), vB = getCol(b, [key]);
-                if (key !== 'Company') { vA = cleanNum(vA); vB = cleanNum(vB); }
-                return vA < vB ? -1 * sortDir : vA > vB ? 1 * sortDir : 0;
-            });
-            displayHoldings(currentHoldingsData);
-        }
-
         function displayHoldings(data) {
             const tbody = document.getElementById('holdings-table-body');
             tbody.innerHTML = '';
@@ -451,8 +350,8 @@ function calculateMetrics(data) {
                     <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
                     <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
                     <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP >= 0 ? '+' : ''}£${profitGBP.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn >= 0 ? '+' : ''}${percReturn.toFixed(2)}%</td>
+                    <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP >= 0 ? '+' : ''}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn >= 0 ? '+' : ''}${Math.abs(percReturn).toFixed(2)}%</td>
                     <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
                 </tr>`;
             });
