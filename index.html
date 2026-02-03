@@ -203,56 +203,63 @@
             initDashboard();
         }
 
-        function initDashboard() {
-            if (!rawPerfData.length) return;
-            const latestDataRow = rawPerfData[rawPerfData.length - 1];
-            const latestDateInFullSet = parseDate(latestDataRow[0]);
+      function initDashboard() {
+    if (!rawPerfData.length) return;
+    const latestDataRow = rawPerfData[rawPerfData.length - 1];
+    const latestDateInFullSet = parseDate(latestDataRow[0]);
 
-            const filtered = rawPerfData.filter(r => {
-                const d = parseDate(r[0]);
-                if (currentPeriod === 'ytd') return d.getFullYear() === latestDateInFullSet.getFullYear();
-                if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDateInFullSet.getFullYear() - 1);
-                if (currentPeriod === 'ly') return d.getFullYear() === latestDateInFullSet.getFullYear() - 1;
-                return true;
-            });
+    const filtered = rawPerfData.filter(r => {
+        const d = parseDate(r[0]);
+        if (currentPeriod === 'ytd') return d.getFullYear() === latestDateInFullSet.getFullYear();
+        if (currentPeriod === '1y') return d >= new Date().setFullYear(latestDateInFullSet.getFullYear() - 1);
+        if (currentPeriod === 'ly') return d.getFullYear() === latestDateInFullSet.getFullYear() - 1;
+        return true;
+    });
 
-            if (!filtered.length) return;
+    if (!filtered.length) return;
 
-            const start = filtered[0];
-            const end = filtered[filtered.length - 1];
-            
-            // HERO VALUE = TOTAL BALANCE AT THE END OF THE PERIOD
-            const valEnd = cleanNum(end[47]);
-            const valStart = cleanNum(start[47]);
-            totalValLatest = valEnd;
+    const start = filtered[0];
+    const end = filtered[filtered.length - 1];
+    
+    const valEnd = cleanNum(end[47]);
+    const valStart = cleanNum(start[47]);
+    totalValLatest = valEnd;
 
-            document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
+    document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
+    document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-            // METRICS FOR PERIOD
-            const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
-            const pDep = cleanNum(end[50]) - cleanNum(start[50]);
-            const baseValue = valStart + pDep;
-            const totalReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
+    // Calculate Performance for the specific period
+    const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
+    const pDep = cleanNum(end[50]) - cleanNum(start[50]);
+    const baseValue = valStart + pDep;
+    const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-            // UPDATE BADGE
-            const badge = document.getElementById('hero-badge');
-            if (currentPeriod === 'all') {
-                badge.classList.add('hidden');
-                document.getElementById('hero-title').innerText = "Total Net Value";
-            } else {
-                badge.classList.remove('hidden');
-                document.getElementById('hero-title').innerText = "Balance at Period End";
-                badge.innerText = (totalReturnPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(totalReturnPerc).toFixed(2) + '%';
-                badge.className = totalReturnPerc >= 0 ? 'badge-up' : 'badge-down';
-            }
+    // BADGE LOGIC FIX
+    const badge = document.getElementById('hero-badge');
+    badge.classList.remove('hidden');
+    
+    let displayPerc;
+    if (currentPeriod === 'all') {
+        document.getElementById('hero-title').innerText = "Total Net Value";
+        // Use absolute total return for "Since Inception"
+        const absoluteProfit = cleanNum(end[51]);
+        const absoluteBase = valEnd - absoluteProfit;
+        displayPerc = absoluteBase !== 0 ? (absoluteProfit / absoluteBase) * 100 : 0;
+    } else {
+        document.getElementById('hero-title').innerText = "Balance at Period End";
+        displayPerc = periodReturnPerc;
+    }
 
-            document.getElementById('stat-profit').innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString();
-            document.getElementById('stat-total-return').innerText = totalReturnPerc.toFixed(2) + '%';
-            
-            calculateMetrics(filtered);
-            renderChart(filtered);
-        }
+    badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
+    badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
+
+    // Stats Grid
+    document.getElementById('stat-profit').innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString();
+    document.getElementById('stat-total-return').innerText = periodReturnPerc.toFixed(2) + '%';
+    
+    calculateMetrics(filtered);
+    renderChart(filtered);
+}
 
         function calculateMetrics(data) {
             let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
