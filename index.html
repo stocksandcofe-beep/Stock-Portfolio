@@ -22,6 +22,11 @@
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
         th.sortable:hover { color: white; cursor: pointer; }
+        
+        /* New badge style */
+        #hero-badge { font-size: 14px; padding: 4px 10px; border-radius: 20px; font-weight: 700; margin-left: 12px; display: inline-flex; align-items: center; }
+        .badge-up { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .badge-down { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
 
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; font-style: normal; margin-left: 6px; }
         .tooltip .tooltiptext {
@@ -33,7 +38,6 @@
         .dash-tooltip .tooltiptext { bottom: 125%; left: 50%; margin-left: -110px; }
         .hold-tooltip .tooltiptext { top: 125%; right: 0; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-
         .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; transition: opacity 0.2s; }
         .refresh-btn:hover { opacity: 0.9; }
     </style>
@@ -55,8 +59,11 @@
         <div id="page-dashboard">
             <header class="flex justify-between items-end mb-8">
                 <div>
-                    <p class="text-zinc-500 text-sm mb-1">Total Net Value</p>
-                    <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
+                    <p id="hero-title" class="text-zinc-500 text-sm mb-1">Total Net Value</p>
+                    <div class="flex items-center">
+                        <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
+                        <span id="hero-badge" class="hidden"></span>
+                    </div>
                 </div>
                 <div class="text-right"><p id="date-label" class="text-zinc-500 text-sm">--/--/----</p></div>
             </header>
@@ -95,7 +102,7 @@
                     <p id="stat-sharpe" class="text-2xl font-bold">0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-amber-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip dash-tooltip">? <span class="tooltiptext">Volatility relative to the S&P 500 in this period.</span></span></p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta <span class="tooltip dash-tooltip">? <span class="tooltiptext">Volatility relative to the S&P 500.</span></span></p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
                 </div>
             </div>
@@ -136,6 +143,7 @@
         let sortDir = -1, lastSortKey = '';
 
         function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
+        function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
         function getCol(row, keys) {
             const rKeys = Object.keys(row);
             for (let k of keys) { 
@@ -144,7 +152,6 @@
             }
             return null;
         }
-        function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
 
         Papa.parse(PERF_CSV, {
             download: true, header: false, skipEmptyLines: true,
@@ -214,18 +221,31 @@
             const start = filtered[0];
             const end = filtered[filtered.length - 1];
             
-            // UPDATE HERO VALUE AND DATE LABEL BASED ON SELECTION
-            const currentVal = cleanNum(end[47]);
-            totalValLatest = currentVal; // Updates the "Allocation" calculation in holdings
+            // HERO VALUE = TOTAL BALANCE AT THE END OF THE PERIOD
+            const valEnd = cleanNum(end[47]);
+            const valStart = cleanNum(start[47]);
+            totalValLatest = valEnd;
 
-            document.getElementById('hero-val').innerText = '£' + currentVal.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('date-label').innerText = end[0];
+            document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-            // METRICS CALCULATION
+            // METRICS FOR PERIOD
             const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
             const pDep = cleanNum(end[50]) - cleanNum(start[50]);
-            const baseValue = cleanNum(start[47]) + pDep;
+            const baseValue = valStart + pDep;
             const totalReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
+
+            // UPDATE BADGE
+            const badge = document.getElementById('hero-badge');
+            if (currentPeriod === 'all') {
+                badge.classList.add('hidden');
+                document.getElementById('hero-title').innerText = "Total Net Value";
+            } else {
+                badge.classList.remove('hidden');
+                document.getElementById('hero-title').innerText = "Balance at Period End";
+                badge.innerText = (totalReturnPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(totalReturnPerc).toFixed(2) + '%';
+                badge.className = totalReturnPerc >= 0 ? 'badge-up' : 'badge-down';
+            }
 
             document.getElementById('stat-profit').innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString();
             document.getElementById('stat-total-return').innerText = totalReturnPerc.toFixed(2) + '%';
@@ -236,44 +256,28 @@
 
         function calculateMetrics(data) {
             let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
-            
             for (let i = 1; i < data.length; i++) {
                 const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
                 const denom = prevVal + flow;
-                if (denom > 0) { 
-                    const r = (currVal / denom) - 1; 
-                    cumFactor *= (1 + r); 
-                    dailyRets.push(r); 
-                }
+                if (denom > 0) { const r = (currVal / denom) - 1; cumFactor *= (1 + r); dailyRets.push(r); }
                 const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
                 if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
-                
                 if (currVal > peak) peak = currVal;
                 const dd = peak !== 0 ? (currVal - peak) / peak : 0;
                 if (dd < maxDD) maxDD = dd;
             }
-
             const years = Math.max((parseDate(data[data.length-1][0]) - parseDate(data[0][0])) / (31557600000), 0.01);
             let twrValue = (years > 1.05) ? (Math.pow(cumFactor, 1/years) - 1) * 100 : (cumFactor - 1) * 100;
-
             document.getElementById('stat-twr').innerText = twrValue.toFixed(2) + '%';
             document.getElementById('stat-max-dd').innerText = (maxDD * 100).toFixed(2) + '%';
-            
             if(dailyRets.length > 1) {
                 const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
                 const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
                 document.getElementById('stat-sharpe').innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
-                
                 const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
                 let num = 0, den = 0;
-                for(let i=0; i<dailyRets.length; i++) { 
-                    num += (dailyRets[i]-mean)*(spyRets[i]-mMean); 
-                    den += Math.pow(spyRets[i]-mMean, 2); 
-                }
+                for(let i=0; i<dailyRets.length; i++) { num += (dailyRets[i]-mean)*(spyRets[i]-mMean); den += Math.pow(spyRets[i]-mMean, 2); }
                 document.getElementById('stat-beta').innerText = (den !== 0) ? (num/den).toFixed(2) : "0.00";
-            } else {
-                document.getElementById('stat-sharpe').innerText = "0.00";
-                document.getElementById('stat-beta').innerText = "0.00";
             }
         }
 
