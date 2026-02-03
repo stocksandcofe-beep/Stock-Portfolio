@@ -27,11 +27,14 @@
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
         
+        /* TOOLTIP REVISIONS */
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; margin-left: 6px; }
         .tooltip .tooltiptext {
             visibility: hidden; width: 240px; background-color: #1e2327; color: #fff; text-align: center;
             border-radius: 6px; padding: 10px; position: absolute; z-index: 100; opacity: 0; transition: opacity 0.2s; 
             font-size: 11px; border: 1px solid #2B2F36; pointer-events: none; bottom: 125%; left: 50%; transform: translateX(-50%);
+            text-transform: none; /* Ensures we don't force uppercase from parent headers */
+            line-height: 1.4;
         }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
         .refresh-btn { background: #10b981; color: #000; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; }
@@ -88,7 +91,7 @@
                 <div class="card p-6 border-l-4 border-zinc-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
                         <span class="tooltip">? 
-                            <span class="tooltiptext">Maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained. It represents the maximum cumulative loss an investor could have experienced, helping to assess downside risk and volatility.</span>
+                            <span class="tooltiptext">maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained. it represents the maximum cumulative loss an investor could have experienced, helping to assess downside risk and volatility.</span>
                         </span>
                     </p>
                     <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
@@ -100,7 +103,7 @@
                 <div class="card p-6 border-l-4 border-blue-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR Ratio 
                         <span class="tooltip">? 
-                            <span class="tooltiptext">The Time-Weighted Return (TWR) measures the compound rate of growth in a portfolio by excluding the effects of external cash flows (deposits/withdrawals). By breaking the investment period into sub-periods based on cash flow timing, it isolates the investment manager’s performance.</span>
+                            <span class="tooltiptext">the Time-Weighted Return (TWR) measures the compound rate of growth in a portfolio by excluding the effects of external cash flows (deposits/withdrawals). by breaking the investment period into sub-periods based on cash flow timing, it isolates the investment manager’s performance.</span>
                         </span>
                     </p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
@@ -108,7 +111,7 @@
                 <div class="card p-6 border-l-4 border-zinc-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio 
                         <span class="tooltip">? 
-                            <span class="tooltiptext">Measures risk-adjusted performance by dividing excess return (above the risk-free rate) by volatility. A higher ratio indicates better historical returns for the level of risk taken.</span>
+                            <span class="tooltiptext">measures risk-adjusted performance by dividing excess return (above the risk-free rate) by volatility. a higher ratio indicates better historical returns for the level of risk taken.</span>
                         </span>
                     </p>
                     <p id="stat-sharpe" class="text-2xl font-bold text-zinc-400">0.00</p>
@@ -116,7 +119,7 @@
                 <div class="card p-6 border-l-4 border-amber-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta 
                         <span class="tooltip">? 
-                            <span class="tooltiptext">Measures an asset's systematic risk or volatility compared to the overall market (usually the S&P 500). It indicates how much a stock's price is expected to move relative to market shifts. A beta of 1.0 indicates the asset moves in line with the market; >1.0 means it is more volatile, and <1.0 suggests lower volatility.</span>
+                            <span class="tooltiptext">measures an asset's systematic risk or volatility compared to the overall market (usually the S&P 500). it indicates how much a stock's price is expected to move relative to market shifts. a beta of 1.0 indicates the asset moves in line with the market; >1.0 means it is more volatile, and <1.0 suggests lower volatility.</span>
                         </span>
                     </p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
@@ -136,7 +139,7 @@
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
-                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break even price.</span></span></div>
+                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">break even price.</span></span></div>
                             </th>
                             <th class="p-4 text-right text-emerald-400">Live Price</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
@@ -153,6 +156,7 @@
     </main>
 
     <script>
+        // JS logic remains unchanged to ensure metric accuracy
         const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
         const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
         const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
