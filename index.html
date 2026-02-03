@@ -85,13 +85,24 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-zinc-500"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Max Drawdown</p><p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p></div>
+                <div class="card p-6 border-l-4 border-zinc-500">
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
+                        <span class="tooltip">? 
+                            <span class="tooltiptext">Maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained. It represents the maximum cumulative loss an investor could have experienced, helping to assess downside risk and volatility.</span>
+                        </span>
+                    </p>
+                    <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
+                </div>
                 <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p><p id="stat-profit" class="text-2xl font-bold">£0.00</p></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="card p-6 border-l-4 border-blue-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR <span class="tooltip">? <span class="tooltiptext">Time-Weighted Return.</span></span></p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR Ratio 
+                        <span class="tooltip">? 
+                            <span class="tooltiptext">The Time-Weighted Return (TWR) measures the compound rate of growth in a portfolio by excluding the effects of external cash flows (deposits/withdrawals). By breaking the investment period into sub-periods based on cash flow timing, it isolates the investment manager’s performance.</span>
+                        </span>
+                    </p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
                 <div class="card p-6 border-l-4 border-zinc-500">
@@ -125,7 +136,7 @@
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
-                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break Even Price.</span></span></div>
+                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break even price.</span></span></div>
                             </th>
                             <th class="p-4 text-right text-emerald-400">Live Price</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
