@@ -116,7 +116,9 @@
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">BEP ↕</th>
+                            <th class="p-4 text-right sortable flex items-center justify-end" onclick="sortHoldings('BEP Price')">
+                                BEP ↕ <span class="tooltip">? <span class="tooltiptext">Break Even Price.</span></span>
+                            </th>
                             <th class="p-4 text-right text-emerald-400">Live Price</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
@@ -172,9 +174,7 @@
             });
         }
 
-        function refreshLivePrices() {
-            fetchLivePrices(false);
-        }
+        function refreshLivePrices() { fetchLivePrices(false); }
 
         function showPage(pageId) {
             document.getElementById('page-dashboard').classList.toggle('hidden', pageId !== 'dashboard');
@@ -227,12 +227,10 @@
 
             let displayPerc;
             if (currentPeriod === 'all') {
-                document.getElementById('hero-title').innerText = "Total Net Value";
                 const totalProfit = cleanNum(end[51]);
                 const costBasis = valEnd - totalProfit;
                 displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
             } else {
-                document.getElementById('hero-title').innerText = "Balance at Period End";
                 displayPerc = periodReturnPerc;
             }
 
@@ -343,7 +341,10 @@
                 let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
                 
                 tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                    <td class="p-4"><div class="font-bold text-white">${getCol(row, ['Company'])}</div><div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div></td>
+                    <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
+                        <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+                        <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+                    </td>
                     <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
                     <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
                     <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
