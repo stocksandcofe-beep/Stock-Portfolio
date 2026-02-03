@@ -203,7 +203,7 @@
             initDashboard();
         }
 
-    function initDashboard() {
+   function initDashboard() {
     if (!rawPerfData.length) return;
     const latestDataRow = rawPerfData[rawPerfData.length - 1];
     const latestDateInFullSet = parseDate(latestDataRow[0]);
@@ -231,11 +231,11 @@
     const baseValue = valStart + pDep;
     const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-    // 1. Update Hero Value & Date
+    // 1. Update Hero Value & Date Range
     document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
     document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-    // 2. Handle the Hero Badge & Total Return synchronization
+    // 2. Sync Hero Badge & Total Return Card
     const badge = document.getElementById('hero-badge');
     const totalReturnCard = document.getElementById('stat-total-return');
     badge.classList.remove('hidden');
@@ -243,7 +243,6 @@
     let displayPerc;
     if (currentPeriod === 'all') {
         document.getElementById('hero-title').innerText = "Total Net Value";
-        // Calculate absolute return: Total Profit / (Total Value - Total Profit)
         const totalProfit = cleanNum(end[51]);
         const costBasis = valEnd - totalProfit;
         displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
@@ -252,29 +251,51 @@
         displayPerc = periodReturnPerc;
     }
 
-    // Sync values and colors
-    const percText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
-    badge.innerText = percText;
+    // Badge still uses arrows for clarity, but the Cards below do not
+    badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
     badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
     
     totalReturnCard.innerText = displayPerc.toFixed(2) + '%';
     totalReturnCard.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-    // 3. Update Net Profit Card with Color Logic
+    // 3. Update Net Profit Card (Clean Currency, No +/- Symbols)
     const profitCard = document.getElementById('stat-profit');
-    profitCard.innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
+    profitCard.innerText = '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 2});
     
-    // Toggle color classes based on profit/loss
     if (pProfit >= 0) {
-        profitCard.classList.remove('text-rose-400');
-        profitCard.classList.add('text-emerald-400');
+        profitCard.classList.replace('text-rose-400', 'text-emerald-400');
     } else {
-        profitCard.classList.remove('text-emerald-400');
-        profitCard.classList.add('text-rose-400');
+        profitCard.classList.replace('text-emerald-400', 'text-rose-400');
     }
     
     calculateMetrics(filtered);
     renderChart(filtered);
+}
+
+function calculateMetrics(data) {
+    let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+    
+    for (let i = 1; i < data.length; i++) {
+        const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+        const denom = prevVal + flow;
+        if (denom > 0) { 
+            const r = (currVal / denom) - 1; 
+            cumFactor *= (1 + r); 
+            dailyRets.push(r); 
+        }
+        const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
+        if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+        
+        if (currVal > peak) peak = currVal;
+        const dd = peak !== 0 ? (currVal - peak) / peak : 0;
+        if (dd < maxDD) maxDD = dd;
+    }
+
+    // 4. Update Max Drawdown (Clean Percentage, No Symbol)
+    const ddCard = document.getElementById('stat-max-dd');
+    ddCard.innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
+
+    // ... rest of Sharpe/Beta logic ...
 }
 
         function calculateMetrics(data) {
