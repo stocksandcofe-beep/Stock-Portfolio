@@ -203,7 +203,7 @@
             initDashboard();
         }
 
-      function initDashboard() {
+    function initDashboard() {
     if (!rawPerfData.length) return;
     const latestDataRow = rawPerfData[rawPerfData.length - 1];
     const latestDateInFullSet = parseDate(latestDataRow[0]);
@@ -225,37 +225,53 @@
     const valStart = cleanNum(start[47]);
     totalValLatest = valEnd;
 
-    document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
-    document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
-
-    // Calculate Performance for the specific period
+    // Period-specific metrics
     const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
     const pDep = cleanNum(end[50]) - cleanNum(start[50]);
     const baseValue = valStart + pDep;
     const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-    // BADGE LOGIC FIX
+    // 1. Update Hero Value & Date
+    document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
+    document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
+
+    // 2. Handle the Hero Badge & Total Return synchronization
     const badge = document.getElementById('hero-badge');
+    const totalReturnCard = document.getElementById('stat-total-return');
     badge.classList.remove('hidden');
     
     let displayPerc;
     if (currentPeriod === 'all') {
         document.getElementById('hero-title').innerText = "Total Net Value";
-        // Use absolute total return for "Since Inception"
-        const absoluteProfit = cleanNum(end[51]);
-        const absoluteBase = valEnd - absoluteProfit;
-        displayPerc = absoluteBase !== 0 ? (absoluteProfit / absoluteBase) * 100 : 0;
+        // Calculate absolute return: Total Profit / (Total Value - Total Profit)
+        const totalProfit = cleanNum(end[51]);
+        const costBasis = valEnd - totalProfit;
+        displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
     } else {
         document.getElementById('hero-title').innerText = "Balance at Period End";
         displayPerc = periodReturnPerc;
     }
 
-    badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
+    // Sync values and colors
+    const percText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
+    badge.innerText = percText;
     badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
+    
+    totalReturnCard.innerText = displayPerc.toFixed(2) + '%';
+    totalReturnCard.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-    // Stats Grid
-    document.getElementById('stat-profit').innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString();
-    document.getElementById('stat-total-return').innerText = periodReturnPerc.toFixed(2) + '%';
+    // 3. Update Net Profit Card with Color Logic
+    const profitCard = document.getElementById('stat-profit');
+    profitCard.innerText = (pProfit >= 0 ? '+' : '') + '£' + pProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
+    
+    // Toggle color classes based on profit/loss
+    if (pProfit >= 0) {
+        profitCard.classList.remove('text-rose-400');
+        profitCard.classList.add('text-emerald-400');
+    } else {
+        profitCard.classList.remove('text-emerald-400');
+        profitCard.classList.add('text-rose-400');
+    }
     
     calculateMetrics(filtered);
     renderChart(filtered);
