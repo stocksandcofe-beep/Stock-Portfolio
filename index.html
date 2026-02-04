@@ -308,7 +308,7 @@
             }
         }
 
-    function renderChart(data) {
+function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
@@ -321,14 +321,25 @@
                         borderWidth: 2, 
                         pointRadius: 0, 
                         tension: 0.4, 
-                        cubicInterpolationMode: 'monotone', // This forces a smoother curve algorithm
+                        cubicInterpolationMode: 'monotone',
                         fill: true,
                         backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            displayColors: false, // This removes the colored icon/square
+                            callbacks: {
+                                title: function(context) {
+                                    // This replaces the month name with the full date from your CSV
+                                    return data[context[0].dataIndex][0];
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
                         x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } }
