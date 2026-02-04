@@ -3,6 +3,7 @@ const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Por
 const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
 
 let chartInstance, rawPerfData = [], currentHoldingsData = [], livePriceMap = {}, currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
+let sortKey = '', sortDir = 1;
 
 function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
 function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
@@ -15,16 +16,14 @@ function getCol(row, keys) {
     return null;
 }
 
-window.onload = () => {
-    Papa.parse(PERF_CSV, {
-        download: true, header: false, skipEmptyLines: true,
-        complete: function(results) {
-            rawPerfData = results.data.slice(1).filter(r => r[0] && r[47]);
-            initDashboard();
-            fetchLivePrices(true);
-        }
-    });
-};
+Papa.parse(PERF_CSV, {
+    download: true, header: false, skipEmptyLines: true,
+    complete: function(results) {
+        rawPerfData = results.data.slice(1).filter(r => r[0] && r[47]);
+        initDashboard();
+        fetchLivePrices(true);
+    }
+});
 
 function fetchLivePrices(isInitial = false) {
     Papa.parse(LIVE_CSV, {
@@ -80,25 +79,34 @@ function initDashboard() {
     const end = filtered[filtered.length - 1];
     
     const valEnd = cleanNum(end[47]);
+    const valStart = cleanNum(start[47]);
     totalValLatest = valEnd;
 
     const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
     const pDep = cleanNum(end[50]) - cleanNum(start[50]);
-    const baseValue = cleanNum(start[47]) + pDep;
+    const baseValue = valStart + pDep;
     const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
     document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {maximumFractionDigits: 0});
     document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-    let displayPerc = (currentPeriod === 'all') ? 
-        ( (valEnd - (valEnd - cleanNum(end[51]))) / (valEnd - cleanNum(end[51])) * 100 ) : periodReturnPerc;
+    let displayPerc;
+    if (currentPeriod === 'all') {
+        const totalProfit = cleanNum(end[51]);
+        const costBasis = valEnd - totalProfit;
+        displayPerc = costBasis !== 0 ? (totalProfit / costBasis) * 100 : 0;
+    } else {
+        displayPerc = periodReturnPerc;
+    }
 
     const trVal = document.getElementById('stat-total-return');
     trVal.innerText = (displayPerc < 0 ? '-' : '') + Math.abs(displayPerc).toFixed(2) + '%';
+    trVal.parentElement.className = `card p-6 border-l-4 ${displayPerc >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
     trVal.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     const npVal = document.getElementById('stat-profit');
-    npVal.innerText = (pProfit < 0 ? '-' : '+') + '£' + Math.abs(pProfit).toLocaleString(undefined, {maximumFractionDigits: 0});
+    npVal.innerText = (pProfit < 0 ? '-' : '+') + '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    npVal.parentElement.className = `card p-6 border-l-4 ${pProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
     npVal.className = `text-2xl font-bold ${pProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     const badge = document.getElementById('hero-badge');
@@ -106,55 +114,74 @@ function initDashboard() {
     badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
     badge.classList.remove('hidden');
 
+    calculateMetrics(filtered);
     renderChart(filtered);
+}
+
+function calculateMetrics(data) {
+    let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
+    for (let i = 1; i < data.length; i++) {
+        const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
+        const denom = prevVal + flow;
+        if (denom > 0) { const r = (currVal / denom) - 1; cumFactor *= (1 + r); dailyRets.push(r); }
+        const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
+        if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+        if (currVal > peak) peak = currVal;
+        const dd = peak !== 0 ? (currVal - peak) / peak : 0;
+        if (dd < maxDD) maxDD = dd;
+    }
+    document.getElementById('stat-max-dd').innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
+    const twrVal = (cumFactor - 1) * 100;
+    document.getElementById('stat-twr').innerText = Math.abs(twrVal).toFixed(2) + '%';
+    if(dailyRets.length > 1) {
+        const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+        const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
+        document.getElementById('stat-sharpe').innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+        const mMean = spyRets.reduce((a,b)=>a+b,0)/spyRets.length;
+        let num = 0, den = 0;
+        for(let i=0; i<dailyRets.length; i++) { num += (dailyRets[i]-mean)*(spyRets[i]-mMean); den += Math.pow(spyRets[i]-mMean, 2); }
+        document.getElementById('stat-beta').innerText = (den !== 0) ? (num/den).toFixed(2) : "0.00";
+    }
 }
 
 function renderChart(data) {
     const ctx = document.getElementById('mainChart').getContext('2d');
     if (chartInstance) chartInstance.destroy();
-
-    const isGrowth = currentChartMode === 'growth';
-    const spyStart = cleanNum(data[0][52]);
-    const portStart = isGrowth ? cleanNum(data[0][47]) : cleanNum(data[0][51]);
-    const spyData = data.map(r => (spyStart !== 0 ? (cleanNum(r[52]) / spyStart) * portStart : 0));
-
-    const datasets = [{
-        label: 'Portfolio',
-        data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
-        borderColor: isGrowth ? '#10b981' : '#3b82f6',
-        borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true,
-        backgroundColor: 'rgba(16, 185, 129, 0.05)'
-    }];
-
-    if (isGrowth) {
-        datasets.push({
-            label: 'Benchmark',
-            data: spyData,
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false
-        });
-    }
-
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.map(r => parseDate(r[0])),
-            datasets: datasets
+            datasets: [{
+                data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
+                borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
+                borderWidth: 2, pointRadius: 0, tension: 0.4, cubicInterpolationMode: 'monotone', fill: true,
+                backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
+            }]
         },
         options: { 
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    displayColors: false, padding: 10, bodySpacing: 5,
+                    callbacks: {
+                        title: context => data[context[0].dataIndex][0],
+                        label: context => new Intl.NumberFormat('en-GB', { 
+                            style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 
+                        }).format(context.parsed.y)
+                    }
+                }
+            },
             scales: {
-                y: { position: 'right', ticks: { color: '#71717a' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
                 x: { 
                     ticks: { 
-                        color: '#71717a', font: { size: 10 }, maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 10, // Keeps X-axis from crowding
+                        color: '#71717a', font: { size: 10 }, autoSkip: true, maxTicksLimit: 8,
                         callback: function(val, index) {
                             const date = this.getLabelForValue(val);
                             if (currentPeriod === 'all') {
-                                return date.toLocaleString('default', { month: 'short', year: '2-digit' });
+                                return date.getFullYear() + ' ' + date.toLocaleString('default', { month: 'short' });
                             }
                             return date.toLocaleString('default', { month: 'short' });
                         }
@@ -173,19 +200,46 @@ function fetchHoldings() {
     }});
 }
 
+function sortHoldings(key) {
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+    currentHoldingsData.sort((a, b) => {
+        let valA = getCol(a, [key]), valB = getCol(b, [key]);
+        if (key !== 'Company') { valA = cleanNum(valA); valB = cleanNum(valB); }
+        return valA > valB ? sortDir : valA < valB ? -sortDir : 0;
+    });
+    displayHoldings(currentHoldingsData);
+}
+
 function displayHoldings(data) {
     const tbody = document.getElementById('holdings-table-body');
     tbody.innerHTML = '';
     data.forEach(row => {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
-        const curValueGBP = (cleanNum(getCol(row, ['Shares'])) * (livePriceMap[ticker]?.price || cleanNum(getCol(row, ['Current Price'])))) * (livePriceMap[ticker]?.rate || 1.0);
+        const shares = cleanNum(getCol(row, ['Shares']));
+        const bepLocal = cleanNum(getCol(row, ['BEP Price']));
+        const liveData = livePriceMap[ticker];
+        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activeRate = liveData ? liveData.rate : 1.0;
+        const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
+        const curValueGBP = (shares * activePriceLocal) * activeRate;
+        const profitGBP = curValueGBP - costGBP;
+        const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
         const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
+        let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
         
-        tbody.innerHTML += `
-            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                <td class="p-4"><div class="font-bold text-white">${getCol(row, ['Company'])}</div></td>
-                <td class="p-4 text-right">£${curValueGBP.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                <td class="p-4 text-right">${weight.toFixed(1)}%</td>
-            </tr>`;
+        tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+            <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
+                <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+                <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+            </td>
+            <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
+            <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
+            <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
+            <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
+            <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+            <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
+            <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
+        </tr>`;
     });
 }
