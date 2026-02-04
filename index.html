@@ -246,7 +246,7 @@
             const baseValue = valStart + pDep;
             const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-            document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {maximumFractionDigits: 0});
             document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
             let displayPerc;
