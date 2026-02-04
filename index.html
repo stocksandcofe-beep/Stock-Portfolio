@@ -14,8 +14,8 @@
 
     <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
         <div class="flex items-center gap-3 mb-10">
-            <div class="logo-container overflow-hidden rounded-lg">
-                <img src="https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/logo.png" alt="Logo" class="w-full h-full object-cover">
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo" class="logo-img">
             </div>
             <span class="text-xl font-bold tracking-tight">Portfolio</span>
         </div>
@@ -31,7 +31,7 @@
                 <div>
                     <p id="hero-title" class="text-zinc-500 text-sm mb-1">Total Net Value</p>
                     <div class="flex items-center">
-                        <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0</h1>
+                        <h1 id="hero-val" class="text-5xl font-bold tracking-tight">£0.00</h1>
                         <span id="hero-badge" class="hidden"></span>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
 
             <div class="card p-6 mb-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-semibold text-zinc-300">Portfolio vs Benchmark (SPY)</h3>
+                    <h3 class="font-semibold text-zinc-300">Portfolio Growth</h3>
                     <div class="flex bg-black/40 p-1 rounded-xl">
                         <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
                         <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
@@ -60,27 +60,35 @@
                 <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
                 <div class="card p-6 border-l-4 border-zinc-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
-                        <span class="tooltip">? <span class="tooltiptext">Largest drop from a portfolio peak.</span></span>
+                        <span class="tooltip">? 
+                            <span class="tooltiptext">maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained.</span>
+                        </span>
                     </p>
                     <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
                 </div>
                 <div class="card p-6 border-l-4">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
-                    <p id="stat-profit" class="text-2xl font-bold">£0</p>
+                    <p id="stat-profit" class="text-2xl font-bold">£0.00</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="card p-6 border-l-4 border-blue-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR Ratio</p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR Ratio 
+                        <span class="tooltip">? <span class="tooltiptext">measures the compound rate of growth in a portfolio by excluding the effects of external cash flows.</span></span>
+                    </p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
                 <div class="card p-6 border-l-4 border-zinc-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio 
+                        <span class="tooltip">? <span class="tooltiptext">measures risk-adjusted performance by dividing excess return by volatility.</span></span>
+                    </p>
                     <p id="stat-sharpe" class="text-2xl font-bold text-zinc-400">0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-amber-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta</p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta 
+                        <span class="tooltip">? <span class="tooltiptext">measures an asset's systematic risk compared to the overall market.</span></span>
+                    </p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
                 </div>
             </div>
@@ -97,7 +105,9 @@
                         <tr>
                             <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
-                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">BEP ↕</th>
+                            <th class="p-4 text-right sortable" onclick="sortHoldings('BEP Price')">
+                                <div class="flex items-center justify-end">BEP ↕ <span class="tooltip">? <span class="tooltiptext">break even price.</span></span></div>
+                            </th>
                             <th class="p-4 text-right text-emerald-400">Live Price</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Price')">Market Price ↕</th>
                             <th class="p-4 text-right sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
