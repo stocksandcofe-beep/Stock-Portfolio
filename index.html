@@ -236,8 +236,12 @@
             if (!filtered.length) return;
             const start = filtered[0];
             const end = filtered[filtered.length - 1];
-            const valEnd = cleanNum(end[47]);
+            
+            // This line ensures the Hero value updates based on the filtered period end
+            const valEnd = cleanNum(end[47]); 
             const valStart = cleanNum(start[47]);
+            
+            // Updates the global variable used for Holdings allocation calculations
             totalValLatest = valEnd;
 
             const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
@@ -245,6 +249,7 @@
             const baseValue = valStart + pDep;
             const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
+            // Updates the Hero Value display
             document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
@@ -277,7 +282,6 @@
             calculateMetrics(filtered);
             renderChart(filtered);
         }
-
         function calculateMetrics(data) {
             let cumFactor = 1, dailyRets = [], spyRets = [], peak = cleanNum(data[0][47]), maxDD = 0;
             for (let i = 1; i < data.length; i++) {
