@@ -305,42 +305,56 @@
             }
         }
 
-        function renderChart(data) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(r => parseDate(r[0]).toLocaleString('default', { month: 'short' })),
-                    datasets: [{
-                        data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
-                        borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                        borderWidth: 2, pointRadius: 0, tension: 0.4, cubicInterpolationMode: 'monotone', fill: true,
-                        backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
-                    }]
+      function renderChart(data) {
+    const canvas = document.getElementById('mainChart');
+    const ctx = canvas.getContext('2d');
+    
+    if (chartInstance) chartInstance.destroy();
+
+    // 1. Create the Gradient
+    // The gradient runs from top (y=0) to bottom (y=400)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    if (currentChartMode === 'growth') {
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); // Emerald top
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)'); // Transparent bottom
+    } else {
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); // Blue top
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)'); // Transparent bottom
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(r => parseDate(r[0]).toLocaleString('default', { month: 'short' })),
+            datasets: [{
+                data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
+                borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4,
+                fill: true,             // 2. Enable Fill
+                backgroundColor: gradient // 3. Apply Gradient
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    position: 'right', 
+                    ticks: { color: '#71717a', font: { size: 10 } },
+                    grid: { color: 'rgba(255,255,255,0.03)' } 
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            displayColors: false, padding: 10, bodySpacing: 5,
-                            callbacks: {
-                                title: context => data[context[0].dataIndex][0],
-                                label: context => new Intl.NumberFormat('en-GB', { 
-                                    style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 
-                                }).format(context.parsed.y)
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                        x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } }
-                    }
+                x: { 
+                    ticks: { color: '#71717a', font: { size: 10 } },
+                    grid: { display: false } 
                 }
-            });
+            }
         }
+    });
+}}
 
         function fetchHoldings() {
             Papa.parse(HOLD_CSV, { download: true, header: true, skipEmptyLines: true, complete: res => {
