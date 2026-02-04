@@ -13,7 +13,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; 
 .badge-up { background: rgba(16, 185, 129, 0.15); color: #10b981; }
 .badge-down { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
 
-.logo-container { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
+.logo-img { width: 100%; height: 100%; object-fit: contain; }
 
 .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; margin-left: 6px; }
 .tooltip .tooltiptext {
