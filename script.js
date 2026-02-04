@@ -168,36 +168,55 @@ function renderChart(data) {
     gradient.addColorStop(0, isGrowth ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)');
     gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
+    // Benchmark normalization
     const spyStart = cleanNum(data[0][52]);
     const portStart = isGrowth ? cleanNum(data[0][47]) : cleanNum(data[0][51]);
     const spyData = data.map(r => (spyStart !== 0 ? (cleanNum(r[52]) / spyStart) * portStart : 0));
+
+    // Construct datasets array
+    const datasets = [
+        {
+            label: 'Portfolio',
+            data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
+            borderColor: isGrowth ? '#10b981' : '#3b82f6',
+            borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
+        }
+    ];
+
+    // Only add Benchmark (SPY) if we are NOT in profit mode
+    if (isGrowth) {
+        datasets.push({
+            label: 'Benchmark (SPY)',
+            data: spyData,
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1, borderDash: [5, 5], pointRadius: 0, tension: 0.4, fill: false
+        });
+    }
 
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.map(r => parseDate(r[0]).toLocaleString('default', { month: 'short' })),
-            datasets: [
-                {
-                    label: 'Portfolio',
-                    data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
-                    borderColor: isGrowth ? '#10b981' : '#3b82f6',
-                    borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
-                },
-                {
-                    label: 'Benchmark (SPY)',
-                    data: spyData,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1, borderDash: [5, 5], pointRadius: 0, tension: 0.4, fill: false
-                }
-            ]
+            datasets: datasets
         },
         options: { 
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false } },
             scales: {
-                y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true }, grid: { display: false } }
+                y: { 
+                    position: 'right', 
+                    ticks: { 
+                        color: '#71717a', 
+                        font: { size: 10 }, 
+                        callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
+                    }, 
+                    grid: { color: 'rgba(255,255,255,0.03)' } 
+                },
+                x: { 
+                    ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true }, 
+                    grid: { display: false } 
+                }
             }
         }
     });
