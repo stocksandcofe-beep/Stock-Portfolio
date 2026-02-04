@@ -327,22 +327,54 @@ function renderChart(data) {
                     }]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false, 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    // Interaction settings to trigger tooltip anywhere along the vertical line
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
-                            displayColors: false, // This removes the colored icon/square
+                            displayColors: false, // Removes the colored icon
+                            padding: 10,
+                            bodySpacing: 5,
                             callbacks: {
                                 title: function(context) {
-                                    // This replaces the month name with the full date from your CSV
+                                    // Shows the full date from the CSV row
                                     return data[context[0].dataIndex][0];
+                                },
+                                label: function(context) {
+                                    // Formats value as GBP currency with commas and 2 decimals
+                                    let val = context.parsed.y;
+                                    return new Intl.NumberFormat('en-GB', { 
+                                        style: 'currency', 
+                                        currency: 'GBP' 
+                                    }).format(val);
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                        x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } }
+                        y: { 
+                            position: 'right', 
+                            ticks: { 
+                                color: '#71717a', 
+                                font: { size: 10 }, 
+                                callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
+                            }, 
+                            grid: { color: 'rgba(255,255,255,0.03)' } 
+                        },
+                        x: { 
+                            ticks: { 
+                                color: '#71717a', 
+                                font: { size: 10 }, 
+                                autoSkip: true, 
+                                maxTicksLimit: 12 
+                            }, 
+                            grid: { display: false } 
+                        }
                     }
                 }
             });
