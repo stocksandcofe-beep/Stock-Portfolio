@@ -164,70 +164,49 @@ function renderChart(data) {
     const ctx = document.getElementById('mainChart').getContext('2d');
     if (chartInstance) chartInstance.destroy();
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
     const isGrowth = currentChartMode === 'growth';
-    gradient.addColorStop(0, isGrowth ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0)');
-
     const spyStart = cleanNum(data[0][52]);
     const portStart = isGrowth ? cleanNum(data[0][47]) : cleanNum(data[0][51]);
     const spyData = data.map(r => (spyStart !== 0 ? (cleanNum(r[52]) / spyStart) * portStart : 0));
 
-    const datasets = [{
-        label: 'Portfolio',
-        data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
-        borderColor: isGrowth ? '#10b981' : '#3b82f6',
-        borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
-    }];
-
-    if (isGrowth) {
-        datasets.push({
-            label: 'Benchmark (SPY)',
-            data: spyData,
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            borderWidth: 1, borderDash: [5, 5], pointRadius: 0, tension: 0.4, fill: false
-        });
-    }
-
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(r => parseDate(r[0])), // Pass actual date objects for better handling
-            datasets: datasets
+            labels: data.map(r => parseDate(r[0])),
+            datasets: [
+                {
+                    label: 'Portfolio',
+                    data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
+                    borderColor: isGrowth ? '#10b981' : '#3b82f6',
+                    borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true
+                },
+                {
+                    label: 'Benchmark',
+                    data: spyData,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false
+                }
+            ]
         },
         options: { 
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false } },
             scales: {
-                y: { 
-                    position: 'right', 
-                    ticks: { 
-                        color: '#71717a', 
-                        font: { size: 10 }, 
-                        callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
-                    }, 
-                    grid: { color: 'rgba(255,255,255,0.03)' } 
-                },
+                y: { position: 'right', ticks: { color: '#71717a' }, grid: { color: 'rgba(255,255,255,0.03)' } },
                 x: { 
                     ticks: { 
-                        color: '#71717a', 
-                        font: { size: 10 },
+                        color: '#71717a',
                         maxRotation: 0,
-                        autoSkip: true,
+                        autoSkip: true, // Let Chart.js handle basic skipping
+                        maxTicksLimit: 8, // Force a maximum of 8 labels to ensure they "fit nicely"
                         callback: function(val, index) {
                             const date = this.getLabelForValue(val);
                             if (currentPeriod === 'all') {
-                                // Since Inception: Year - Mid Month - Year
-                                return date.getDate() >= 14 && date.getDate() <= 16 ? 
-                                       date.toLocaleString('default', { month: 'short', year: '2-digit' }) : '';
-                            } else if (currentPeriod === 'ytd') {
-                                // YTD: Week commencing
-                                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                            } else {
-                                // 1Y and Last Year: Monthly
-                                return date.getDate() <= 7 ? date.toLocaleString('default', { month: 'short' }) : '';
+                                // Since Inception: Show Month and Year (e.g., "Jan 24")
+                                return date.toLocaleString('default', { month: 'short', year: '2-digit' });
                             }
+                            // Other views: Just show Month (e.g., "Jan")
+                            return date.toLocaleString('default', { month: 'short' });
                         }
                     }, 
                     grid: { display: false } 
