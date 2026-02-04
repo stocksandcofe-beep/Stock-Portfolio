@@ -180,7 +180,6 @@ function renderChart(data) {
         borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
     }];
 
-    // Hide benchmark if in profit mode
     if (isGrowth) {
         datasets.push({
             label: 'Benchmark (SPY)',
@@ -193,7 +192,7 @@ function renderChart(data) {
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(r => parseDate(r[0]).toLocaleString('default', { month: 'short' })),
+            labels: data.map(r => parseDate(r[0])), // Pass actual date objects for better handling
             datasets: datasets
         },
         options: { 
@@ -201,8 +200,38 @@ function renderChart(data) {
             interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false } },
             scales: {
-                y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true }, grid: { display: false } }
+                y: { 
+                    position: 'right', 
+                    ticks: { 
+                        color: '#71717a', 
+                        font: { size: 10 }, 
+                        callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
+                    }, 
+                    grid: { color: 'rgba(255,255,255,0.03)' } 
+                },
+                x: { 
+                    ticks: { 
+                        color: '#71717a', 
+                        font: { size: 10 },
+                        maxRotation: 0,
+                        autoSkip: true,
+                        callback: function(val, index) {
+                            const date = this.getLabelForValue(val);
+                            if (currentPeriod === 'all') {
+                                // Since Inception: Year - Mid Month - Year
+                                return date.getDate() >= 14 && date.getDate() <= 16 ? 
+                                       date.toLocaleString('default', { month: 'short', year: '2-digit' }) : '';
+                            } else if (currentPeriod === 'ytd') {
+                                // YTD: Week commencing
+                                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                            } else {
+                                // 1Y and Last Year: Monthly
+                                return date.getDate() <= 7 ? date.toLocaleString('default', { month: 'short' }) : '';
+                            }
+                        }
+                    }, 
+                    grid: { display: false } 
+                }
             }
         }
     });
