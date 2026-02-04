@@ -42,16 +42,20 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="logo-container bg-emerald-500/20 text-emerald-500 font-bold">P</div>
-            <span class="text-xl font-bold tracking-tight">Portfolio</span>
+   <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
+    <div class="flex items-center gap-3 mb-10">
+        <div class="logo-container overflow-hidden rounded-lg">
+            <img src="https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/logo.png" 
+                 alt="Logo" 
+                 class="w-full h-full object-cover">
         </div>
-        <nav class="space-y-2 flex-1">
-            <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl"><span>Dashboard</span></div>
-            <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl"><span>Holdings</span></div>
-        </nav>
-    </aside>
+        <span class="text-xl font-bold tracking-tight">Portfolio</span>
+    </div>
+    <nav class="space-y-2 flex-1">
+        <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl"><span>Dashboard</span></div>
+        <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl"><span>Holdings</span></div>
+    </nav>
+</aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <div id="page-dashboard">
