@@ -176,18 +176,27 @@ function renderChart(data) {
             scales: {
                 y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
                 x: { 
-                    ticks: { 
-                        color: '#71717a', font: { size: 10 }, autoSkip: true, maxTicksLimit: 8,
-                        callback: function(val, index) {
-                            const date = this.getLabelForValue(val);
-                            if (currentPeriod === 'all') {
-                                return date.getFullYear() + ' ' + date.toLocaleString('default', { month: 'short' });
-                            }
-                            return date.toLocaleString('default', { month: 'short' });
-                        }
-                    }, 
-                    grid: { display: false } 
-                }
+    ticks: { 
+        color: '#71717a', 
+        font: { size: 10 }, 
+        autoSkip: true,
+        maxTicksLimit: 8,
+        callback: function(val, index) {
+            const date = this.getLabelForValue(val);
+            
+            if (currentPeriod === 'all') {
+                // Since Inception: "2024 Jun"
+                return date.getFullYear() + ' ' + date.toLocaleString('default', { month: 'short' });
+            } else if (currentPeriod === 'ytd') {
+                // YTD: "01 Jan" (Shows specific days to avoid repeating "Jan")
+                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            }
+            // 1Y / Last Year: "Jun"
+            return date.toLocaleString('default', { month: 'short' });
+        }
+    }, 
+    grid: { display: false } 
+}
             }
         }
     });
