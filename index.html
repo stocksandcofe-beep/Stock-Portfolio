@@ -25,7 +25,6 @@
         .badge-down { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
 
         .logo-container { width: 32px; height: 32px; overflow: hidden; border-radius: 8px; background: #1e2327; display: flex; align-items: center; justify-content: center; }
-        .logo-img { width: 100%; height: 100%; object-fit: contain; }
         
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #2B2F36; color: #71717a; border-radius: 50%; font-size: 10px; cursor: help; margin-left: 6px; }
         .tooltip .tooltiptext {
@@ -75,7 +74,7 @@
 
             <div class="card p-6 mb-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-semibold text-zinc-300">Portfolio Growth</h3>
+                    <h3 class="font-semibold text-zinc-300">Portfolio vs Benchmark (SPY)</h3>
                     <div class="flex bg-black/40 p-1 rounded-xl">
                         <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
                         <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
@@ -88,9 +87,7 @@
                 <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
                 <div class="card p-6 border-l-4 border-zinc-500">
                     <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
-                        <span class="tooltip">? 
-                            <span class="tooltiptext">Maximum drawdown (MDD) measures the largest percentage drop from a portfolio's peak to its trough.</span>
-                        </span>
+                        <span class="tooltip">? <span class="tooltiptext">Largest drop from a portfolio peak.</span></span>
                     </p>
                     <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
                 </div>
@@ -102,21 +99,15 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="card p-6 border-l-4 border-blue-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">TWR Ratio 
-                        <span class="tooltip">? <span class="tooltiptext">Time-Weighted Return excludes effects of external cash flows.</span></span>
-                    </p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">TWR Ratio</p>
                     <p id="stat-twr" class="text-2xl font-bold text-blue-400">0.00%</p>
                 </div>
                 <div class="card p-6 border-l-4 border-zinc-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Sharpe Ratio 
-                        <span class="tooltip">? <span class="tooltiptext">Measures risk-adjusted performance.</span></span>
-                    </p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Sharpe Ratio</p>
                     <p id="stat-sharpe" class="text-2xl font-bold text-zinc-400">0.00</p>
                 </div>
                 <div class="card p-6 border-l-4 border-amber-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Beta 
-                        <span class="tooltip">? <span class="tooltiptext">Measures volatility relative to the market.</span></span>
-                    </p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Beta</p>
                     <p id="stat-beta" class="text-2xl font-bold text-amber-400">0.00</p>
                 </div>
             </div>
@@ -238,7 +229,6 @@
             const baseValue = valStart + pDep;
             const periodReturnPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
 
-            // WHOLE NUMBER FIX: Total Net Value
             document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {maximumFractionDigits: 0});
             document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
@@ -256,7 +246,6 @@
             trVal.parentElement.className = `card p-6 border-l-4 ${displayPerc >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
             trVal.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-            // WHOLE NUMBER FIX: Net Profit Card
             const npVal = document.getElementById('stat-profit');
             npVal.innerText = (pProfit < 0 ? '-' : '+') + '£' + Math.abs(pProfit).toLocaleString(undefined, {maximumFractionDigits: 0});
             npVal.parentElement.className = `card p-6 border-l-4 ${pProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
@@ -276,47 +265,71 @@
             for (let i = 1; i < data.length; i++) {
                 const prevVal = cleanNum(data[i-1][47]), currVal = cleanNum(data[i][47]), flow = cleanNum(data[i][50]) - cleanNum(data[i-1][50]);
                 const denom = prevVal + flow;
-                if (denom > 0) { const r = (currVal / denom) - 1; cumFactor *= (1 + r); dailyRets.push(r); }
                 const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
-                if(spyPrev > 0) spyRets.push((spyCurr/spyPrev)-1);
+
+                if (denom > 0) { 
+                    const r = (currVal / denom) - 1; 
+                    cumFactor *= (1 + r); 
+                    if (spyPrev > 0) {
+                        dailyRets.push(r);
+                        spyRets.push((spyCurr / spyPrev) - 1);
+                    }
+                }
                 if (currVal > peak) peak = currVal;
                 const dd = peak !== 0 ? (currVal - peak) / peak : 0;
                 if (dd < maxDD) maxDD = dd;
             }
+
             document.getElementById('stat-max-dd').innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
             document.getElementById('stat-twr').innerText = ((cumFactor - 1) * 100).toFixed(2) + '%';
-            if(dailyRets.length > 1) {
-                const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
-                const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
+
+            if(dailyRets.length > 2) {
+                const mean = dailyRets.reduce((a, b) => a + b, 0) / dailyRets.length;
+                const sd = Math.sqrt(dailyRets.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / dailyRets.length);
                 document.getElementById('stat-sharpe').innerText = (sd > 0) ? (((mean * 252) - 0.04) / (sd * Math.sqrt(252))).toFixed(2) : "0.00";
+
+                const mMean = spyRets.reduce((a, b) => a + b, 0) / spyRets.length;
+                let cov = 0, varM = 0;
+                for(let i=0; i<dailyRets.length; i++) {
+                    cov += (dailyRets[i]-mean)*(spyRets[i]-mMean);
+                    varM += Math.pow(spyRets[i]-mMean, 2);
+                }
+                document.getElementById('stat-beta').innerText = varM !== 0 ? (cov / varM).toFixed(2) : "0.00";
             }
         }
 
         function renderChart(data) {
-            const canvas = document.getElementById('mainChart');
-            const ctx = canvas.getContext('2d');
+            const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
 
-            // Premium Gradient Creation
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            if (currentChartMode === 'growth') {
-                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-                gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
-            } else {
-                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
-                gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-            }
+            const isGrowth = currentChartMode === 'growth';
+            gradient.addColorStop(0, isGrowth ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+            // Benchmark normalization
+            const spyStart = cleanNum(data[0][52]);
+            const portStart = isGrowth ? cleanNum(data[0][47]) : cleanNum(data[0][51]);
+            const spyData = data.map(r => (spyStart !== 0 ? (cleanNum(r[52]) / spyStart) * portStart : 0));
 
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.map(r => parseDate(r[0]).toLocaleString('default', { month: 'short' })),
-                    datasets: [{
-                        data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
-                        borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                        borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true,
-                        backgroundColor: gradient
-                    }]
+                    datasets: [
+                        {
+                            label: 'Portfolio',
+                            data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
+                            borderColor: isGrowth ? '#10b981' : '#3b82f6',
+                            borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
+                        },
+                        {
+                            label: 'Benchmark (SPY)',
+                            data: spyData,
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1, borderDash: [5, 5], pointRadius: 0, tension: 0.4, fill: false
+                        }
+                    ]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
@@ -347,14 +360,12 @@
                 const liveData = livePriceMap[ticker];
                 const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
                 const activeRate = liveData ? liveData.rate : 1.0;
-                const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
                 const curValueGBP = (shares * activePriceLocal) * activeRate;
+                const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
                 const profitGBP = curValueGBP - costGBP;
                 const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
                 const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
-                let sym = '$';
-                if(ticker === 'UL') sym = '£';
-                if(ticker === 'WKL') sym = '€';
+                let sym = (ticker === 'UL') ? '£' : (ticker === 'WKL' ? '€' : '$');
                 
                 tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                     <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) ${weight}%, transparent ${weight}%);">
@@ -366,8 +377,8 @@
                     <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
                     <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
                     <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
+                    <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn.toFixed(2)}%</td>
                     <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
                 </tr>`;
             });
