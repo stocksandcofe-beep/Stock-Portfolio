@@ -308,7 +308,7 @@
             }
         }
 
-        function renderChart(data) {
+    function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
@@ -318,7 +318,11 @@
                     datasets: [{
                         data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
                         borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                        borderWidth: 2, pointRadius: 0, tension: 0.9, fill: true,
+                        borderWidth: 2, 
+                        pointRadius: 0, 
+                        tension: 0.4, 
+                        cubicInterpolationMode: 'monotone', // This forces a smoother curve algorithm
+                        fill: true,
                         backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
                     }]
                 },
@@ -332,7 +336,6 @@
                 }
             });
         }
-
         function fetchHoldings() {
             Papa.parse(HOLD_CSV, { download: true, header: true, skipEmptyLines: true, complete: res => {
                 currentHoldingsData = res.data.filter(r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0);
