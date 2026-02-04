@@ -5,7 +5,7 @@ const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBu
 let chartInstance, rawPerfData = [], currentHoldingsData = [], livePriceMap = {}, currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
 let sortKey = '', sortDir = 1;
 
-// Global Initialization
+// Initialization
 window.onload = () => {
     Papa.parse(PERF_CSV, {
         download: true, header: false, skipEmptyLines: true,
@@ -19,6 +19,7 @@ window.onload = () => {
 
 function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
 function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]-1, p[1]); }
+
 function getCol(row, keys) {
     const rKeys = Object.keys(row);
     for (let k of keys) { 
@@ -129,7 +130,7 @@ function calculateMetrics(data) {
         const spyPrev = cleanNum(data[i-1][52]), spyCurr = cleanNum(data[i][52]);
 
         if (denom > 0) { 
-            const r = (currVal / denom) - 1; 
+            const r = (currVal / denom) - 1;
             cumFactor *= (1 + r); 
             if (spyPrev > 0) {
                 dailyRets.push(r);
@@ -168,22 +169,18 @@ function renderChart(data) {
     gradient.addColorStop(0, isGrowth ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)');
     gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
-    // Benchmark normalization
     const spyStart = cleanNum(data[0][52]);
     const portStart = isGrowth ? cleanNum(data[0][47]) : cleanNum(data[0][51]);
     const spyData = data.map(r => (spyStart !== 0 ? (cleanNum(r[52]) / spyStart) * portStart : 0));
 
-    // Construct datasets array
-    const datasets = [
-        {
-            label: 'Portfolio',
-            data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
-            borderColor: isGrowth ? '#10b981' : '#3b82f6',
-            borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
-        }
-    ];
+    const datasets = [{
+        label: 'Portfolio',
+        data: data.map(r => isGrowth ? cleanNum(r[47]) : cleanNum(r[51])),
+        borderColor: isGrowth ? '#10b981' : '#3b82f6',
+        borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient
+    }];
 
-    // Only add Benchmark (SPY) if we are NOT in profit mode
+    // Hide benchmark if in profit mode
     if (isGrowth) {
         datasets.push({
             label: 'Benchmark (SPY)',
@@ -204,19 +201,8 @@ function renderChart(data) {
             interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false } },
             scales: {
-                y: { 
-                    position: 'right', 
-                    ticks: { 
-                        color: '#71717a', 
-                        font: { size: 10 }, 
-                        callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
-                    }, 
-                    grid: { color: 'rgba(255,255,255,0.03)' } 
-                },
-                x: { 
-                    ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true }, 
-                    grid: { display: false } 
-                }
+                y: { position: 'right', ticks: { color: '#71717a', font: { size: 10 }, callback: v => '£' + (v / 1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                x: { ticks: { color: '#71717a', font: { size: 10 }, autoSkip: true }, grid: { display: false } }
             }
         }
     });
@@ -231,52 +217,34 @@ function fetchHoldings() {
 
 function displayHoldings(data) {
     const tbody = document.getElementById('holdings-table-body');
-    if (!tbody) return; // Safety check
-    
     tbody.innerHTML = '';
-    
-    // Debugging: check in browser console (F12) if data is arriving
-    console.log("Rendering Holdings Data:", data);
-
     data.forEach(row => {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
-        if (!ticker) return;
-
         const shares = cleanNum(getCol(row, ['Shares']));
         const bepLocal = cleanNum(getCol(row, ['BEP Price']));
-        
-        // Use Live Price if available, otherwise fallback to CSV Market Price
         const liveData = livePriceMap[ticker];
         const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
         const activeRate = liveData ? liveData.rate : 1.0;
-        
         const curValueGBP = (shares * activePriceLocal) * activeRate;
-        const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
+        const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
         const profitGBP = curValueGBP - costGBP;
         const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
         const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
-        
-        // Currency Symbol Logic
         let sym = (ticker === 'UL') ? '£' : (ticker === 'WKL' ? '€' : '$');
         
-        tbody.innerHTML += `
-            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-                <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) ${weight}%, transparent ${weight}%);">
-                    <div class="font-bold text-white">${getCol(row, ['Company']) || 'Unknown'}</div>
-                    <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
-                </td>
-                <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
-                <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
-                <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
-                <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
-                <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                    ${profitGBP >= 0 ? '+' : '-'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits: 0})}
-                </td>
-                <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                    ${percReturn.toFixed(2)}%
-                </td>
-                <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
-            </tr>`;
+        tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+            <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) ${weight}%, transparent ${weight}%);">
+                <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+                <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+            </td>
+            <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
+            <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
+            <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
+            <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
+            <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+            <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn.toFixed(2)}%</td>
+            <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
+        </tr>`;
     });
 }
