@@ -244,7 +244,7 @@ function displayHoldings(data) {
             <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
             <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
             <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
-            <td class="p-4 text-right text-zinc-300">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
+            <td class="p-4 text-right text-zinc-300 hidden">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
             <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
             <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
