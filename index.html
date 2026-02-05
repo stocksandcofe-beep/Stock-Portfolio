@@ -75,21 +75,26 @@
                 <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card p-6 border-l-4"><p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p><p id="stat-total-return" class="text-2xl font-bold">0.00%</p></div>
-                <div class="card p-6 border-l-4 border-zinc-500">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
-                        <span class="tooltip">? 
-                            <span class="tooltiptext">maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained.</span>
-                        </span>
-                    </p>
-                    <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
-                </div>
-                <div class="card p-6 border-l-4">
-                    <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
-                    <p id="stat-profit" class="text-2xl font-bold">£0.00</p>
-                </div>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="card p-6 border-l-4">
+        <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Total Return</p>
+        <p id="stat-total-return" class="text-2xl font-bold">0.00%</p>
+    </div>
+
+    <div class="card p-6 border-l-4">
+        <p class="text-zinc-500 text-xs font-bold uppercase mb-2">Net Profit</p>
+        <p id="stat-profit" class="text-2xl font-bold">£0.00</p>
+    </div>
+
+    <div class="card p-6 border-l-4 border-zinc-500">
+        <p class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center">Max Drawdown
+            <span class="tooltip">? 
+                <span class="tooltiptext">maximum drawdown (MDD) is a key financial risk metric measuring the largest percentage drop from a portfolio's highest value (peak) to its lowest value (trough) before a new peak is attained. it represents the maximum cumulative loss an investor could have experienced, helping to assess downside risk and volatility.</span>
+            </span>
+        </p>
+        <p id="stat-max-dd" class="text-2xl font-bold text-zinc-400">0.00%</p>
+    </div>
+</div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="card p-6 border-l-4 border-blue-500">
