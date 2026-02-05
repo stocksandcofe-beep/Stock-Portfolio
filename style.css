@@ -108,3 +108,20 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; 
 .social-icon:hover {
     color: #10b981; /* Turns green on hover to match your theme */
 }
+
+.social-icon {
+    color: #71717a;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.social-icon:hover {
+    color: #10b981; /* Dashboard Green */
+}
+
+/* Ensure the Lucide icons match the stroke of your theme */
+.lucide {
+    stroke-width: 2.5px;
+}
