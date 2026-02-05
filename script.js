@@ -252,3 +252,6 @@ function displayHoldings(data) {
 </tr>`;
     });
 }
+
+// Initialize Lucide icons
+lucide.createIcons();
