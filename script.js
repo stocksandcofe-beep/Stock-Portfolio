@@ -237,18 +237,18 @@ function displayHoldings(data) {
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
         
         tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-            <td class="p-4" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
-                <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
-                <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
-            </td>
-            <td class="p-4 text-right font-mono text-zinc-400">${shares}</td>
-            <td class="p-4 text-right text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
-            <td class="p-4 text-right font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
-            <td class="p-4 text-right text-zinc-300 hidden">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
-            <td class="p-4 text-right font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td class="p-4 text-right font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-            <td class="p-4 text-right font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
-            <td class="p-4 text-right font-medium text-zinc-300">${weight.toFixed(1)}%</td>
-        </tr>`;
+    <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
+        <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+        <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+    </td>
+    <td class="p-4 text-center font-mono text-zinc-400">${shares}</td>
+    <td class="p-4 text-center text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
+    <td class="p-4 text-center font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
+    <td class="p-4 text-center text-zinc-300 hidden">${sym}${cleanNum(getCol(row, ['Current Price'])).toFixed(2)}</td>
+    <td class="p-4 text-center font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+    <td class="p-4 text-center font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+    <td class="p-4 text-center font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
+    <td class="p-4 text-center font-medium text-zinc-300">${weight.toFixed(1)}%</td>
+</tr>`;
     });
 }
