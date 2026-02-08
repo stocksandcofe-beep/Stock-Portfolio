@@ -46,7 +46,7 @@
         </nav>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+  <main class="flex-1 overflow-y-auto p-6 md:p-10">
     <header class="mb-8">
         <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
         <p class="text-zinc-500 mt-2">Plan and rebalance your portfolio allocation targets.</p>
@@ -57,7 +57,6 @@
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-emerald-400 transition-colors">
                 <i data-lucide="search" class="w-5 h-5"></i>
             </div>
-            
             <input 
                 type="text" 
                 id="asset-search" 
@@ -65,14 +64,37 @@
                 class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-zinc-600"
             >
         </div>
-        
-        <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
+        <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full max-w-2xl">
             </div>
     </div>
 
-    <div class="card p-10 flex flex-col items-center justify-center border-dashed opacity-50">
-        <i data-lucide="line-chart" class="w-12 h-12 text-zinc-700 mb-4"></i>
-        <p class="text-zinc-500 italic">Search for an asset above to begin planning your allocation.</p>
+    <div id="selection-container" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="card p-8 bg-zinc-900/40 border-l-4 border-emerald-500">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <h2 id="selected-ticker" class="text-3xl font-bold tracking-tighter text-white">---</h2>
+                        <span id="selected-type" class="text-[10px] bg-zinc-800 text-zinc-500 px-2 py-1 rounded uppercase font-mono tracking-widest">Asset</span>
+                    </div>
+                    <p id="selected-name" class="text-zinc-400 font-medium">Loading asset details...</p>
+                </div>
+
+                <div class="flex flex-col md:items-end">
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">Live Market Price</p>
+                    <div class="flex items-center gap-3">
+                        <span id="live-price" class="text-4xl font-mono font-bold text-white">£0.00</span>
+                        <div id="price-indicator" class="w-2 h-2 rounded-full bg-zinc-700 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card p-6 border-zinc-800/50">
+                <h3 class="text-lg font-bold mb-4">Targeting Logic</h3>
+                <p class="text-zinc-500 text-sm">Would you like to calculate how many shares you need to reach a specific % of your total portfolio?</p>
+            </div>
+        </div>
     </div>
 </main>
 
