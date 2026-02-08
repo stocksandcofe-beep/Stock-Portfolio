@@ -143,14 +143,10 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; 
     transform: translateY(-1px);
 }
 
+/* Ensure the search dropdown stays on top of everything */
 #search-results {
-    display: block; /* Ensure it's not permanently hidden by a conflict */
-    min-height: 50px;
-    z-index: 9999 !important;
-    background-color: #18181b; /* zinc-900 */
     position: absolute;
-}
-
-#search-results.hidden {
-    display: none !important;
+    width: 100%;
+    z-index: 100;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
 }
