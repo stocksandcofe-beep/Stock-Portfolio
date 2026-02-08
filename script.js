@@ -351,3 +351,21 @@ function updateAllocatorPriceUI(price) {
 
 // Initialize Lucide icons
 lucide.createIcons();
+
+// Add this at the bottom of script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const allocatorSearch = document.getElementById('asset-search');
+    
+    if (allocatorSearch) {
+        console.log("Allocator Logic Initialized"); // Check your browser console (F12) for this
+
+        const FINNHUB_KEY = 'YOUR_FINNHUB_API_KEY'; // DOUBLE CHECK THIS KEY
+        const resultsDiv = document.getElementById('search-results');
+
+        allocatorSearch.addEventListener('input', () => {
+            console.log("Typing..."); // Check if this triggers when you type
+            const query = allocatorSearch.value.trim().toUpperCase();
+            // ... rest of the search logic ...
+        });
+    }
+});
