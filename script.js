@@ -256,74 +256,98 @@ function displayHoldings(data) {
 // Initialize Lucide icons
 lucide.createIcons();
 
-// Search bar for asset allocation
-const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
-const searchInput = document.getElementById('asset-search');
-const resultsDiv = document.getElementById('search-results');
-let socket = null;
+/** * ASSET ALLOCATOR LOGIC 
+ * This only runs if the search input exists on the current page
+ */
+const allocatorSearch = document.getElementById('asset-search');
 
-// 1. SEARCH LOGIC (REST API - Required for Search)
-let timeout = null;
-searchInput.addEventListener('input', () => {
-    clearTimeout(timeout);
-    const query = searchInput.value.trim().toUpperCase();
-    if (query.length < 2) { resultsDiv.classList.add('hidden'); return; }
-    timeout = setTimeout(() => fetchResults(query), 300);
-});
+if (allocatorSearch) {
+    const FINNHUB_KEY = 'YOUR_FINNHUB_API_KEY';
+    const resultsDiv = document.getElementById('search-results');
+    let allocatorSocket = null;
+    let lastAllocPrice = 0;
 
-async function fetchResults(query) {
+    // 1. Search Logic
+    let searchTimeout = null;
+    allocatorSearch.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const query = allocatorSearch.value.trim().toUpperCase();
+        if (query.length < 2) { 
+            resultsDiv.classList.add('hidden'); 
+            return; 
+        }
+        searchTimeout = setTimeout(() => fetchAllocatorResults(query, FINNHUB_KEY, resultsDiv), 300);
+    });
+
+    // 2. WebSocket Initialization
+    window.initAllocatorSocket = function(symbol) {
+        if (allocatorSocket) allocatorSocket.close();
+        
+        allocatorSocket = new WebSocket(`wss://ws.finnhub.io?token=${FINNHUB_KEY}`);
+
+        allocatorSocket.onopen = () => {
+            allocatorSocket.send(JSON.stringify({'type':'subscribe', 'symbol': symbol}));
+        };
+
+        allocatorSocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'trade') {
+                updateAllocatorPriceUI(data.data[0].p);
+            }
+        };
+    };
+}
+
+async function fetchAllocatorResults(query, key, resultsDiv) {
     try {
-        const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${FINNHUB_KEY}`);
+        const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${key}`);
         const data = await response.json();
-        if (data.result) displayResults(data.result.slice(0, 6));
+        if (data.result) {
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.remove('hidden');
+            data.result.slice(0, 6).forEach(asset => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-4 hover:bg-emerald-500/10 cursor-pointer border-b border-zinc-800/50 last:border-0 transition-colors group";
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-white font-bold group-hover:text-emerald-400">${asset.symbol}</span>
+                        <span class="text-zinc-500 text-xs truncate max-w-[200px]">${asset.description}</span>
+                    </div>
+                    <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-mono">${asset.type || 'Stock'}</span>
+                `;
+                item.onclick = () => selectAllocatorAsset(asset.symbol, asset.description, asset.type);
+                resultsDiv.appendChild(item);
+            });
+        }
     } catch (e) { console.error("Search error", e); }
 }
 
-function displayResults(assets) {
-    resultsDiv.innerHTML = '';
-    resultsDiv.classList.remove('hidden');
-    assets.forEach(asset => {
-        const item = document.createElement('div');
-        item.className = "flex items-center justify-between p-4 hover:bg-emerald-500/10 cursor-pointer border-b border-zinc-800/50 last:border-0 transition-colors group";
-        item.innerHTML = `
-            <div class="flex flex-col">
-                <span class="text-white font-bold group-hover:text-emerald-400">${asset.symbol}</span>
-                <span class="text-zinc-500 text-xs truncate max-w-[200px]">${asset.description}</span>
-            </div>
-            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-mono">${asset.type || 'Stock'}</span>
-        `;
-        item.onclick = () => selectAsset(asset.symbol, asset.description);
-        resultsDiv.appendChild(item);
-    });
-}
-
-// 2. LIVE PRICE LOGIC (WebSocket - Saves Credits)
-function initWebSocket(symbol) {
-    if (socket) socket.close(); // Reset for new selection
+function selectAllocatorAsset(ticker, name, type) {
+    document.getElementById('selected-ticker').textContent = ticker;
+    document.getElementById('selected-name').textContent = name;
+    document.getElementById('selected-type').textContent = type || 'Asset';
     
-    socket = new WebSocket(`wss://ws.finnhub.io?token=${FINNHUB_KEY}`);
+    document.getElementById('selection-container').classList.remove('hidden');
+    document.getElementById('search-results').classList.add('hidden');
+    document.getElementById('asset-search').value = ""; 
 
-    socket.onopen = () => {
-        socket.send(JSON.stringify({'type':'subscribe', 'symbol': symbol}));
-    };
-
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'trade') {
-            const price = data.data[0].p;
-            updateLivePriceUI(price);
-        }
-    };
+    if (window.initAllocatorSocket) window.initAllocatorSocket(ticker);
 }
 
-function selectAsset(ticker, name) {
-    searchInput.value = `${ticker} - ${name}`;
-    resultsDiv.classList.add('hidden');
-    // Start the WebSocket for the chosen ticker
-    initWebSocket(ticker);
-}
+function updateAllocatorPriceUI(price) {
+    const priceEl = document.getElementById('live-price');
+    const indicator = document.getElementById('price-indicator');
+    if (!priceEl) return;
 
-function updateLivePriceUI(price) {
-    // This will target a price display we'll build in the next step
-    console.log("Live WebSocket Price:", price);
+    priceEl.textContent = `£${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+    // Visual feedback
+    if (price > window.lastAllocPrice) {
+        indicator.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
+    } else if (price < window.lastAllocPrice) {
+        indicator.className = "w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
+    }
+    
+    window.lastAllocPrice = price;
+    setTimeout(() => { if(indicator) indicator.className = "w-2 h-2 rounded-full bg-zinc-700"; }, 500);
 }
