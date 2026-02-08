@@ -30,20 +30,20 @@
             </div>
         </div>
         
-         <nav class="space-y-2 flex-1">
-        <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl">
-            <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
-            <span>Dashboard</span>
-        </div>
-        <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl">
-            <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-            <span>Holdings</span>
-        </div>
-        <div id="nav-allocator" onclick="showPage('allocator')" class="nav-item flex items-center gap-3 p-3 rounded-xl">
-            <i data-lucide="pie-chart" class="w-4 h-4"></i>
-            <span>Asset Allocator</span>
-        </div>
-    </nav>
+        <nav class="space-y-2 flex-1">
+            <div onclick="window.location.href='index.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                <span>Dashboard</span>
+            </div>
+            <div onclick="window.location.href='index.html#holdings'" class="nav-item flex items-center gap-3 p-3 rounded-xl">
+                <i data-lucide="briefcase" class="w-4 h-4"></i>
+                <span>Holdings</span>
+            </div>
+            <div class="nav-item active flex items-center gap-3 p-3 rounded-xl">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </div>
+        </nav>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
