@@ -255,3 +255,77 @@ function displayHoldings(data) {
 
 // Initialize Lucide icons
 lucide.createIcons();
+
+const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
+const searchInput = document.getElementById('asset-search');
+const resultsDiv = document.getElementById('search-results');
+
+// Debounce function to prevent hitting the API on every single keystroke
+let timeout = null;
+searchInput.addEventListener('input', () => {
+    clearTimeout(timeout);
+    const query = searchInput.value.trim().toUpperCase();
+    
+    if (query.length < 2) {
+        resultsDiv.classList.add('hidden');
+        return;
+    }
+
+    timeout = setTimeout(() => fetchResults(query), 300);
+});
+
+async function fetchResults(query) {
+    try {
+        const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${FINNHUB_KEY}`);
+        const data = await response.json();
+        
+        if (data.result && data.result.length > 0) {
+            displayResults(data.result.slice(0, 6)); // Show top 6 results
+        } else {
+            resultsDiv.innerHTML = '<div class="p-4 text-zinc-500 text-sm">No assets found.</div>';
+            resultsDiv.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error("Finnhub Error:", error);
+    }
+}
+
+function displayResults(assets) {
+    resultsDiv.innerHTML = '';
+    resultsDiv.classList.remove('hidden');
+
+    assets.forEach(asset => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-4 hover:bg-emerald-500/10 cursor-pointer border-b border-zinc-800/50 last:border-0 transition-colors group";
+        
+        // Handle cases where description or symbol might be missing
+        const name = asset.description || "Unknown Asset";
+        const symbol = asset.symbol || "N/A";
+        const type = asset.type || "Common Stock";
+
+        item.innerHTML = `
+            <div class="flex flex-col">
+                <span class="text-white font-bold group-hover:text-emerald-400">${symbol}</span>
+                <span class="text-zinc-500 text-xs truncate max-w-[250px]">${name}</span>
+            </div>
+            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-mono">${type}</span>
+        `;
+
+        item.onclick = () => selectAsset(symbol, name);
+        resultsDiv.appendChild(item);
+    });
+}
+
+function selectAsset(ticker, name) {
+    searchInput.value = `${ticker} - ${name}`;
+    resultsDiv.classList.add('hidden');
+    console.log(`Selected: ${ticker}`);
+    // Next step: Add this asset to your allocation planning table
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+        resultsDiv.classList.add('hidden');
+    }
+});
