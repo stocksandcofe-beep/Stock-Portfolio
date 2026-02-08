@@ -253,9 +253,6 @@ function displayHoldings(data) {
     });
 }
 
-// Initialize Lucide icons
-lucide.createIcons();
-
 /** * ASSET ALLOCATOR LOGIC 
  * This only runs if the search input exists on the current page
  */
@@ -351,3 +348,6 @@ function updateAllocatorPriceUI(price) {
     window.lastAllocPrice = price;
     setTimeout(() => { if(indicator) indicator.className = "w-2 h-2 rounded-full bg-zinc-700"; }, 500);
 }
+
+// Initialize Lucide icons
+lucide.createIcons();
