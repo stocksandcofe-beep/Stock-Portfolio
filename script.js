@@ -262,7 +262,7 @@ lucide.createIcons();
 const allocatorSearch = document.getElementById('asset-search');
 
 if (allocatorSearch) {
-    const FINNHUB_KEY = 'YOUR_FINNHUB_API_KEY';
+    const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
     const resultsDiv = document.getElementById('search-results');
     let allocatorSocket = null;
     let lastAllocPrice = 0;
