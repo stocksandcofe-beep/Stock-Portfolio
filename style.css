@@ -143,10 +143,9 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0B0E11; 
     transform: translateY(-1px);
 }
 
-/* Ensure the search dropdown stays on top of everything */
 #search-results {
-    position: absolute;
-    width: 100%;
-    z-index: 100;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    background-color: #18181b; /* zinc-900 */
+    border: 1px solid #27272a; /* zinc-800 */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
 }
