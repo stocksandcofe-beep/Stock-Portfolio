@@ -46,27 +46,29 @@
         </nav>
     </aside>
 
-  <main class="flex-1 overflow-y-auto p-6 md:p-10">
-    <header class="mb-8">
-        <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
-        <p class="text-zinc-500 mt-2">Plan and rebalance your portfolio allocation targets.</p>
-    </header>
-
-    <div class="max-w-2xl mb-10">
-        <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-emerald-400 transition-colors">
-                <i data-lucide="search" class="w-5 h-5"></i>
-            </div>
-            <input 
-                type="text" 
-                id="asset-search" 
-                placeholder="Search company, ticker, or ETF (e.g. Google, GOOGL, iShares...)" 
-                class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-zinc-600"
-            >
+ <main class="flex-1 overflow-y-auto p-6 md:p-10">
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
+            <p class="text-zinc-500 mt-2">Plan and rebalance your portfolio targets.</p>
         </div>
-        <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full max-w-2xl">
+
+        <div class="w-full md:w-[400px] relative">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-emerald-400 transition-colors">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </div>
+                <input 
+                    type="text" 
+                    id="asset-search" 
+                    placeholder="Search company, ticker, or ETF..." 
+                    class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-zinc-600"
+                >
             </div>
-    </div>
+            <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full">
+                </div>
+        </div>
+    </header>
 
     <div id="selection-container" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div class="card p-8 bg-zinc-900/40 border-l-4 border-emerald-500">
@@ -86,13 +88,6 @@
                         <div id="price-indicator" class="w-2 h-2 rounded-full bg-zinc-700 transition-all duration-300"></div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-6 border-zinc-800/50">
-                <h3 class="text-lg font-bold mb-4">Targeting Logic</h3>
-                <p class="text-zinc-500 text-sm">Would you like to calculate how many shares you need to reach a specific % of your total portfolio?</p>
             </div>
         </div>
     </div>
