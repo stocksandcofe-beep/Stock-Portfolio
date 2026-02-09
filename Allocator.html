@@ -48,27 +48,97 @@
 
  <main class="flex-1 overflow-y-auto p-6 md:p-10">
     <header class="flex flex-col md:flex-row md:items-center gap-10 mb-10">
-        <div class="flex-shrink-0">
-            <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
-            <p class="text-zinc-500 mt-1">Plan and rebalance your portfolio targets.</p>
+       <div id="selection-container" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    
+    <div class="card p-6 bg-zinc-900/40 border-l-4 border-emerald-500 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 id="selected-ticker" class="text-3xl font-bold tracking-tighter text-white">---</h2>
+                <p id="selected-name" class="text-zinc-400 font-medium">Asset Name</p>
+            </div>
+            <div class="text-right">
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">Live WebSocket Price</p>
+                <div class="flex items-center gap-3">
+                    <span id="live-price" class="text-4xl font-mono font-bold text-white">£0.00</span>
+                    <div id="price-indicator" class="w-2 h-2 rounded-full bg-zinc-700 transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="card p-6 border-zinc-800/50">
+            <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
+            </h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">Current Price:</span>
+                    <span id="metric-price" class="text-white font-mono font-medium">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">Change & % Change:</span>
+                    <span id="metric-change" class="text-white font-mono font-medium text-right">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">High / Low / Open:</span>
+                    <span id="metric-hlo" class="text-white font-mono font-medium text-right">---</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Previous Close:</span>
+                    <span id="metric-pc" class="text-white font-mono font-medium">---</span>
+                </div>
+            </div>
         </div>
 
-        <div class="flex-1 relative">
-            <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-emerald-400 transition-colors">
-                    <i data-lucide="search" class="w-5 h-5"></i>
+        <div class="card p-6 border-zinc-800/50">
+            <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i> Company Profile
+            </h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">Market Cap / Fund Size:</span>
+                    <span id="metric-mcap" class="text-white font-medium">---</span>
                 </div>
-                <input 
-                    type="text" 
-                    id="asset-search" 
-                    placeholder="Search company, ticker, or ETF (e.g. Google, GOOGL, iShares...)" 
-                    class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-zinc-600"
-                >
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">TER (Expense Ratio):</span>
+                    <span id="metric-ter" class="text-white font-medium">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">Dividend Yield:</span>
+                    <span id="metric-div" class="text-white font-medium">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">PE / PEG Ratio:</span>
+                    <span id="metric-pe-peg" class="text-white font-medium">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">EPS Next 5Y:</span>
+                    <span id="metric-eps" class="text-white font-medium">---</span>
+                </div>
+                <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span class="text-zinc-400">52-Week High / Low:</span>
+                    <span id="metric-52w" class="text-white font-medium">---</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Beta:</span>
+                    <span id="metric-beta" class="text-white font-medium">---</span>
+                </div>
             </div>
-            <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full">
-                </div>
         </div>
-    </header>
+
+        <div class="card p-6 border-zinc-800/50 flex flex-col">
+            <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i> Market News
+            </h3>
+            <div id="news-container" class="space-y-4 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+                <p class="text-zinc-500 italic text-sm">Select an asset to fetch latest headlines...</p>
+            </div>
+        </div>
+
+    </div>
+</div>
 
     <div id="selection-container" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
         </div>
