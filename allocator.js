@@ -41,14 +41,30 @@ function displaySearchResults(assets) {
 
 // 2. Asset Selection
 async function selectAsset(ticker, name) {
-    // ... existing UI code ...
+    // 1. Immediate UI Feedback: Hide results and clear input
+    resultsDiv.classList.add('hidden');
+    searchInput.value = "";
     
+    // 2. Update Header Labels
+    document.getElementById('selected-ticker').textContent = ticker;
+    document.getElementById('selected-name').textContent = name;
+
+    // 3. Set Currency Multiplier for London Stocks
+    window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
+
+    // 4. Fetch Data with individual "Safety Wrappers"
+    // This ensures that if fetchProfile fails, fetchQuotes still runs.
+    const safeFetch = async (fn, label) => {
+        try { await fn(ticker); } 
+        catch (e) { console.warn(`${label} failed:`, e); }
+    };
+
     await Promise.all([
-        fetchQuotes(ticker),
-        fetchFinancials(ticker),
-        fetchProfile(ticker), // Added this
-        fetchNews(ticker),
-        initWebSocket(ticker)
+        safeFetch(fetchQuotes, "Quotes"),
+        safeFetch(fetchFinancials, "Financials"),
+        safeFetch(fetchProfile, "Profile"),
+        safeFetch(fetchNews, "News"),
+        safeFetch(initWebSocket, "WebSocket")
     ]);
 }
 async function fetchQuotes(symbol) {
