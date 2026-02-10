@@ -8,6 +8,7 @@ function parseDate(dStr) { const p = dStr.split('/'); return new Date(p[2], p[0]
 Papa.parse(PERF_CSV, {
     download: true, header: false, skipEmptyLines: true,
     complete: function(results) {
+        // Filter rows that have valid date (0) and Net Value (47)
         rawPerfData = results.data.slice(1).filter(r => r[0] && r[47]);
         initDashboard();
     }
@@ -15,7 +16,10 @@ Papa.parse(PERF_CSV, {
 
 function updatePeriod(p) {
     currentPeriod = p;
-    ['all', 'ytd', '1y', 'ly'].forEach(id => document.getElementById('p-'+id).classList.toggle('active', id === p));
+    ['all', 'ytd', '1y', 'ly'].forEach(id => {
+        const btn = document.getElementById('p-'+id);
+        if(btn) btn.classList.toggle('active', id === p);
+    });
     initDashboard();
 }
 
@@ -28,8 +32,8 @@ function updateChartMode(m) {
 
 function initDashboard() {
     if (!rawPerfData.length) return;
-    const latestDataRow = rawPerfData[rawPerfData.length - 1];
-    const latestDateInFullSet = parseDate(latestDataRow[0]);
+    const latestRow = rawPerfData[rawPerfData.length - 1];
+    const latestDateInFullSet = parseDate(latestRow[0]);
 
     const filtered = rawPerfData.filter(r => {
         const d = parseDate(r[0]);
@@ -42,7 +46,6 @@ function initDashboard() {
     if (!filtered.length) return;
     const start = filtered[0], end = filtered[filtered.length - 1];
     const valEnd = cleanNum(end[47]), valStart = cleanNum(start[47]);
-
     const pProfit = cleanNum(end[51]) - cleanNum(start[51]);
     const pDep = cleanNum(end[50]) - cleanNum(start[50]);
     const baseValue = valStart + pDep;
@@ -51,22 +54,20 @@ function initDashboard() {
     document.getElementById('hero-val').innerText = '£' + valEnd.toLocaleString(undefined, {maximumFractionDigits: 0});
     document.getElementById('date-label').innerText = start[0] + ' — ' + end[0];
 
-    let displayPerc = (currentPeriod === 'all') ? ((valEnd - (valEnd - cleanNum(end[51]))) / (valEnd - cleanNum(end[51]))) * 100 : periodReturnPerc;
+    let displayPerc = (currentPeriod === 'all') ? 
+        ((valEnd - (valEnd - cleanNum(end[51]))) / (valEnd - cleanNum(end[51])) * 100) : periodReturnPerc;
 
+    // Update Return Metric Color
     const trVal = document.getElementById('stat-total-return');
     trVal.innerText = (displayPerc < 0 ? '-' : '') + Math.abs(displayPerc).toFixed(2) + '%';
     trVal.parentElement.className = `card p-6 border-l-4 ${displayPerc >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
     trVal.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
+    // Update Profit Metric Color
     const npVal = document.getElementById('stat-profit');
-    npVal.innerText = (pProfit < 0 ? '-' : '+') + '£' + Math.abs(pProfit).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    npVal.innerText = (pProfit < 0 ? '-' : '+') + '£' + Math.abs(pProfit).toLocaleString(undefined, {maximumFractionDigits: 0});
     npVal.parentElement.className = `card p-6 border-l-4 ${pProfit >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
     npVal.className = `text-2xl font-bold ${pProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-
-    const badge = document.getElementById('hero-badge');
-    badge.innerText = (displayPerc >= 0 ? '↑ ' : '↓ ') + Math.abs(displayPerc).toFixed(2) + '%';
-    badge.className = displayPerc >= 0 ? 'badge-up' : 'badge-down';
-    badge.classList.remove('hidden');
 
     calculateMetrics(filtered);
     renderChart(filtered);
@@ -86,6 +87,7 @@ function calculateMetrics(data) {
     }
     document.getElementById('stat-max-dd').innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
     document.getElementById('stat-twr').innerText = Math.abs((cumFactor - 1) * 100).toFixed(2) + '%';
+    
     if(dailyRets.length > 1) {
         const mean = dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
         const sd = Math.sqrt(dailyRets.map(x=>Math.pow(x-mean,2)).reduce((a,b)=>a+b,0)/dailyRets.length);
@@ -107,7 +109,7 @@ function renderChart(data) {
             datasets: [{
                 data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
                 borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                borderWidth: 2, pointRadius: 0, tension: 0.4, cubicInterpolationMode: 'monotone', fill: true,
+                borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true,
                 backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
             }]
         },
@@ -115,10 +117,9 @@ function renderChart(data) {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                y: { position: 'right', ticks: { color: '#71717a', callback: v => '£' + (v / 1000).toFixed(0) + 'k' } },
+                y: { position: 'right', ticks: { color: '#71717a' }, grid: { color: 'rgba(255,255,255,0.03)' } },
                 x: { ticks: { color: '#71717a', maxTicksLimit: 8 }, grid: { display: false } }
             }
         }
     });
 }
-lucide.createIcons();
