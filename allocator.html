@@ -11,40 +11,40 @@
 </head>
 <body class="flex h-screen overflow-hidden bg-black text-white">
 
-    <aside class="sidebar w-64 hidden lg:flex flex-col p-6">
-    <div class="mb-10">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="logo-container">
-                <img src="logo.png" alt="Logo" class="logo-img">
+    <aside class="sidebar w-64 flex flex-col p-6 border-r border-zinc-800">
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="logo-container">
+                    <img src="logo.png" alt="Logo" class="logo-img">
+                </div>
+                <span class="text-xl font-bold tracking-tight">Portfolio</span>
             </div>
-            <span class="text-xl font-bold tracking-tight">Portfolio</span>
+            
+            <div class="flex gap-4 px-1">
+                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+                    <i data-lucide="bookmark" class="w-4 h-4 text-zinc-500 hover:text-emerald-400 transition-colors"></i>
+                </a>
+                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+                    <i data-lucide="x" class="w-4 h-4 text-zinc-500 hover:text-emerald-400 transition-colors"></i>
+                </a>
+            </div>
         </div>
         
-        <div class="flex gap-4 px-1">
-            <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
-                <i data-lucide="bookmark" class="w-4 h-4"></i>
-            </a>
-            <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </a>
-        </div>
-    </div>
-    
-    <nav class="space-y-2 flex-1">
-        <div id="nav-dash" onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 p-3 rounded-xl">
-            <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
-            <span>Dashboard</span>
-        </div>
-        <div id="nav-holdings" onclick="showPage('holdings')" class="nav-item flex items-center gap-3 p-3 rounded-xl">
-            <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-            <span>Holdings</span>
-        </div>
-       <div id="nav-allocator" onclick="window.location.href='Allocator.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl">
-        <i data-lucide="pie-chart" class="w-4 h-4"></i>
-        <span>Asset Allocator</span>
-    </div>
-    </nav>
-</aside>
+        <nav class="space-y-2 flex-1">
+            <div onclick="window.location.href='performance.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition-colors text-zinc-400">
+                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
+                <span>Performance</span>
+            </div>
+            <div onclick="window.location.href='holdings.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition-colors text-zinc-400">
+                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                <span>Holdings</span>
+            </div>
+            <div onclick="window.location.href='allocator.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition-colors text-zinc-400">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </div>
+        </nav>
+    </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
     
