@@ -102,6 +102,17 @@ function calculateMetrics(data) {
 function renderChart(data) {
     const ctx = document.getElementById('mainChart').getContext('2d');
     if (chartInstance) chartInstance.destroy();
+
+    // Create a smooth vertical gradient for the fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    if (currentChartMode === 'growth') {
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    } else {
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    }
+
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -109,16 +120,59 @@ function renderChart(data) {
             datasets: [{
                 data: data.map(r => currentChartMode === 'growth' ? cleanNum(r[47]) : cleanNum(r[51])),
                 borderColor: currentChartMode === 'growth' ? '#10b981' : '#3b82f6',
-                borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true,
-                backgroundColor: currentChartMode === 'growth' ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)'
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4, // Essential for the smooth curved look
+                cubicInterpolationMode: 'monotone', // Keeps curves natural
+                fill: true,
+                backgroundColor: gradient
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false }, // Shows tooltips easily on hover
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    displayColors: false,
+                    padding: 10,
+                    bodySpacing: 5,
+                    callbacks: {
+                        title: context => data[context[0].dataIndex][0], // Restores date in tooltip
+                        label: context => new Intl.NumberFormat('en-GB', { 
+                            style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 
+                        }).format(context.parsed.y)
+                    }
+                }
+            },
             scales: {
-                y: { position: 'right', ticks: { color: '#71717a' }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                x: { ticks: { color: '#71717a', maxTicksLimit: 8 }, grid: { display: false } }
+                y: { 
+                    position: 'right', 
+                    ticks: { 
+                        color: '#71717a', 
+                        font: { size: 10 },
+                        // Restores the "£10k" format for readability
+                        callback: v => '£' + (v / 1000).toFixed(0) + 'k' 
+                    }, 
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' } 
+                },
+                x: { 
+                    ticks: { 
+                        color: '#71717a', 
+                        font: { size: 10 }, 
+                        autoSkip: true,
+                        maxTicksLimit: 8,
+                        callback: function(val, index) {
+                            const date = this.getLabelForValue(val);
+                            if (currentPeriod === 'all') {
+                                return date.getFullYear() + ' ' + date.toLocaleString('default', { month: 'short' });
+                            }
+                            return date.toLocaleString('default', { month: 'short' });
+                        }
+                    }, 
+                    grid: { display: false } 
+                }
             }
         }
     });
