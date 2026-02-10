@@ -1,4 +1,5 @@
 const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
+const NINJAS_KEY = 'OSbyAOvXuAW1AUKsf17vlEHzjp0ysuTjIk2NSKOf';
 const searchInput = document.getElementById('asset-search');
 const resultsDiv = document.getElementById('search-results');
 let allocatorSocket = null;
@@ -75,31 +76,47 @@ async function fetchQuotes(symbol) {
 }
 
 async function fetchFinancials(symbol) {
-    try {
-        const res = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`);
-        const data = await res.json();
-        
-        if (!data || !data.metric) return;
-        const m = data.metric;
+    // 1. Determine if it's an ETF based on the ticker or search metadata
+    // LSE tickers (.L) or known ETF patterns trigger the API Ninjas path
+    const isETF = symbol.includes('.L') || symbol.includes('VUSA') || symbol.includes('QQQ');
 
-        // Populate Standard Stock Metrics
-        const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
-        const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : '-';
+    // Reset UI fields before fetching
+    const fields = ['metric-mcap', 'metric-ter', 'metric-pe', 'metric-div', 'metric-eps'];
+    fields.forEach(id => document.getElementById(id).textContent = '-');
 
-        document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
-        document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
-        document.getElementById('metric-peg').textContent = formatValue(m.pegRatio);
-        document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
-        document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y) + '%';
-        document.getElementById('metric-52w').textContent = `${m['52WeekHigh'] || '-'} / ${m['52WeekLow'] || '-'}`;
-        document.getElementById('metric-beta').textContent = formatValue(m.beta);
+    if (isETF) {
+        // --- STEP 2: ETF Path (API Ninjas) ---
+        try {
+            const response = await fetch(`https://api.api-ninjas.com/v1/etf?ticker=${symbol}`, {
+                headers: { 'X-Api-Key': NINJAS_KEY }
+            });
+            const data = await response.json();
 
-        // Explicitly set TER to '-' for Stocks
-        const terEl = document.getElementById('metric-ter');
-        if (terEl) terEl.textContent = '-';
+            // Populate ETF-specific metrics
+            document.getElementById('metric-mcap').textContent = data.aum ? (data.aum / 1e9).toFixed(2) + 'B' : 'N/A';
+            document.getElementById('metric-ter').textContent = data.expense_ratio ? data.expense_ratio + '%' : 'N/A';
+            document.getElementById('metric-pe').textContent = 'ETF'; // Placeholder for clarity
+            document.getElementById('metric-eps').textContent = 'N/A';
+        } catch (e) {
+            console.error(\"API Ninjas ETF Fetch Error:\", e);
+        }
+    } else {
+        // --- STEP 2: Stock Path (Finnhub) ---
+        try {
+            const res = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`);
+            const data = await res.json();
+            const m = data.metric;
 
-    } catch (error) {
-        console.error("Stock financial fetch failed:", error);
+            if (m) {
+                document.getElementById('metric-mcap').textContent = (m.marketCapitalization / 1000).toFixed(2) + 'B';
+                document.getElementById('metric-pe').textContent = m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : '-';
+                document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? m.dividendYieldIndicatedAnnual.toFixed(2) + '%' : '0.00%';
+                document.getElementById('metric-eps').textContent = m.epsGrowthNext5Y ? m.epsGrowthNext5Y.toFixed(2) + '%' : '-';
+                document.getElementById('metric-ter').textContent = 'N/A';
+            }
+        } catch (e) {
+            console.error(\"Finnhub Stock Fetch Error:\", e);
+        }
     }
 }
 async function fetchNews(symbol) {
