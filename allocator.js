@@ -67,21 +67,28 @@ async function selectAsset(ticker, name) {
         safeFetch(initWebSocket, "WebSocket")
     ]);
 }
+
 async function fetchQuotes(symbol) {
     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
     const d = await res.json();
     const m = window.priceMultiplier || 1.0;
     
-    // Updates the Live Price & Change
+    // 1. Update Live Price
     document.getElementById('metric-price').textContent = `£${(d.c * m).toFixed(2)}`;
     
-    // UPDATED: Populate High/Low/Open in Daily Quotes table
-    // Assumes you have an ID like 'metric-hlo' in your table
+    // 2. Update Previous Close (Yesterday's Close)
+    const prevCloseEl = document.getElementById('metric-pc');
+    if (prevCloseEl) {
+        prevCloseEl.textContent = `£${(d.pc * m).toFixed(2)}`;
+    }
+
+    // 3. Update High/Low/Open Table row
     const hloEl = document.getElementById('metric-hlo');
     if (hloEl) {
         hloEl.textContent = `${(d.h * m).toFixed(2)} / ${(d.l * m).toFixed(2)} / ${(d.o * m).toFixed(2)}`;
     }
 
+    // 4. Update Change Indicator
     document.getElementById('metric-change').innerHTML = `
         <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
             ${d.d >= 0 ? '+' : ''}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
@@ -97,14 +104,30 @@ async function fetchFinancials(symbol) {
 
     if (!m) return;
 
-    const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
-    const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : '-';
+    // Helper functions for consistent formatting
+    const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A';
+    const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : 'N/A';
 
+    // 1. Market Cap (Fund Size for ETFs)
     document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
+
+    // 2. Dividend Yield
+    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual 
+        ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` 
+        : '0.00%';
+
+    // 3. Stock Fundamental Metrics
     document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
-    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+    document.getElementById('metric-peg').textContent = formatValue(m.pegRatio);
     document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y) + '%';
-    document.getElementById('metric-ter').textContent = '-'; // Reverted: ETFs not handled here
+    
+    // 4. Price Action Metrics
+    document.getElementById('metric-52w').textContent = `${m['52WeekHigh']} / ${m['52WeekLow']}`;
+    document.getElementById('metric-beta').textContent = formatValue(m.beta);
+
+    // Explicitly hide TER for common stocks
+    const terEl = document.getElementById('metric-ter');
+    if (terEl) terEl.textContent = '-';
 }
 
 // 3. WebSocket & News (Existing logic restored)
@@ -125,9 +148,38 @@ function updatePriceUI(price) {
 }
 
 async function fetchNews(symbol) {
-    const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=2024-01-01&to=2025-12-31&token=${FINNHUB_KEY}`);
-    const data = await res.json();
-    displayNews(data.slice(0, 4));
+    // Generate dates for the last 7 days
+    const today = new Date().toISOString().split('T')[0];
+    const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    try {
+        const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${lastWeek}&to=${today}&token=${FINNHUB_KEY}`);
+        const data = await res.json();
+        
+        const container = document.getElementById('allocator-news');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (data.length === 0) {
+            container.innerHTML = '<p class="text-zinc-500 text-xs p-4">No recent news found for this ticker.</p>';
+            return;
+        }
+
+        data.slice(0, 4).forEach(item => {
+            const article = document.createElement('div');
+            article.className = "p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50 mb-2";
+            article.innerHTML = `
+                <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
+                    <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
+                </a>
+                <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleDateString()}</p>
+            `;
+            container.appendChild(article);
+        });
+    } catch (e) {
+        console.error("News Fetch Error:", e);
+    }
 }
 
 function displayNews(news) {
