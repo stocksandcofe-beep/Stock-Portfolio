@@ -5,11 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Holdings</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Restoring Tooltip Styles */
+        .tooltip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            background: #3f3f46;
+            color: #a1a1aa;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: help;
+            margin-left: 6px;
+            position: relative;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #18181b;
+            color: #d4d4d8;
+            text-align: center;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 10px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.4;
+            text-transform: none;
+            pointer-events: none;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="flex h-screen overflow-hidden bg-black text-white">
 
@@ -51,35 +93,36 @@
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="mb-10 flex justify-between items-center">
             <h1 class="text-4xl font-bold tracking-tight">Holdings</h1>
-            <button onclick="refreshLivePrices()" class="refresh-btn flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-colors">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                Refresh Live Prices
-            </button>
+            <button onclick="refreshLivePrices()" class="refresh-btn">Refresh Live Prices</button>
         </header>
-
+        
         <div class="card overflow-x-auto">
             <table class="w-full text-left min-w-[1200px]">
                 <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest relative z-20">
                     <tr>
-                        <th class="p-4 sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Company')">Company ↕</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Shares')">Shares ↕</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('BEP Price')">BEP ↕</th>
+                        <th class="p-4 sortable" onclick="sortHoldings('Company')">Company ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('Shares')">Shares ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('BEP Price')">
+                            <div class="flex items-center justify-end">BEP ↕ 
+                                <span class="tooltip">? 
+                                    <span class="tooltiptext">Break-even price is the price at which an asset, if sold, would pay for the costs of ownership. Any amount beyond the break-even price is profit.</span>
+                                </span>
+                            </div>
+                        </th>
                         <th class="p-4 text-center text-emerald-400">Live Price</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Current Value')">£ Value ↕</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('% Return')">% P/L ↕</th>
-                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Allocation')">Allocation ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('Current Value')">£ Value ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('% Return')">% P/L ↕</th>
+                        <th class="p-4 text-center sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                     </tr>
                 </thead>
-                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
-                    </tbody>
+                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
             </table>
         </div>
     </main>
 
     <script src="holdings.js"></script>
     <script>
-        // Initialize icons on page load
         lucide.createIcons();
     </script>
 </body>
