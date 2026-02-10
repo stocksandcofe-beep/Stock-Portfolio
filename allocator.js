@@ -41,33 +41,36 @@ function displaySearchResults(assets) {
 
 // 2. Asset Selection
 async function selectAsset(ticker, name) {
-    document.getElementById('selected-ticker').textContent = ticker;
-    document.getElementById('selected-name').textContent = name;
-    resultsDiv.classList.add('hidden');
-    searchInput.value = "";
-
-    // LSE Correction (Pence to Pounds)
-    window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
-
+    // ... existing UI code ...
+    
     await Promise.all([
         fetchQuotes(ticker),
         fetchFinancials(ticker),
+        fetchProfile(ticker), // Added this
         fetchNews(ticker),
         initWebSocket(ticker)
     ]);
 }
-
 async function fetchQuotes(symbol) {
     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
     const d = await res.json();
     const m = window.priceMultiplier || 1.0;
     
+    // Updates the Live Price & Change
     document.getElementById('metric-price').textContent = `£${(d.c * m).toFixed(2)}`;
-    document.getElementById('metric-pc').textContent = `£${(d.pc * m).toFixed(2)}`;
+    
+    // UPDATED: Populate High/Low/Open in Daily Quotes table
+    // Assumes you have an ID like 'metric-hlo' in your table
+    const hloEl = document.getElementById('metric-hlo');
+    if (hloEl) {
+        hloEl.textContent = `${(d.h * m).toFixed(2)} / ${(d.l * m).toFixed(2)} / ${(d.o * m).toFixed(2)}`;
+    }
+
     document.getElementById('metric-change').innerHTML = `
         <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
             ${d.d >= 0 ? '+' : ''}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
         </span>`;
+    
     lastAllocPrice = d.c;
 }
 
@@ -125,4 +128,21 @@ function displayNews(news) {
         `;
         container.appendChild(article);
     });
+}
+
+async function fetchProfile(symbol) {
+    try {
+        const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_KEY}`);
+        const data = await res.json();
+
+        if (data.name) {
+            // Populate your Company Profile table IDs
+            document.getElementById('profile-industry').textContent = data.finnhubIndustry || '-';
+            document.getElementById('profile-country').textContent = data.country || '-';
+            document.getElementById('profile-exchange').textContent = data.exchange || '-';
+            document.getElementById('profile-website').innerHTML = `<a href="${data.weburl}" target="_blank" class="text-emerald-400 hover:underline">Visit Site</a>`;
+        }
+    } catch (e) {
+        console.error("Profile Fetch Error:", e);
+    }
 }
