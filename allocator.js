@@ -44,17 +44,15 @@ function displaySearchResults(assets) {
 async function selectAsset(ticker, name) {
     document.getElementById('selected-ticker').textContent = ticker;
     document.getElementById('selected-name').textContent = name;
-    resultsDiv.classList.add('hidden');
-    searchInput.value = "";
-
-    // Global multiplier for LSE stocks (pence to pounds)
+    
+    // Correct for LSE pence vs pounds
     window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
 
     await Promise.all([
-        fetchQuotes(ticker),
-        fetchFinancials(ticker),
-        fetchNews(ticker),
-        initWebSocket(ticker)
+        fetchQuotes(ticker),      // Uses Finnhub for Price
+        fetchFinancials(ticker),  // Uses Two-Step Logic (Finnhub or Ninjas)
+        fetchNews(ticker),        // Uses Finnhub for News
+        initWebSocket(ticker)     // Uses Finnhub for Live Feed
     ]);
 }
 
