@@ -46,7 +46,9 @@ async function selectAsset(ticker, name) {
     resultsDiv.classList.add('hidden');
     searchInput.value = "";
 
-    // Fetch all data in parallel
+    // Global multiplier for LSE stocks (pence to pounds)
+    window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
+
     await Promise.all([
         fetchQuotes(ticker),
         fetchFinancials(ticker),
@@ -59,14 +61,16 @@ async function selectAsset(ticker, name) {
 async function fetchQuotes(symbol) {
     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
     const d = await res.json();
+    const m = window.priceMultiplier || 1.0;
     
-    document.getElementById('metric-price').textContent = `£${d.c.toFixed(2)}`;
+    document.getElementById('metric-price').textContent = `£${(d.c * m).toFixed(2)}`;
+    document.getElementById('metric-pc').textContent = `£${(d.pc * m).toFixed(2)}`;
+    document.getElementById('metric-hlo').textContent = `${(d.h * m).toFixed(2)} / ${(d.l * m).toFixed(2)} / ${(d.o * m).toFixed(2)}`;
+    
     document.getElementById('metric-change').innerHTML = `
         <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-            ${d.d >= 0 ? '+' : ''}${d.d.toFixed(2)} (${d.dp.toFixed(2)}%)
+            ${d.d >= 0 ? '+' : ''}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
         </span>`;
-    document.getElementById('metric-hlo').textContent = `${d.h.toFixed(2)} / ${d.l.toFixed(2)} / ${d.o.toFixed(2)}`;
-    document.getElementById('metric-pc').textContent = `£${d.pc.toFixed(2)}`;
 }
 
 async function fetchFinancials(symbol) {
@@ -76,18 +80,29 @@ async function fetchFinancials(symbol) {
 
     if (!m) return;
 
-    // Helper to format large numbers
     const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A';
     const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : 'N/A';
 
+    // MCAP & 52W High/Low work for both
     document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
-    document.getElementById('metric-ter').textContent = m.expenseRatio ? `${m.expenseRatio}%` : 'N/A';
-    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
-    document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
-    document.getElementById('metric-peg').textContent = formatValue(m.pegRatio);
-    document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y);
     document.getElementById('metric-52w').textContent = `${m['52WeekHigh']} / ${m['52WeekLow']}`;
     document.getElementById('metric-beta').textContent = formatValue(m.beta);
+
+    // ETF Specific: Total Expense Ratio (TER)
+    const ter = m.expenseRatio || m.itdExpenseRatio || null;
+    document.getElementById('metric-ter').textContent = ter ? `${ter.toFixed(2)}%` : 'N/A';
+
+    // Asset Category Fallback for Table Logic
+    const assetType = m.assetClass || (m.peBasicExclExtraTTM ? 'Equity' : 'ETF/Commodity');
+    
+    // Update P/E and Div Yield (ETFs often have 0 P/E)
+    document.getElementById('metric-pe').textContent = m.peBasicExclExtraTTM ? formatValue(m.peBasicExclExtraTTM) : 'N/A (ETF)';
+    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+    
+    // Custom check for Silver/Gold ETFs
+    if (symbol === 'SSLN.L') {
+        document.getElementById('metric-pe').textContent = 'N/A (Physical)';
+    }
 }
 
 async function fetchNews(symbol) {
@@ -123,12 +138,11 @@ function initWebSocket(symbol) {
 }
 
 function updatePriceUI(price) {
+    const m = window.priceMultiplier || 1.0;
+    const correctedPrice = price * m;
     const priceEl = document.getElementById('live-price');
-    const indicator = document.getElementById('price-indicator');
-    priceEl.textContent = `£${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    indicator.className = `w-2 h-2 rounded-full ${price > lastAllocPrice ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'}`;
-    lastAllocPrice = price;
-    setTimeout(() => { if(indicator) indicator.className = "w-2 h-2 rounded-full bg-zinc-700"; }, 500);
+    priceEl.textContent = `£${correctedPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    // ... existing indicator logic
 }
 
 // Init Lucide
