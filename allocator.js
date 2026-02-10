@@ -79,39 +79,24 @@ async function fetchFinancials(symbol) {
     const data = await res.json();
     const m = data.metric;
 
-    // 1. Clear all fields first to prevent old stock data from sticking
-    const fields = ['metric-mcap', 'metric-ter', 'metric-div', 'metric-pe', 'metric-peg', 'metric-eps', 'metric-52w', 'metric-beta'];
-    fields.forEach(id => document.getElementById(id).textContent = '-');
-
-    if (!m) return;
-
-    // 2. Identify if it is an ETF (No P/E or has an Expense Ratio)
-    const isETF = !m.peBasicExclExtraTTM || m.expenseRatio > 0 || symbol.includes('.L');
-
-    // 3. Populate universal metrics
-    const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : 'N/A';
-    document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
-    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
-    document.getElementById('metric-52w').textContent = `${m['52WeekHigh']} / ${m['52WeekLow']}`;
-
-    if (isETF) {
-        // ETF-ONLY Logic: Show TER, blank out the rest
-        document.getElementById('metric-ter').textContent = m.expenseRatio ? `${m.expenseRatio.toFixed(2)}%` : 'N/A';
-        
-        // Explicitly blank out Stock-specific metrics for ETFs
-        document.getElementById('metric-pe').textContent = '-';
-        document.getElementById('metric-peg').textContent = '-';
-        document.getElementById('metric-eps').textContent = '-';
-        document.getElementById('metric-beta').textContent = '-';
-    } else {
-        // STOCK-ONLY Logic: Populate everything
-        const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A';
-        document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
-        document.getElementById('metric-peg').textContent = formatValue(m.pegRatio);
-        document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y);
-        document.getElementById('metric-beta').textContent = formatValue(m.beta);
-        document.getElementById('metric-ter').textContent = '-';
+    if (!m) {
+        console.error("No metrics found for this ticker.");
+        return;
     }
+
+    // 1. FUND SIZE (Market Cap)
+    const fundSize = m.marketCapitalization ? (m.marketCapitalization / 1000).toFixed(2) + 'B' : 'N/A';
+    document.getElementById('metric-mcap').textContent = fundSize;
+
+    // 2. TER (Expense Ratio) - Specifically check for ETF fields
+    const ter = m.expenseRatio || m.itdExpenseRatio || null;
+    document.getElementById('metric-ter').textContent = ter ? `${ter.toFixed(2)}%` : '-';
+
+    // 3. DIVIDEND YIELD
+    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+
+    // 4. NEWS (Always fetch news regardless of asset type)
+    fetchNews(symbol);
 }
 
 async function fetchNews(symbol) {
