@@ -5,16 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Holdings</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="flex h-screen overflow-hidden bg-black text-white">
 
     <aside class="sidebar w-64 hidden lg:flex flex-col p-6 border-r border-zinc-800">
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="logo-container">
+                    <img src="logo.png" alt="Logo" class="logo-img">
+                </div>
+                <span class="text-xl font-bold tracking-tight">Portfolio</span>
+            </div>
+            
+            <div class="flex gap-4 px-1">
+                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+                    <i data-lucide="bookmark" class="w-4 h-4"></i>
+                </a>
+                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+        
         <nav class="space-y-2 flex-1">
-            <div onclick="window.location.href='performance.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition-colors">
+            <div onclick="window.location.href='index.html'" class="nav-item flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-zinc-900 transition-colors">
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </div>
@@ -32,15 +51,36 @@
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="mb-10 flex justify-between items-center">
             <h1 class="text-4xl font-bold tracking-tight">Holdings</h1>
-            <button onclick="refreshLivePrices()" class="refresh-btn">Refresh Live Prices</button>
+            <button onclick="refreshLivePrices()" class="refresh-btn flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-colors">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh Live Prices
+            </button>
         </header>
+
         <div class="card overflow-x-auto">
             <table class="w-full text-left min-w-[1200px]">
-                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
+                <thead class="bg-zinc-900/50 text-zinc-500 text-[10px] uppercase font-bold tracking-widest relative z-20">
+                    <tr>
+                        <th class="p-4 sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Company')">Company ↕</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Shares')">Shares ↕</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('BEP Price')">BEP ↕</th>
+                        <th class="p-4 text-center text-emerald-400">Live Price</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Current Value')">£ Value ↕</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('% Return')">% P/L ↕</th>
+                        <th class="p-4 text-center sortable cursor-pointer hover:text-white transition-colors" onclick="sortHoldings('Allocation')">Allocation ↕</th>
+                    </tr>
+                </thead>
+                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
+                    </tbody>
             </table>
         </div>
     </main>
 
     <script src="holdings.js"></script>
+    <script>
+        // Initialize icons on page load
+        lucide.createIcons();
+    </script>
 </body>
 </html>
