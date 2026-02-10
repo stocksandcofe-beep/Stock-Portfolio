@@ -1,5 +1,4 @@
 const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
-const NINJAS_KEY = 'OSbyAOvXuAW1AUKsf17vlEHzjp0ysuTjIk2NSKOf';
 const searchInput = document.getElementById('asset-search');
 const resultsDiv = document.getElementById('search-results');
 let allocatorSocket = null;
@@ -40,105 +39,56 @@ function displaySearchResults(assets) {
     });
 }
 
-// 2. Asset Selection & Data Orchestration
+// 2. Asset Selection
 async function selectAsset(ticker, name) {
     document.getElementById('selected-ticker').textContent = ticker;
     document.getElementById('selected-name').textContent = name;
-    
-    // Correct for LSE pence vs pounds
+    resultsDiv.classList.add('hidden');
+    searchInput.value = "";
+
+    // LSE Correction (Pence to Pounds)
     window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
 
     await Promise.all([
-        fetchQuotes(ticker),      // Uses Finnhub for Price
-        fetchFinancials(ticker),  // Uses Two-Step Logic (Finnhub or Ninjas)
-        fetchNews(ticker),        // Uses Finnhub for News
-        initWebSocket(ticker)     // Uses Finnhub for Live Feed
+        fetchQuotes(ticker),
+        fetchFinancials(ticker),
+        fetchNews(ticker),
+        initWebSocket(ticker)
     ]);
 }
 
-// 3. Fetching Functions
 async function fetchQuotes(symbol) {
     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
     const d = await res.json();
     const m = window.priceMultiplier || 1.0;
     
-    // Update Price and Change (Applies to both Stocks and ETFs)
     document.getElementById('metric-price').textContent = `£${(d.c * m).toFixed(2)}`;
     document.getElementById('metric-pc').textContent = `£${(d.pc * m).toFixed(2)}`;
-    document.getElementById('metric-hlo').textContent = `${(d.h * m).toFixed(2)} / ${(d.l * m).toFixed(2)} / ${(d.o * m).toFixed(2)}`;
-    
     document.getElementById('metric-change').innerHTML = `
         <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
             ${d.d >= 0 ? '+' : ''}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
         </span>`;
+    lastAllocPrice = d.c;
 }
 
 async function fetchFinancials(symbol) {
-    // 1. Determine if it's an ETF based on the ticker or search metadata
-    // LSE tickers (.L) or known ETF patterns trigger the API Ninjas path
-    const isETF = symbol.includes('.L') || symbol.includes('VUSA') || symbol.includes('QQQ');
+    const res = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`);
+    const data = await res.json();
+    const m = data.metric;
 
-    // Reset UI fields before fetching
-    const fields = ['metric-mcap', 'metric-ter', 'metric-pe', 'metric-div', 'metric-eps'];
-    fields.forEach(id => document.getElementById(id).textContent = '-');
+    if (!m) return;
 
-    if (isETF) {
-        // --- STEP 2: ETF Path (API Ninjas) ---
-        try {
-            const response = await fetch(`https://api.api-ninjas.com/v1/etf?ticker=${symbol}`, {
-                headers: { 'X-Api-Key': NINJAS_KEY }
-            });
-            const data = await response.json();
+    const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
+    const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : '-';
 
-            // Populate ETF-specific metrics
-            document.getElementById('metric-mcap').textContent = data.aum ? (data.aum / 1e9).toFixed(2) + 'B' : 'N/A';
-            document.getElementById('metric-ter').textContent = data.expense_ratio ? data.expense_ratio + '%' : 'N/A';
-            document.getElementById('metric-pe').textContent = 'ETF'; // Placeholder for clarity
-            document.getElementById('metric-eps').textContent = 'N/A';
-        } catch (e) {
-            console.error(\"API Ninjas ETF Fetch Error:\", e);
-        }
-    } else {
-        // --- STEP 2: Stock Path (Finnhub) ---
-        try {
-            const res = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`);
-            const data = await res.json();
-            const m = data.metric;
-
-            if (m) {
-                document.getElementById('metric-mcap').textContent = (m.marketCapitalization / 1000).toFixed(2) + 'B';
-                document.getElementById('metric-pe').textContent = m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : '-';
-                document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? m.dividendYieldIndicatedAnnual.toFixed(2) + '%' : '0.00%';
-                document.getElementById('metric-eps').textContent = m.epsGrowthNext5Y ? m.epsGrowthNext5Y.toFixed(2) + '%' : '-';
-                document.getElementById('metric-ter').textContent = 'N/A';
-            }
-        } catch (e) {
-            console.error(\"Finnhub Stock Fetch Error:\", e);
-        }
-    }
-}
-async function fetchNews(symbol) {
-    const today = new Date().toISOString().split('T')[0];
-    const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${today}&to=${today}&token=${FINNHUB_KEY}`);
-    const news = await res.json();
-    
-    const container = document.getElementById('news-container');
-    container.innerHTML = news.length ? '' : '<p class="text-zinc-600 italic text-xs">No recent news found.</p>';
-    
-    news.slice(0, 5).forEach(item => {
-        const article = document.createElement('div');
-        article.className = "border-b border-zinc-800/50 pb-3 last:border-0";
-        article.innerHTML = `
-            <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
-                <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
-            </a>
-            <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-        `;
-        container.appendChild(article);
-    });
+    document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
+    document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
+    document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+    document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y) + '%';
+    document.getElementById('metric-ter').textContent = '-'; // Reverted: ETFs not handled here
 }
 
-// 4. WebSocket (Live Update)
+// 3. WebSocket & News (Existing logic restored)
 function initWebSocket(symbol) {
     if (allocatorSocket) allocatorSocket.close();
     allocatorSocket = new WebSocket(`wss://ws.finnhub.io?token=${FINNHUB_KEY}`);
@@ -151,11 +101,28 @@ function initWebSocket(symbol) {
 
 function updatePriceUI(price) {
     const m = window.priceMultiplier || 1.0;
-    const correctedPrice = price * m;
     const priceEl = document.getElementById('live-price');
-    priceEl.textContent = `£${correctedPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    // ... existing indicator logic
+    priceEl.textContent = `£${(price * m).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 }
 
-// Init Lucide
-lucide.createIcons();
+async function fetchNews(symbol) {
+    const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=2024-01-01&to=2025-12-31&token=${FINNHUB_KEY}`);
+    const data = await res.json();
+    displayNews(data.slice(0, 4));
+}
+
+function displayNews(news) {
+    const container = document.getElementById('allocator-news');
+    container.innerHTML = '';
+    news.forEach(item => {
+        const article = document.createElement('div');
+        article.className = "p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50";
+        article.innerHTML = `
+            <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
+                <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
+            </a>
+            <p class="text-[10px] text-zinc-500 uppercase">${item.source}</p>
+        `;
+        container.appendChild(article);
+    });
+}
