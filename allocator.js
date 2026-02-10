@@ -148,40 +148,55 @@ function updatePriceUI(price) {
 }
 
 async function fetchNews(symbol) {
-    // Generate dates for the last 7 days
+    // 1. Generate fresh dates for the last 7 days (ISO format: YYYY-MM-DD)
     const today = new Date().toISOString().split('T')[0];
     const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     try {
+        // 2. Call the company-news endpoint with the fresh date window
         const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${lastWeek}&to=${today}&token=${FINNHUB_KEY}`);
         const data = await res.json();
         
         const container = document.getElementById('allocator-news');
         if (!container) return;
         
+        // 3. Clear existing content
         container.innerHTML = '';
         
-        if (data.length === 0) {
-            container.innerHTML = '<p class="text-zinc-500 text-xs p-4">No recent news found for this ticker.</p>';
+        // 4. Handle empty news response gracefully
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="p-8 text-center">
+                    <p class="text-zinc-500 text-xs italic">No news articles found for ${symbol} in the last 7 days.</p>
+                </div>`;
             return;
         }
 
+        // 5. Display the latest 4 news items
         data.slice(0, 4).forEach(item => {
             const article = document.createElement('div');
-            article.className = "p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50 mb-2";
+            article.className = "p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50 mb-3 hover:border-emerald-500/30 transition-all";
             article.innerHTML = `
-                <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
-                    <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
+                <a href="${item.url}" target="_blank" class="block group">
+                    <p class="text-xs font-bold leading-tight mb-2 group-hover:text-emerald-400 transition-colors line-clamp-2">
+                        ${item.headline}
+                    </p>
                 </a>
-                <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleDateString()}</p>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-zinc-500 uppercase font-medium">${item.source}</span>
+                    <span class="text-[10px] text-zinc-400">
+                        ${new Date(item.datetime * 1000).toLocaleDateString()}
+                    </span>
+                </div>
             `;
             container.appendChild(article);
         });
     } catch (e) {
         console.error("News Fetch Error:", e);
+        const container = document.getElementById('allocator-news');
+        if (container) container.innerHTML = '<p class="text-rose-400 text-[10px] p-4 text-center">Failed to load news.</p>';
     }
 }
-
 function displayNews(news) {
     const container = document.getElementById('allocator-news');
     container.innerHTML = '';
