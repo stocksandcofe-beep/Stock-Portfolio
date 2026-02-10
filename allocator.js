@@ -148,45 +148,24 @@ function updatePriceUI(price) {
 }
 
 async function fetchNews(symbol) {
-    // 1. Generate fresh dates for the last 7 days (ISO format: YYYY-MM-DD)
     const today = new Date().toISOString().split('T')[0];
-    const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-    try {
-        // 2. Fetch using the dynamic date range
-        const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${lastWeek}&to=${today}&token=${FINNHUB_KEY}`);
-        const data = await res.json();
-        
-        const container = document.getElementById('allocator-news');
-        if (!container) return;
-        
-        // 3. Clear existing list
-        container.innerHTML = '';
-        
-        // 4. Handle no news found
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p class="text-zinc-500 text-xs p-4 italic text-center">No recent news articles found.</p>';
-            return;
-        }
-
-        // 5. Populate table with top 4 articles
-        data.slice(0, 4).forEach(item => {
-            const article = document.createElement('div');
-            article.className = "p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50 hover:border-emerald-500/30 transition-all mb-2";
-            article.innerHTML = `
-                <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
-                    <p class="text-xs font-bold leading-tight mb-2">${item.headline}</p>
-                </a>
-                <div class="flex justify-between items-center">
-                    <p class="text-[10px] text-zinc-500 uppercase">${item.source}</p>
-                    <p class="text-[10px] text-zinc-400">${new Date(item.datetime * 1000).toLocaleDateString()}</p>
-                </div>
-            `;
-            container.appendChild(article);
-        });
-    } catch (e) {
-        console.error("News Fetch Error:", e);
-    }
+    const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${today}&to=${today}&token=${FINNHUB_KEY}`);
+    const news = await res.json();
+    
+    const container = document.getElementById('news-container');
+    container.innerHTML = news.length ? '' : '<p class="text-zinc-600 italic text-xs">No recent news found.</p>';
+    
+    news.slice(0, 5).forEach(item => {
+        const article = document.createElement('div');
+        article.className = "border-b border-zinc-800/50 pb-3 last:border-0";
+        article.innerHTML = `
+            <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
+                <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
+            </a>
+            <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+        `;
+        container.appendChild(article);
+    });
 }
 function displayNews(news) {
     const container = document.getElementById('allocator-news');
