@@ -79,44 +79,27 @@ async function fetchFinancials(symbol) {
         const res = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`);
         const data = await res.json();
         
-        // Reset ALL displays to '-' first to clear previous search data
-        const allMetrics = ['metric-mcap', 'metric-pe', 'metric-div', 'metric-ter', 'metric-eps', 'metric-52w', 'metric-beta'];
-        allMetrics.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.textContent = '-';
-        });
-
         if (!data || !data.metric) return;
         const m = data.metric;
 
-        // 1. Determine Asset Type
-        // If it has an expense ratio or no P/E, we treat it as an ETF
-        const isETF = (m.expenseRatio > 0 || !m.peBasicExclExtraTTM || symbol.includes('.L'));
+        // Populate Standard Stock Metrics
+        const formatValue = (val) => val ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
+        const formatBillions = (val) => val ? (val / 1000).toFixed(2) + 'B' : '-';
 
-        // 2. Populate Universal Metrics (Market Cap / Fund Size)
-        const mcap = m.marketCapitalization ? (m.marketCapitalization / 1000).toFixed(2) + 'B' : 'N/A';
-        document.getElementById('metric-mcap').textContent = mcap;
+        document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
+        document.getElementById('metric-pe').textContent = formatValue(m.peBasicExclExtraTTM);
+        document.getElementById('metric-peg').textContent = formatValue(m.pegRatio);
+        document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+        document.getElementById('metric-eps').textContent = formatValue(m.epsGrowthNext5Y) + '%';
         document.getElementById('metric-52w').textContent = `${m['52WeekHigh'] || '-'} / ${m['52WeekLow'] || '-'}`;
+        document.getElementById('metric-beta').textContent = formatValue(m.beta);
 
-        if (isETF) {
-            // ETF VIEW: Show TER & Yield only
-            document.getElementById('metric-ter').textContent = m.expenseRatio ? `${m.expenseRatio.toFixed(2)}%` : 'N/A';
-            document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
-            
-            // Hide/Blank out Stock Metrics
-            ['metric-pe', 'metric-eps', 'metric-beta'].forEach(id => document.getElementById(id).textContent = 'N/A');
-        } else {
-            // STOCK VIEW: Show P/E, EPS, Beta, etc.
-            document.getElementById('metric-pe').textContent = m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : 'N/A';
-            document.getElementById('metric-eps').textContent = m.epsGrowthNext5Y ? m.epsGrowthNext5Y.toFixed(2) + '%' : 'N/A';
-            document.getElementById('metric-beta').textContent = m.beta ? m.beta.toFixed(2) : 'N/A';
-            document.getElementById('metric-div').textContent = m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
-            
-            // Hide TER for Stocks
-            document.getElementById('metric-ter').textContent = 'N/A';
-        }
+        // Explicitly set TER to '-' for Stocks
+        const terEl = document.getElementById('metric-ter');
+        if (terEl) terEl.textContent = '-';
+
     } catch (error) {
-        console.error("Financials fetch failed:", error);
+        console.error("Stock financial fetch failed:", error);
     }
 }
 async function fetchNews(symbol) {
