@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Restoring Tooltip Styles */
+        /* Fixed Tooltip Styles */
         .tooltip {
             display: inline-flex;
             align-items: center;
@@ -25,31 +25,43 @@
             margin-left: 6px;
             position: relative;
         }
+
         .tooltip .tooltiptext {
             visibility: hidden;
-            width: 200px;
+            /* Increased width and added padding/line-height for readability */
+            width: 240px; 
             background-color: #18181b;
             color: #d4d4d8;
             text-align: center;
             border: 1px solid #27272a;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             position: absolute;
             z-index: 100;
-            bottom: 125%;
+            bottom: 150%; /* Lifted higher to avoid clipping headers */
             left: 50%;
-            margin-left: -100px;
+            transform: translateX(-50%); /* Better centering logic */
             opacity: 0;
             transition: opacity 0.3s;
             font-size: 11px;
             font-weight: 400;
-            line-height: 1.4;
+            line-height: 1.5;
             text-transform: none;
             pointer-events: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            /* Prevents text from staying on one line and overflowing */
+            white-space: normal; 
+            word-wrap: break-word;
         }
+
         .tooltip:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
+        }
+
+        .sortable:hover {
+            color: white;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -93,7 +105,10 @@
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="mb-10 flex justify-between items-center">
             <h1 class="text-4xl font-bold tracking-tight">Holdings</h1>
-            <button onclick="refreshLivePrices()" class="refresh-btn">Refresh Live Prices</button>
+            <button onclick="refreshLivePrices()" class="refresh-btn flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-colors">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh Live Prices
+            </button>
         </header>
         
         <div class="card overflow-x-auto">
@@ -116,7 +131,8 @@
                         <th class="p-4 text-center sortable" onclick="sortHoldings('Allocation')">Allocation ↕</th>
                     </tr>
                 </thead>
-                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
+                <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800">
+                    </tbody>
             </table>
         </div>
     </main>
