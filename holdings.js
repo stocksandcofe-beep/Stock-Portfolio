@@ -15,17 +15,17 @@ function getCol(row, keys) {
     return null;
 }
 
-// First get total portfolio value from Performance CSV for allocation weights
+// 1. Get total portfolio value first for weight calculation
 Papa.parse(PERF_CSV, {
     download: true, header: false, skipEmptyLines: true,
     complete: function(results) {
         const latest = results.data.filter(r => r[0] && r[47]).pop();
         totalValLatest = cleanNum(latest[47]);
-        fetchLivePrices(true);
+        fetchLivePrices();
     }
 });
 
-function fetchLivePrices(isInitial = false) {
+function fetchLivePrices() {
     Papa.parse(LIVE_CSV, {
         download: true, header: false, skipEmptyLines: true,
         complete: function(results) {
@@ -38,7 +38,7 @@ function fetchLivePrices(isInitial = false) {
     });
 }
 
-function refreshLivePrices() { fetchLivePrices(false); }
+function refreshLivePrices() { fetchLivePrices(); }
 
 function fetchHoldings() {
     Papa.parse(HOLD_CSV, { download: true, header: true, skipEmptyLines: true, complete: res => {
@@ -61,32 +61,41 @@ function displayHoldings(data) {
     const tbody = document.getElementById('holdings-table-body');
     if(!tbody) return;
     tbody.innerHTML = '';
+    
     data.forEach(row => {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const shares = cleanNum(getCol(row, ['Shares']));
+        const bepLocal = cleanNum(getCol(row, ['BEP Price']));
         const liveData = livePriceMap[ticker];
         const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
         const activeRate = liveData ? liveData.rate : 1.0;
+        
+        // Calculate P/L logic
         const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
         const curValueGBP = (shares * activePriceLocal) * activeRate;
         const profitGBP = curValueGBP - costGBP;
         const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
         const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
+        
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
         
-        tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
-            <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
-                <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
-                <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
-            </td>
-            <td class="p-4 text-center font-mono text-zinc-400">${shares}</td>
-            <td class="p-4 text-center text-zinc-300">${sym}${cleanNum(getCol(row, ['BEP Price'])).toFixed(2)}</td>
-            <td class="p-4 text-center font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
-            <td class="p-4 text-center font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td class="p-4 text-center font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-            <td class="p-4 text-center font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%</td>
-            <td class="p-4 text-center font-medium text-zinc-300">${weight.toFixed(1)}%</td>
-        </tr>`;
+        tbody.innerHTML += `
+            <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
+                <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
+                    <div class="font-bold text-white">${getCol(row, ['Company'])}</div>
+                    <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
+                </td>
+                <td class="p-4 text-center font-mono text-zinc-400">${shares}</td>
+                <td class="p-4 text-center text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
+                <td class="p-4 text-center font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
+                <td class="p-4 text-center font-medium text-white">£${curValueGBP.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="p-4 text-center font-semibold ${profitGBP >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}
+                </td>
+                <td class="p-4 text-center font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%
+                </td>
+                <td class="p-4 text-center font-medium text-zinc-300">${weight.toFixed(1)}%</td>
+            </tr>`;
     });
 }
-lucide.createIcons();
