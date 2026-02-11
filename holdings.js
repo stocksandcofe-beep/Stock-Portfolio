@@ -1,6 +1,8 @@
 const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
 const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
 const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
+// Base URL for your uploaded logos
+const LOGO_BASE_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/';
 
 let currentHoldingsData = [], livePriceMap = {}, totalValLatest = 0;
 let sortKey = '', sortDir = 1;
@@ -36,8 +38,6 @@ function fetchLivePrices() {
         }
     });
 }
-
-function refreshLivePrices() { fetchLivePrices(); }
 
 function fetchHoldings() {
     Papa.parse(HOLD_CSV, { download: true, header: true, skipEmptyLines: true, complete: res => {
@@ -79,32 +79,27 @@ function displayHoldings(data) {
         const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
         const activeRate = liveData ? liveData.rate : 1.0;
         
-        const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
         const curValueGBP = (shares * activePriceLocal) * activeRate;
+        const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
+        const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
         const profitGBP = curValueGBP - costGBP;
         const percReturn = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
-        const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
         
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
-        
-        // Use Logo.dev for better coverage (Nike, Visa, etc.)
-        const cleanTicker = ticker.split('.')[0];
         
         tbody.innerHTML += `
             <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                 <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-800">
-                            <img src="https://img.logo.dev/ticker/${cleanTicker}?token=pk_S6hK-vD_R6-F3_G_3_G_3" 
+                            <img src="${LOGO_BASE_URL}${ticker}.png" 
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                                  class="w-full h-full object-contain p-1">
                             <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-500 bg-zinc-900 uppercase">
-                                ${cleanTicker.substring(0,2)}
+                                ${ticker.substring(0,2)}
                             </div>
                         </div>
-                        <div class="flex flex-col">
-                            <div class="font-bold text-white leading-tight">${getCol(row, ['Company'])}</div>
-                        </div>
+                        <div class="font-bold text-white leading-tight">${getCol(row, ['Company'])}</div>
                     </div>
                 </td>
                 <td class="p-4 text-center font-mono text-zinc-400">${shares}</td>
