@@ -47,22 +47,22 @@
         
         <div class="card overflow-x-auto">
             <table class="w-full text-left min-w-[1200px]">
-                <thead class="text-zinc-500 uppercase text-[10px] font-bold tracking-wider border-b border-zinc-800">
+<thead class="text-zinc-500 uppercase text-[10px] font-bold tracking-wider border-b border-zinc-800">
     <tr>
         <th class="p-4 text-left cursor-pointer hover:text-white" onclick="sortHoldings('Company')">Company Name ↕</th>
         <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Shares')">Shares ↕</th>
         <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('BEP')">
             <div class="flex items-center justify-center gap-1">BEP ↕ 
                 <span class="tooltip">? 
-                    <span class="tooltiptext">Break-even price (Average Price)</span>
+                    <span class="tooltiptext">Break-even price</span>
                 </span>
             </div>
-    </th>
+        </th>
         <th class="p-4 text-center text-emerald-400">Live Price</th>
         <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Current Value')">£ Value ↕</th>
         <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Total Unrealised P/L')">£ P/L ↕</th>
         <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('% Return')">% P/L ↕</th>
-        <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Weight')">Allocation ↕</th>
+        <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Allocation')">Allocation ↕</th>
     </tr>
 </thead>
                 <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
