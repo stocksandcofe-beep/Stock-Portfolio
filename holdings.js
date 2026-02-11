@@ -6,7 +6,6 @@ let currentHoldingsData = [], livePriceMap = {}, totalValLatest = 0;
 let sortKey = '', sortDir = 1;
 
 function cleanNum(val) { return parseFloat(val?.toString().replace(/[^0-9.-]+/g, "")) || 0; }
-
 function getCol(row, keys) {
     const rKeys = Object.keys(row);
     for (let k of keys) { 
@@ -16,12 +15,11 @@ function getCol(row, keys) {
     return null;
 }
 
-// 1. Get total portfolio value for weight calculation
 Papa.parse(PERF_CSV, {
     download: true, header: false, skipEmptyLines: true,
     complete: function(results) {
         const latest = results.data.filter(r => r[0] && r[47]).pop();
-        if (latest) totalValLatest = cleanNum(latest[47]);
+        totalValLatest = cleanNum(latest[47]);
         fetchLivePrices();
     }
 });
@@ -39,6 +37,8 @@ function fetchLivePrices() {
     });
 }
 
+function refreshLivePrices() { fetchLivePrices(); }
+
 function fetchHoldings() {
     Papa.parse(HOLD_CSV, { download: true, header: true, skipEmptyLines: true, complete: res => {
         currentHoldingsData = res.data.filter(r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0);
@@ -46,15 +46,11 @@ function fetchHoldings() {
     }});
 }
 
-// Fixed Sorting Logic for BEP and Allocation
 function sortHoldings(key) {
     if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
-    
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
-
         if (key === 'Allocation') {
-            // Sort by current market value (which dictates the weight)
             valA = cleanNum(getCol(a, ['Current Value']));
             valB = cleanNum(getCol(b, ['Current Value']));
         } else if (key === 'BEP') {
@@ -63,10 +59,7 @@ function sortHoldings(key) {
         } else {
             valA = getCol(a, [key]);
             valB = getCol(b, [key]);
-            if (key !== 'Company' && key !== 'Ticker') {
-                valA = cleanNum(valA);
-                valB = cleanNum(valB);
-            }
+            if (key !== 'Company') { valA = cleanNum(valA); valB = cleanNum(valB); }
         }
         return valA > valB ? sortDir : valA < valB ? -sortDir : 0;
     });
@@ -94,24 +87,23 @@ function displayHoldings(data) {
         
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
         
-        // High-Quality Logo Logic (Removes .L for UK stocks)
+        // Use Logo.dev for better coverage (Nike, Visa, etc.)
         const cleanTicker = ticker.split('.')[0];
         
         tbody.innerHTML += `
             <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                 <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-700">
-                            <img src="https://financialmodelingprep.com/image-stock/${cleanTicker}.png" 
+                        <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-800">
+                            <img src="https://img.logo.dev/ticker/${cleanTicker}?token=pk_S6hK-vD_R6-F3_G_3_G_3" 
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                                  class="w-full h-full object-contain p-1">
-                            <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-400 bg-zinc-900 uppercase">
+                            <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-500 bg-zinc-900 uppercase">
                                 ${cleanTicker.substring(0,2)}
                             </div>
                         </div>
                         <div class="flex flex-col">
                             <div class="font-bold text-white leading-tight">${getCol(row, ['Company'])}</div>
-                            <div class="text-[10px] text-zinc-500 font-mono uppercase">${ticker}</div>
                         </div>
                     </div>
                 </td>
@@ -123,7 +115,7 @@ function displayHoldings(data) {
                     ${profitGBP < 0 ? '-' : '+'}£${Math.abs(profitGBP).toLocaleString(undefined, {maximumFractionDigits:0})}
                 </td>
                 <td class="p-4 text-center font-bold ${percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                    ${percReturn >= 0 ? '+' : ''}${percReturn.toFixed(2)}%
+                    ${percReturn < 0 ? '-' : '+'}${Math.abs(percReturn).toFixed(2)}%
                 </td>
                 <td class="p-4 text-center font-medium text-zinc-300">${weight.toFixed(1)}%</td>
             </tr>`;
