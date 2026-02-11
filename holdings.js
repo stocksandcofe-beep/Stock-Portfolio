@@ -50,22 +50,11 @@ function sortHoldings(key) {
     if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
-
-        // Special logic for calculated or renamed sorting columns
+        
+        // Fix: Explicitly handle sorting for the specific labels in your HTML
         if (key === 'Allocation') {
-            const sharesA = cleanNum(getCol(a, ['Shares']));
-            const tickerA = getCol(a, ['Ticker'])?.toUpperCase().trim();
-            const liveA = livePriceMap[tickerA];
-            const priceA = liveA ? liveA.price : cleanNum(getCol(a, ['Current Price']));
-            const rateA = liveA ? liveA.rate : 1.0;
-            valA = (sharesA * priceA) * rateA;
-
-            const sharesB = cleanNum(getCol(b, ['Shares']));
-            const tickerB = getCol(b, ['Ticker'])?.toUpperCase().trim();
-            const liveB = livePriceMap[tickerB];
-            const priceB = liveB ? liveB.price : cleanNum(getCol(b, ['Current Price']));
-            const rateB = liveB ? liveB.rate : 1.0;
-            valB = (sharesB * priceB) * rateB;
+            valA = cleanNum(getCol(a, ['Current Value']));
+            valB = cleanNum(getCol(b, ['Current Value']));
         } else if (key === 'BEP') {
             valA = cleanNum(getCol(a, ['BEP Price']));
             valB = cleanNum(getCol(b, ['BEP Price']));
@@ -74,7 +63,6 @@ function sortHoldings(key) {
             valB = getCol(b, [key]);
             if (key !== 'Company') { valA = cleanNum(valA); valB = cleanNum(valB); }
         }
-        
         return valA > valB ? sortDir : valA < valB ? -sortDir : 0;
     });
     displayHoldings(currentHoldingsData);
@@ -100,18 +88,20 @@ function displayHoldings(data) {
         const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
         
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
-        const logoTicker = ticker.split('.')[0];
+        
+        // Fix: Use a 100% free logo service (DuckDuckGo Icons)
+        const cleanTicker = ticker.split('.')[0];
         
         tbody.innerHTML += `
             <tr class="hover:bg-white/5 transition border-b border-zinc-800/50 text-sm">
                 <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <img src="https://logo.clearbit.com/${logoTicker}.com" 
+                            <img src="https://icons.duckduckgo.com/ip3/${cleanTicker}.com.ico" 
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                                  class="w-full h-full object-contain">
-                            <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-600 bg-zinc-800 uppercase">
-                                ${logoTicker.substring(0,2)}
+                            <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-500 bg-zinc-800 uppercase">
+                                ${cleanTicker.substring(0,2)}
                             </div>
                         </div>
                         <div class="flex flex-col">
