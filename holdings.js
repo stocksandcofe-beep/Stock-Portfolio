@@ -15,7 +15,6 @@ function getCol(row, keys) {
     return null;
 }
 
-// 1. Get total portfolio value first for weight calculation
 Papa.parse(PERF_CSV, {
     download: true, header: false, skipEmptyLines: true,
     complete: function(results) {
@@ -31,7 +30,6 @@ function fetchLivePrices() {
         complete: function(results) {
             results.data.forEach(row => {
                 const ticker = row[0]?.toUpperCase().trim();
-                // RESTORED: Original live price map logic
                 if (ticker) livePriceMap[ticker] = { price: cleanNum(row[1]), rate: cleanNum(row[2]) || 1.0 };
             });
             fetchHoldings();
@@ -51,8 +49,32 @@ function fetchHoldings() {
 function sortHoldings(key) {
     if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
     currentHoldingsData.sort((a, b) => {
-        let valA = getCol(a, [key]), valB = getCol(b, [key]);
-        if (key !== 'Company') { valA = cleanNum(valA); valB = cleanNum(valB); }
+        let valA, valB;
+
+        // Special logic for calculated or renamed sorting columns
+        if (key === 'Allocation') {
+            const sharesA = cleanNum(getCol(a, ['Shares']));
+            const tickerA = getCol(a, ['Ticker'])?.toUpperCase().trim();
+            const liveA = livePriceMap[tickerA];
+            const priceA = liveA ? liveA.price : cleanNum(getCol(a, ['Current Price']));
+            const rateA = liveA ? liveA.rate : 1.0;
+            valA = (sharesA * priceA) * rateA;
+
+            const sharesB = cleanNum(getCol(b, ['Shares']));
+            const tickerB = getCol(b, ['Ticker'])?.toUpperCase().trim();
+            const liveB = livePriceMap[tickerB];
+            const priceB = liveB ? liveB.price : cleanNum(getCol(b, ['Current Price']));
+            const rateB = liveB ? liveB.rate : 1.0;
+            valB = (sharesB * priceB) * rateB;
+        } else if (key === 'BEP') {
+            valA = cleanNum(getCol(a, ['BEP Price']));
+            valB = cleanNum(getCol(b, ['BEP Price']));
+        } else {
+            valA = getCol(a, [key]);
+            valB = getCol(b, [key]);
+            if (key !== 'Company') { valA = cleanNum(valA); valB = cleanNum(valB); }
+        }
+        
         return valA > valB ? sortDir : valA < valB ? -sortDir : 0;
     });
     displayHoldings(currentHoldingsData);
@@ -66,13 +88,11 @@ function displayHoldings(data) {
     data.forEach(row => {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const shares = cleanNum(getCol(row, ['Shares']));
-        // RESTORED: Original BEP mapping
-        const bepLocal = cleanNum(getCol(row, ['BEP Price'])); 
+        const bepLocal = cleanNum(getCol(row, ['BEP Price']));
         const liveData = livePriceMap[ticker];
         const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
         const activeRate = liveData ? liveData.rate : 1.0;
         
-        // RESTORED: Original P/L logic
         const costGBP = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L'])); 
         const curValueGBP = (shares * activePriceLocal) * activeRate;
         const profitGBP = curValueGBP - costGBP;
@@ -80,8 +100,6 @@ function displayHoldings(data) {
         const weight = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
         
         let sym = (ticker === 'WKL') ? '€' : (ticker === 'UL' ? '£' : '$');
-        
-        // ADDED: Clean ticker for logo logic
         const logoTicker = ticker.split('.')[0];
         
         tbody.innerHTML += `
@@ -89,10 +107,10 @@ function displayHoldings(data) {
                 <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) ${weight}%, transparent ${weight}%);">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <img src="https://img.logo.dev/ticker/${logoTicker}?token=pk_YOUR_TOKEN" 
+                            <img src="https://logo.clearbit.com/${logoTicker}.com" 
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                                  class="w-full h-full object-contain">
-                            <div class="hidden w-full h-full items-center justify-center text-[8px] font-bold text-zinc-500 bg-zinc-800 uppercase">
+                            <div class="hidden w-full h-full items-center justify-center text-[10px] font-bold text-zinc-600 bg-zinc-800 uppercase">
                                 ${logoTicker.substring(0,2)}
                             </div>
                         </div>
