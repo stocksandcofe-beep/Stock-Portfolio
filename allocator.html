@@ -66,23 +66,94 @@
 
     <div id="selection-container" class="animate-in fade-in duration-700">
         
-        <div class="card py-2 px-6 bg-zinc-900/40 border-l-4 border-emerald-500 mb-4">
+        <div class="card py-3 px-6 bg-zinc-900/40 border-l-4 border-emerald-500 mb-4">
             <div class="flex justify-between items-center">
-                <div class="flex flex-col">
-                    <h2 id="selected-ticker" class="text-xl font-bold tracking-tighter text-white leading-none">---</h2>
-                    <p id="selected-name" class="text-zinc-400 text-[10px] font-medium italic mt-1">No Asset Selected</p>
+                <div>
+                    <h2 id="selected-ticker" class="text-3xl font-bold tracking-tighter text-white">---</h2>
+                    <p id="selected-name" class="text-zinc-400 font-medium italic">No Asset Selected</p>
                 </div>
-                <div class="flex items-center gap-6">
-                    <div class="text-right">
-                        <p class="text-zinc-500 text-[8px] font-bold uppercase tracking-widest leading-none mb-1">Live WebSocket Price</p>
-                        <div class="flex items-center justify-end gap-2">
-                            <span id="live-price" class="text-xl font-mono font-bold text-white leading-none">£0.00</span>
-                            <div id="price-indicator" class="w-1.5 h-1.5 rounded-full bg-zinc-700 transition-all duration-300"></div>
-                        </div>
+                <div class="text-right">
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1 text-right">Live WebSocket Price</p>
+                    <div class="flex items-center justify-end gap-3">
+                        <span id="live-price" class="text-4xl font-mono font-bold text-white">£0.00</span>
+                        <div id="price-indicator" class="w-2 h-2 rounded-full bg-zinc-700 transition-all duration-300"></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                    <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">Current Price:</span>
+                        <span id="metric-price" class="text-white font-mono">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">Change & % Change:</span>
+                        <span id="metric-change" class="text-white font-mono">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">High / Low / Open:</span>
+                        <span id="metric-hlo" class="text-white font-mono text-right text-xs">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">Previous Close:</span>
+                        <span id="metric-pc" class="text-white font-mono">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                    <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i> Company Profile
+                </h3>
+                <div class="space-y-3 text-xs">
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">Market Cap:</span>
+                        <span id="metric-mcap" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">Dividend Yield:</span>
+                        <span id="metric-div" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">PE Ratio:</span>
+                        <span id="metric-pe" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">PEG:</span>
+                        <span id="metric-peg" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">EPS Next 5Y:</span>
+                        <span id="metric-eps" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">52-Week High / Low:</span>
+                        <span id="metric-52w" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">Beta:</span>
+                        <span id="metric-beta" class="text-white">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20 flex flex-col h-full">
+                <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                    <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i> Market News
+                </h3>
+                <div id="news-container" class="flex-1 overflow-y-auto max-h-[380px] space-y-4 pr-2 custom-scrollbar">
+                    <p class="text-zinc-600 italic text-xs">Search an asset to see news headlines...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
