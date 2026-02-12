@@ -1,5 +1,4 @@
-// calculator.js - Logic for the Market Cap Rebalancing Table
-
+// calculator.js - Logic for the Market Cap Rebalancing Table with Manual Entry
 let portfolioItems = [];
 
 const calcTableBody = document.getElementById('calc-table-body');
@@ -8,7 +7,12 @@ const addBtn = document.getElementById('add-to-calc-btn');
 const investmentInput = document.getElementById('calc-investment');
 const currencySelect = document.getElementById('calc-currency');
 
-// Show "Add" button only when an asset is selected in the main app
+// Manual Form Elements
+const manualForm = document.getElementById('manual-form');
+const toggleBtn = document.getElementById('toggle-manual-form');
+const submitManualBtn = document.getElementById('submit-manual');
+
+// 1. OBSERVER: Show "Add" button only when a search result is selected
 const tickerObserver = new MutationObserver(() => {
     const ticker = document.getElementById('selected-ticker').innerText;
     if (ticker && ticker !== '---') {
@@ -19,14 +23,18 @@ const tickerObserver = new MutationObserver(() => {
 });
 tickerObserver.observe(document.getElementById('selected-ticker'), { childList: true });
 
-// Add asset to the rebalancer
+// 2. TOGGLE: Show/Hide Manual Form
+toggleBtn.addEventListener('click', () => {
+    manualForm.classList.toggle('hidden');
+});
+
+// 3. ACTION: Add from Search Results
 addBtn.addEventListener('click', () => {
     const ticker = document.getElementById('selected-ticker').innerText;
     const name = document.getElementById('selected-name').innerText;
     const priceStr = document.getElementById('metric-price').innerText;
     const mcapStr = document.getElementById('metric-mcap').innerText;
 
-    // Avoid duplicates
     if (portfolioItems.find(item => item.ticker === ticker)) return;
 
     portfolioItems.push({
@@ -40,7 +48,40 @@ addBtn.addEventListener('click', () => {
     updateCalculatorUI();
 });
 
+// 4. ACTION: Add Manually (For ETFs)
+submitManualBtn.addEventListener('click', () => {
+    const name = document.getElementById('man-name').value;
+    const ticker = document.getElementById('man-ticker').value;
+    const price = parseFloat(document.getElementById('man-price').value);
+    const mcapRaw = document.getElementById('man-mcap').value;
+    const currentCurrency = currencySelect.value;
+
+    if (!name || !ticker || isNaN(price) || !mcapRaw) {
+        alert("Please fill in all fields correctly.");
+        return;
+    }
+
+    portfolioItems.push({
+        ticker: ticker.toUpperCase(),
+        name: name,
+        price: price,
+        mcap: parseMcapValue(mcapRaw.toUpperCase()),
+        currency: currentCurrency 
+    });
+
+    // Clear and Hide
+    document.getElementById('man-name').value = '';
+    document.getElementById('man-ticker').value = '';
+    document.getElementById('man-price').value = '';
+    document.getElementById('man-mcap').value = '';
+    manualForm.classList.add('hidden');
+
+    updateCalculatorUI();
+});
+
+// 5. HELPER: Parse strings like "3.2T" or "500B" into numbers
 function parseMcapValue(str) {
+    if (!str) return 0;
     const num = parseFloat(str.replace(/[^0-9.-]+/g, "")) || 0;
     if (str.includes('T')) return num * 1000000000000;
     if (str.includes('B')) return num * 1000000000;
@@ -48,8 +89,8 @@ function parseMcapValue(str) {
     return num;
 }
 
+// 6. CORE: Update the Table UI and Math
 function updateCalculatorUI() {
-    // Clear current rows
     const existingRows = calcTableBody.querySelectorAll('.asset-row');
     existingRows.forEach(row => row.remove());
 
@@ -102,6 +143,6 @@ function formatCurrency(val, curr) {
     return `${symbol}${val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 }
 
-// Re-calculate when user changes investment or currency
+// Listeners for re-calculation
 investmentInput.addEventListener('input', updateCalculatorUI);
 currencySelect.addEventListener('change', updateCalculatorUI);
