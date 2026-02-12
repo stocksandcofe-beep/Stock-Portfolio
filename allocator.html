@@ -69,8 +69,13 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
             <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
-                <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center gap-2">
-                    <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
+                <h3 class="text-zinc-500 text-xs font-bold uppercase mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
+                    </div>
+                    <button id="add-to-calc-btn" class="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-emerald-500/20 transition-all opacity-0 pointer-events-none">
+                        Add to Calculator
+                    </button>
                 </h3>
                 <div class="space-y-4 text-sm">
                     <div class="flex justify-between border-b border-zinc-800/50 pb-2">
@@ -137,9 +142,57 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-8">
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h3 class="text-zinc-500 text-xs font-bold uppercase flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i> Investment Allocator
+                        </h3>
+                        <p class="text-zinc-400 text-[10px] mt-1 italic">Weighting shares by Market Cap relative to total portfolio.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Currency</span>
+                            <select id="calc-currency" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white outline-none">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP" selected>GBP (£)</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-zinc-500 font-bold uppercase mb-1">Total Investment</span>
+                            <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1 text-sm text-white w-32 font-mono outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-zinc-500 uppercase text-[10px] font-bold border-b border-zinc-800">
+                                <th class="pb-3 px-2">Company</th>
+                                <th class="pb-3 text-center">Ticker</th>
+                                <th class="pb-3 text-center">Price</th>
+                                <th class="pb-3 text-center">Weight %</th>
+                                <th class="pb-3 text-right">Target Shares</th>
+                                <th class="pb-3 text-right w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="calc-table-body" class="text-sm">
+                            <tr id="calc-empty-row">
+                                <td colspan="6" class="py-10 text-center text-zinc-600 italic">No assets added. Add assets from "Daily Quotes" to begin simulation.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="allocator.js"></script>
-    <script>lucide.createIcons();</script>
+    <script src="calculator.js"></script> <script>lucide.createIcons();</script>
 </body>
 </html>
