@@ -1,4 +1,4 @@
-const PERF_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQqzdML5fedLHG5w8t24X3PJTD-CA_Wg2_Jumz3kOQ-pL6uZCMjirW6RH2wVwd_BZyRnCzZYf0RFOGD/pub?output=csv';
+const PERF_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQqzdML5fedLHG5w8t24X3PJTD-CA_Wg2_Jumz3kOQ-pL6uZCMjirW6RH2wVwd_BZyRnCzZYf0RFOGD/pub?gid=0&single=true&output=csv';
 
 let chartInstance, rawPerfData = [], currentPeriod = 'all', currentChartMode = 'growth';
 
