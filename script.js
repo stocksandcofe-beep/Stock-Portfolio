@@ -1,5 +1,5 @@
 const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Performance.csv';
-const HOLD_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Holdings.csv';
+const HOLD_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBdW0eqX7wJilgANW92D9MXqElTdcSYFzLHHS_lyr0Hiw41Kt2ItdRh4eOMgpsZG95h5yoatM6xYKU/pub?gid=0&single=true&output=csv';
 const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSXM1dYBxznBus1fR27mZ9AEfISwr54qMJHTsw6cSyPs7LAwV1sw6Y8zpC7V3gwCcH854_HudCUPEm/pub?gid=0&single=true&output=csv';
 
 let chartInstance, rawPerfData = [], currentHoldingsData = [], livePriceMap = {}, currentPeriod = 'all', currentChartMode = 'growth', totalValLatest = 0;
