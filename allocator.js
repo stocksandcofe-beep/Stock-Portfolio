@@ -163,8 +163,15 @@ async function fetchFinancials(symbol) {
     const formatBillions = (val) => val != null ? (val / 1000).toFixed(2) + 'B' : 'N/A';
 
     document.getElementById('metric-mcap').textContent = formatBillions(m.marketCapitalization);
-    document.getElementById('metric-div').textContent  = m.dividendYieldIndicatedAnnual
-        ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : '0.00%';
+    // Dividend yield — try multiple field names as Finnhub coverage varies by ticker
+    const divYield = m.dividendYieldIndicatedAnnual
+        || m.dividendYield
+        || m.dividendYieldNormalizedAnnual
+        || m['dividendYield5Y']
+        || null;
+    document.getElementById('metric-div').textContent = divYield
+        ? `${divYield.toFixed(2)}%`
+        : 'N/A';
     document.getElementById('metric-pe').textContent   = formatValue(m.peBasicExclExtraTTM);
     document.getElementById('metric-peg').textContent  = formatValue(m.pegRatio);
     document.getElementById('metric-eps').textContent  = formatValue(m.epsGrowthNext5Y) + '%';
