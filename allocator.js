@@ -199,3 +199,17 @@ async function fetchProfile(symbol) {
         console.error("Profile Fetch Error:", e);
     }
 }
+
+// Manual Form Toggle
+document.getElementById('toggle-manual-form').addEventListener('click', () => {
+    const form = document.getElementById('manual-form');
+    const isHidden = form.classList.contains('hidden');
+
+    if (isHidden) {
+        form.classList.remove('hidden');
+        form.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+    } else {
+        form.classList.add('hidden');
+        form.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+    }
+});
