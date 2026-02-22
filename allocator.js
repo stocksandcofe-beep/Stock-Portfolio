@@ -22,9 +22,9 @@ async function getFxRates(portfolioCurrency) {
     if (fxCache[portfolioCurrency]) return fxCache[portfolioCurrency];
 
     try {
-        const res  = await fetch(`https://finnhub.io/api/v1/forex/rates?base=${portfolioCurrency}&token=${FINNHUB_KEY}`);
+        const res  = await fetch(`https://api.frankfurter.app/latest?from=${portfolioCurrency}`);
         const data = await res.json();
-        const rates = data.quote ? { ...data.quote, [portfolioCurrency]: 1.0 } : { [portfolioCurrency]: 1.0 };
+        const rates = { ...data.rates, [portfolioCurrency]: 1.0 };
         fxCache[portfolioCurrency] = rates;
         return rates;
     } catch (e) {
@@ -32,7 +32,6 @@ async function getFxRates(portfolioCurrency) {
         return { [portfolioCurrency]: 1.0 };
     }
 }
-
 
 // =============================================================================
 // CURRENCY FORMATTERS
@@ -388,10 +387,7 @@ async function updateCalculatorUI() {
         row.innerHTML = `
             <td class="py-4 px-2 text-white font-medium">${item.name}</td>
             <td class="py-4 text-center font-mono text-zinc-400">${item.ticker}</td>
-            <td class="py-4 text-center font-mono text-zinc-300">
-                ${formatLocalCurrency(item.price, item.localCurrency)}
-                <span class="text-zinc-600 text-[9px] block">${item.localCurrency}</span>
-            </td>
+            <td class="py-4 text-center font-mono text-zinc-300">${formatLocalCurrency(item.price, item.localCurrency)}</td>
             <td class="py-4 text-center">
                 <span class="text-emerald-400 font-bold text-[10px] bg-emerald-500/10 px-2 py-1 rounded">
                     ${(weight * 100).toFixed(1)}%
