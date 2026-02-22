@@ -22,9 +22,9 @@ async function getFxRates(portfolioCurrency) {
     if (fxCache[portfolioCurrency]) return fxCache[portfolioCurrency];
 
     try {
-        const res  = await fetch(`https://finnhub.io/api/v1/forex/rates?base=${portfolioCurrency}&token=${FINNHUB_KEY}`);
+        const res  = await fetch(`https://api.frankfurter.app/latest?from=${portfolioCurrency}`);
         const data = await res.json();
-        const rates = data.quote ? { ...data.quote, [portfolioCurrency]: 1.0 } : { [portfolioCurrency]: 1.0 };
+        const rates = { ...data.rates, [portfolioCurrency]: 1.0 };
         fxCache[portfolioCurrency] = rates;
         return rates;
     } catch (e) {
