@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asset Allocator | Portfolio</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.574.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,7 @@
     <aside class="sidebar w-64 hidden lg:flex flex-col p-6 border-r border-zinc-800">
         <div class="mb-10">
             <div class="flex items-center gap-3 mb-4">
-                <div class="logo-container"><img src="https://drive.google.com/thumbnail?id=1wqX5IAixnAJnnpKf-4udy84xO7LbP3qF&sz=w1000" alt="Logo" class="logo-img"></div>
+                <div class="logo-container"><img src="https://drive.google.com/thumbnail?id=1wqX5IAixnAJnnpKf-4udy84xO7LbP3qF&sz=w1000" alt="Stocks and Coffee logo" class="logo-img"></div>
                 <span class="text-xl font-bold tracking-tight">Portfolio</span>
             </div>
             <div class="flex gap-4 px-1">
@@ -49,6 +49,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-emerald-400 transition-colors">
                         <i data-lucide="search" class="w-5 h-5"></i>
                     </div>
+                    <label for="asset-search" class="sr-only">Search assets</label>
                     <input 
                         type="text" 
                         id="asset-search" 
@@ -170,7 +171,7 @@
             </div>
         </div>
 
-        <div id="manual-form" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/50 animate-in slide-in-from-top-2 duration-300">
+        <div id="manual-form" class="hidden mb-6 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/50 animate-in slide-in-from-top-2 duration-300">
             <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
             <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
             <input type="number" id="man-price" placeholder="Price" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
@@ -204,6 +205,7 @@
     </main>
 
     <script src="allocator.js"></script>
-    <script src="calculator.js"></script> <script>lucide.createIcons();</script>
+    <script src="calculator.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
