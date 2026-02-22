@@ -377,9 +377,11 @@ async function updateCalculatorUI() {
         // Divide by local share price to get target shares
         const shares = item.price > 0 ? Math.floor(targetInLocalCurrency / item.price) : 0;
 
-        // Show FX rate as a small note if currencies differ
-        const fxNote = item.localCurrency !== portfolioCurrency
-            ? `<span class="text-zinc-600 text-[9px] block mt-0.5">1 ${portfolioCurrency} = ${fxRate.toFixed(4)} ${item.localCurrency}</span>`
+        // Tooltip shown on hover over price when currencies differ
+        const fxTooltip = item.localCurrency !== portfolioCurrency
+            ? `<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                   1 ${portfolioCurrency} = ${fxRate.toFixed(4)} ${item.localCurrency}
+               </div>`
             : '';
 
         const row = document.createElement('tr');
@@ -387,7 +389,13 @@ async function updateCalculatorUI() {
         row.innerHTML = `
             <td class="py-4 px-2 text-white font-medium">${item.name}</td>
             <td class="py-4 text-center font-mono text-zinc-400">${item.ticker}</td>
-            <td class="py-4 text-center font-mono text-zinc-300">${formatLocalCurrency(item.price, item.localCurrency)}</td>
+            <td class="py-4 text-center font-mono text-zinc-300 relative group">
+    <span class="cursor-help">${formatLocalCurrency(item.price, item.localCurrency)}</span>
+    ${item.localCurrency !== portfolioCurrency ? `
+    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+        1 ${portfolioCurrency} = ${fxRate.toFixed(4)} ${item.localCurrency}
+    </div>` : ''}
+</td>
             <td class="py-4 text-center">
                 <span class="text-emerald-400 font-bold text-[10px] bg-emerald-500/10 px-2 py-1 rounded">
                     ${(weight * 100).toFixed(1)}%
