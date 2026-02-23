@@ -195,8 +195,11 @@ function calculateMetrics(data) {
     document.getElementById('stat-max-dd').innerText = Math.abs(maxDD * 100).toFixed(2) + '%';
 
     // TWR — preserve sign so negative periods show correctly
-    const twr = (cumFactor - 1) * 100;
-    document.getElementById('stat-twr').innerText = (twr >= 0 ? '+' : '') + twr.toFixed(2) + '%';
+    const twr    = (cumFactor - 1) * 100;
+    const twrEl  = document.getElementById('stat-twr');
+    twrEl.innerText = (twr >= 0 ? '+' : '') + twr.toFixed(2) + '%';
+    twrEl.parentElement.className = `card p-6 border-l-4 ${twr >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
+    twrEl.className = `text-2xl font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     if (pairedRets.length > 1) {
         const portRets = pairedRets.map(p => p.port);
