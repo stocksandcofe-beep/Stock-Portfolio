@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Manager</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@0.378.0"></script>
+</head>
+<body class="flex h-screen overflow-hidden bg-black text-white">
+
+    <aside class="sidebar w-64 flex flex-col p-6 border-r border-zinc-800">
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="logo-container">
+                    <img src="https://drive.google.com/thumbnail?id=1wqX5IAixnAJnnpKf-4udy84xO7LbP3qF&sz=w1000" alt="Stocks and Coffee logo" class="logo-img">
+                </div>
+                <span class="text-xl font-bold tracking-tight">Portfolio</span>
+            </div>
+            <div class="flex gap-4 px-1">
+                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+                    <i data-lucide="bookmark" class="w-4 h-4"></i>
+                </a>
+                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+        <nav class="space-y-2 flex-1">
+            <a href="performance.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors text-zinc-400">
+                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
+                <span>Performance</span>
+            </a>
+            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors text-zinc-400">
+                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                <span>Holdings</span>
+            </a>
+            <a href="allocator.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors text-zinc-400">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex items-center justify-center p-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-black to-black">
+        <div class="text-center max-w-md">
+            <h1 class="text-5xl font-bold mb-6 tracking-tighter">Welcome back</h1>
+            <p class="text-zinc-500 text-lg leading-relaxed">Select a section from the sidebar to manage your assets or view performance analytics.</p>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
