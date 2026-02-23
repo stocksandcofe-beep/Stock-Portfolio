@@ -1,0 +1,280 @@
+/* =============================================================================
+   BASE
+============================================================================= */
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #0B0E11;
+    color: #FFFFFF;
+}
+
+
+/* =============================================================================
+   LAYOUT
+============================================================================= */
+.sidebar {
+    background-color: #15191C;
+    border-right: 1px solid #2B2F36;
+}
+
+.card {
+    background-color: #15191C;
+    border: 1px solid #2B2F36;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.logo-container {
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #1e2327;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+/* =============================================================================
+   NAVIGATION — desktop
+============================================================================= */
+.nav-item {
+    transition: all 0.2s;
+    color: #a1a1aa;
+}
+
+.nav-item.active {
+    background: #10b9811a;
+    color: #10b981;
+}
+
+
+/* =============================================================================
+   NAVIGATION — mobile
+============================================================================= */
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 40;
+    backdrop-filter: blur(2px);
+}
+
+.mobile-nav-overlay.open {
+    display: block;
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    background-color: #15191C;
+    border-right: 1px solid #2B2F36;
+    z-index: 50;
+    padding: 24px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-sidebar.open {
+    transform: translateX(0);
+}
+
+.mobile-topbar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: #15191C;
+    border-bottom: 1px solid #2B2F36;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+@media (max-width: 1023px) {
+    .mobile-topbar {
+        display: flex;
+    }
+}
+
+
+/* =============================================================================
+   BUTTONS
+============================================================================= */
+.toggle-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #a1a1aa;
+}
+
+.toggle-btn.active {
+    background: #10b981;
+    color: #000;
+}
+
+.period-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #1e2327;
+    color: #a1a1aa;
+    border: 1px solid #2B2F36;
+}
+
+.period-btn.active {
+    border-color: #10b981;
+    color: #10b981;
+    background: #10b9810d;
+}
+
+.refresh-btn {
+    background-color: #10b981;
+    color: #000000;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.refresh-btn:hover {
+    background-color: #059669;
+}
+
+
+/* =============================================================================
+   SOCIAL ICONS
+============================================================================= */
+.social-icon {
+    color: #a1a1aa;
+    transition: color 0.2s ease;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.social-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.social-icon:hover {
+    color: #10b981;
+}
+
+.social-icon:focus,
+.social-icon:active {
+    outline: none;
+    border: none;
+}
+
+
+/* =============================================================================
+   TOOLTIP
+============================================================================= */
+.tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: #2B2F36;
+    color: #a1a1aa;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: help;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #1e2327;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 11px;
+    border: 1px solid #2B2F36;
+    pointer-events: none;
+    top: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-transform: none;
+    line-height: 1.4;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/* =============================================================================
+   SEARCH
+============================================================================= */
+#asset-search {
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#asset-search:focus {
+    background-color: rgba(24, 24, 27, 0.8);
+    transform: translateY(-1px);
+}
+
+#search-results {
+    background-color: #18181b;
+    border: 1px solid #27272a;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+
+/* =============================================================================
+   HOLDINGS TABLE — hide horizontal scrollbar
+============================================================================= */
+.card.overflow-x-auto {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+}
+
+.card.overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+
+/* =============================================================================
+   ICONS
+============================================================================= */
+.lucide {
+    stroke-width: 2.5px;
+}
