@@ -1,8 +1,8 @@
 // =============================================================================
 // CONSTANTS & STATE
 // =============================================================================
-const PERF_CSV     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRilmJ5ffPS1VkjeRUHLdaErMD249QrbMkS7t34qZHMVDujIQPL_CRNSyFECDV7xg/pub?gid=1527590055&single=true&output=csv';
-const HOLD_CSV     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSxcpWbBicLIh9Bsi-SdAaFSNw09AT8KZzMXFf4tfPrG0Tla5OtHCTskyjYq95aXA/pub?gid=2052161205&single=true&output=csv';
+const PERF_CSV     = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Files/performance.csv';
+const HOLD_CSV     = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Files/holdings.csv';
 const LIVE_CSV     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfe4R4WmXqdloLQnh7aX7GN3l_TvLZrbHbNUx5_l5CriBdSSk2X5_FqnmEoO0piA/pub?gid=182157152&single=true&output=csv';
 const LOGO_BASE_URL = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Images/';
 
