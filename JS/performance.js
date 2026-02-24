@@ -1,7 +1,7 @@
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-const PERF_CSV = 'cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/performance.csv';
+const PERF_CSV = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/performance.csv';
 
 // Column indices — update these if your spreadsheet structure changes
 const COL_DATE   = 0;
