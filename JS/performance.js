@@ -1,7 +1,7 @@
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-const PERF_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRilmJ5ffPS1VkjeRUHLdaErMD249QrbMkS7t34qZHMVDujIQPL_CRNSyFECDV7xg/pub?gid=1527590055&single=true&output=csv';
+const PERF_CSV = 'https://raw.githubusercontent.com/stocksandcofe-beep/Stock-Portfolio/main/Files/performance.csv';
 
 // Column indices — update these if your spreadsheet structure changes
 const COL_DATE   = 0;
