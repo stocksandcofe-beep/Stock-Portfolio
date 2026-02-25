@@ -96,6 +96,7 @@ async function selectAsset(ticker, name) {
 
     document.getElementById('selected-ticker').textContent = ticker;
     document.getElementById('selected-name').textContent   = name;
+    document.getElementById('asset-label').textContent     = `${name} (${ticker})`;
 
     window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
 
