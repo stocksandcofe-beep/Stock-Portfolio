@@ -278,19 +278,19 @@ function displayHoldings(data) {
         totalProfit += (curValueGBP - costGBP);
     });
 
-    const totalReturn = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
-    const profitClass = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
-    const returnClass = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
-    const profitSign  = totalProfit >= 0 ? '+' : '';
-    const returnSign  = totalReturn >= 0 ? '+' : '';
+    const totalReturn      = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
+    const totalProfitClass = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const totalReturnClass = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const totalProfitSign  = totalProfit >= 0 ? '+' : '';
+    const totalReturnSign  = totalReturn >= 0 ? '+' : '';
 
     const totalTr = document.createElement('tr');
     totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
     totalTr.innerHTML = `
         <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
         <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
-        <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(totalProfit, 0)}</td>
-        <td class="p-4 text-center ${returnClass}">${returnSign}${totalReturn.toFixed(2)}%</td>
+        <td class="p-4 text-center ${totalProfitClass}">${totalProfitSign}${formatGBP(totalProfit, 0)}</td>
+        <td class="p-4 text-center ${totalReturnClass}">${totalReturnSign}${totalReturn.toFixed(2)}%</td>
         <td class="p-4 text-center text-zinc-400">100%</td>
     `;
 
