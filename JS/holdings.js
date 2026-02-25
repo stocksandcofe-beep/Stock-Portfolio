@@ -44,9 +44,9 @@ function initView() {
         });
     });
 
-    // Refresh button — only meaningful on table view
+    // Refresh button lives in the Live Price column header — hide whole table view on charts
     const refreshBtn = document.getElementById('refresh-btn');
-    if (refreshBtn) refreshBtn.classList.toggle('hidden', isCharts);
+    if (refreshBtn) refreshBtn.closest('th')?.closest('thead')?.closest('table')?.closest('div');
 }
 
 // Accordion toggle — only toggles the submenu and chevron within the same nav block
@@ -141,8 +141,23 @@ function fetchHoldings() {
 }
 
 function refreshLivePrices() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = true;
+        const icon = btn.querySelector('svg') || btn.querySelector('i');
+        if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+    }
     livePriceMap = {};
     fetchLivePrices();
+}
+
+function stopRefreshSpin() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = false;
+        const icon = btn.querySelector('svg');
+        if (icon) icon.style.animation = '';
+    }
 }
 
 
@@ -151,6 +166,19 @@ function refreshLivePrices() {
 // =============================================================================
 function sortHoldings(key) {
     if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+
+    // Update all sort arrows — reset to neutral, highlight active one
+    document.querySelectorAll('.sort-arrow').forEach(el => {
+        el.textContent = '↕';
+        el.classList.remove('text-emerald-400', 'text-white');
+        el.classList.add('text-zinc-600');
+    });
+    const activeArrow = document.getElementById(`sort-${key}`);
+    if (activeArrow) {
+        activeArrow.textContent = sortDir === 1 ? '↓' : '↑';
+        activeArrow.classList.remove('text-zinc-600');
+        activeArrow.classList.add('text-emerald-400');
+    }
 
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
@@ -233,6 +261,46 @@ function displayHoldings(data) {
     });
 
     tbody.appendChild(fragment);
+
+    // --- Totals row ---
+    const tfoot = document.getElementById('holdings-tfoot');
+    if (!tfoot) return;
+
+    let totalValue  = 0;
+    let totalCost   = 0;
+    let totalProfit = 0;
+
+    data.forEach(row => {
+        const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const liveData         = livePriceMap[ticker];
+        const shares           = cleanNum(getCol(row, ['Shares']));
+        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activeRate       = liveData ? liveData.rate : 1.0;
+        const curValueGBP      = shares * activePriceLocal * activeRate;
+        const costGBP          = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
+
+        totalValue  += curValueGBP;
+        totalCost   += costGBP;
+        totalProfit += (curValueGBP - costGBP);
+    });
+
+    const totalReturn   = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
+    const profitClass   = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const returnClass   = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const profitSign    = totalProfit >= 0 ? '+' : '';
+    const returnSign    = totalReturn >= 0 ? '+' : '';
+
+    tfoot.innerHTML = `
+        <tr class="border-t-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold">
+            <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
+            <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
+            <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(totalProfit, 0)}</td>
+            <td class="p-4 text-center ${returnClass}">${returnSign}${totalReturn.toFixed(2)}%</td>
+            <td class="p-4 text-center text-zinc-400">100%</td>
+        </tr>
+    `;
+
+    stopRefreshSpin();
 }
 
 
