@@ -264,6 +264,7 @@ function displayHoldings(data) {
     let totalValue  = 0;
     let totalCost   = 0;
     let totalProfit = 0;
+    let totalShares = 0;
 
     data.forEach(row => {
         const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
@@ -276,6 +277,7 @@ function displayHoldings(data) {
         totalValue  += curValueGBP;
         totalCost   += costGBP;
         totalProfit += (curValueGBP - costGBP);
+        totalShares += cleanNum(getCol(row, ['Shares']));
     });
 
     const totalReturn      = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
@@ -287,7 +289,9 @@ function displayHoldings(data) {
     const totalTr = document.createElement('tr');
     totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
     totalTr.innerHTML = `
-        <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
+        <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider">Total Portfolio</td>
+        <td class="p-4 text-center font-mono text-zinc-300">${totalShares.toLocaleString()}</td>
+        <td class="p-4" colspan="2"></td>
         <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
         <td class="p-4 text-center ${totalProfitClass}">${totalProfitSign}${formatGBP(totalProfit, 0)}</td>
         <td class="p-4 text-center ${totalReturnClass}">${totalReturnSign}${totalReturn.toFixed(2)}%</td>
