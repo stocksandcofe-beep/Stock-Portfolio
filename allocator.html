@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Allocator | Portfolio</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://unpkg.com/lucide@0.574.0"></script>
+    <script>
+        // Guard: wrap lucide.createIcons so it never processes the same element twice,
+        // preventing icon triplication when called multiple times by page scripts.
+        (function() {
+            var _orig = lucide.createIcons.bind(lucide);
+            lucide.createIcons = function(opts) {
+                // Remove any extra SVG duplicates inside nav items before re-rendering
+                document.querySelectorAll('.nav-item svg.lucide, .sub-nav-item svg.lucide').forEach(function(svg) {
+                    // Keep only the first SVG per nav item
+                });
+                _orig(opts);
+                // After creation, deduplicate: if any parent has >1 lucide SVG child, remove extras
+                document.querySelectorAll('.nav-item, .sub-nav-item, .mobile-topbar button, header button').forEach(function(parent) {
+                    var svgs = parent.querySelectorAll('svg.lucide');
+                    for (var i = 1; i < svgs.length; i++) svgs[i].remove();
+                });
+            };
+        })();
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex h-screen overflow-hidden bg-black text-white">
+
+    <!-- Mobile top bar -->
+    <div class="mobile-topbar">
+        <div class="flex items-center gap-3">
+            <div class="logo-container">
+                <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
+            </div>
+            <span class="text-base font-bold tracking-tight">Portfolio</span>
+        </div>
+        <button onclick="openMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Mobile nav overlay -->
+    <div id="mobile-overlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile sidebar -->
+    <div id="mobile-sidebar" class="mobile-sidebar">
+        <div class="mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="logo-container">
+                        <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Portfolio</span>
+                </div>
+                <button onclick="closeMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex gap-4 px-1">
+                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+    <img src="https://cdn.simpleicons.org/substack" class="w-4 h-4" alt="Substack">
+</a>
+<a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+    <div class="w-4 h-4 bg-black rounded-sm flex items-center justify-center">
+        <img src="https://cdn.simpleicons.org/x/white" class="w-3 h-3" alt="X">
+    </div>
+</a>
+            </div>
+        </div>
+        <nav class="space-y-2">
+            <a href="performance.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
+                <span>Performance</span>
+            </a>
+            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                <span>Holdings</span>
+            </a>
+            <a class="nav-item active flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Desktop sidebar -->
+    <aside class="sidebar w-64 hidden lg:flex flex-col p-6 border-r border-zinc-800">
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="logo-container">
+                    <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
+                </div>
+                <span class="text-xl font-bold tracking-tight">Portfolio</span>
+            </div>
+            <div class="flex gap-4 px-1">
+               <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+    <img src="https://cdn.simpleicons.org/substack" class="w-4 h-4" alt="Substack">
+</a>
+<a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+    <div class="w-4 h-4 bg-black rounded-sm flex items-center justify-center">
+        <img src="https://cdn.simpleicons.org/x/white" class="w-3 h-3" alt="X">
+    </div>
+</a>
+            </div>
+        </div>
+        <nav class="space-y-2 flex-1">
+            <a href="performance.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
+                <span>Performance</span>
+            </a>
+            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                <span>Holdings</span>
+            </a>
+            <a class="nav-item active flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+        <header class="flex flex-col md:flex-row md:items-center gap-6 mb-10 w-full">
+            <div class="flex-shrink-0">
+                <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
+                <p class="text-zinc-400 mt-1">Plan and rebalance your portfolio targets.</p>
+            </div>
+            <div class="grow relative">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-emerald-400 transition-colors">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                    </div>
+                    <label for="asset-search" class="sr-only">Search assets</label>
+                    <input
+                        type="text"
+                        id="asset-search"
+                        placeholder="Search company, ticker, or ETF..."
+                        class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    >
+                </div>
+                <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full"></div>
+            </div>
+        </header>
+
+        <div id="selection-container" class="hidden">
+            <h2 id="selected-ticker">---</h2>
+            <p id="selected-name">No Asset Selected</p>
+            <span id="live-price">£0.00</span>
+            <div id="price-indicator"></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-4 min-h-[24px]">
+            <span id="asset-label" class="text-white font-bold text-sm"></span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
+                    </div>
+                    <button id="add-to-calc-btn" class="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-emerald-500/20 transition-all opacity-0 pointer-events-none">
+                        Add to Calculator
+                    </button>
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">Current Price:</span>
+                        <span id="metric-price" class="text-white font-mono">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">Change & % Change:</span>
+                        <span id="metric-change" class="text-white font-mono">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+                        <span class="text-zinc-400">High / Low / Open:</span>
+                        <span id="metric-hlo" class="text-white font-mono text-right text-xs">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">Previous Close:</span>
+                        <span id="metric-pc" class="text-white font-mono">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                    <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i> Company Profile
+                </h3>
+                <div class="space-y-3 text-xs">
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">Market Cap:</span>
+                        <span id="metric-mcap" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">Dividend Yield:</span>
+                        <span id="metric-div" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">PE Ratio:</span>
+                        <span id="metric-pe" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">PEG:</span>
+                        <span id="metric-peg" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">EPS Next 5Y:</span>
+                        <span id="metric-eps" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+                        <span class="text-zinc-400">52-Week High / Low:</span>
+                        <span id="metric-52w" class="text-white">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">Beta:</span>
+                        <span id="metric-beta" class="text-white">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20 flex flex-col">
+                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
+                    <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i> Market News
+                </h3>
+                <div id="news-container" class="flex-1 overflow-y-auto max-h-[380px] space-y-4 pr-2">
+                    <p class="text-zinc-500 italic text-xs">Search an asset to see news headlines...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="card p-6 border-zinc-800/50 bg-zinc-900/20">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h3 class="text-zinc-400 text-xs font-bold uppercase flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i> Investment Allocator
+                        </h3>
+                        <p class="text-zinc-400 text-[10px] mt-1 italic">Weighting shares by Market Cap / AUM relative to total portfolio.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="toggle-manual-form" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Manual Add
+                        </button>
+                        <select id="calc-currency" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP" selected>GBP (£)</option>
+                        </select>
+                        <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 font-mono outline-none">
+                    </div>
+                </div>
+
+                <div id="manual-form" class="hidden mb-6 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/50">
+                    
+                        <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <input type="number" id="man-price" placeholder="Price (in local currency)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <div class="flex gap-2">
+                            <input type="text" id="man-mcap" placeholder="Mkt Cap / AUM (e.g. 500B)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 flex-1">
+                            <select id="man-currency" class="bg-black/40 border border-zinc-800 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                            <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors">Add</button>
+                        </div>
+                    
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800">
+                                <th class="pb-3 px-2">Company / ETF</th>
+                                <th class="pb-3 text-center">Ticker</th>
+                                <th class="pb-3 text-center">Price</th>
+                                <th class="pb-3 text-center">Weight %</th>
+                                <th class="pb-3 text-right">Target Shares</th>
+                                <th class="pb-3 text-right w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="calc-table-body" class="text-sm">
+                            <tr id="calc-empty-row">
+                                <td colspan="6" class="py-10 text-center text-zinc-500 italic">No assets added. Search above or use Manual Add to begin.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="JS/allocator.js"></script>
+    <script>
+        lucide.createIcons();
+        function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
+        function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
+    </script>
+</body>
+</html>
