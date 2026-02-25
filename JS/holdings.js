@@ -260,8 +260,6 @@ function displayHoldings(data) {
         fragment.appendChild(tr);
     });
 
-    tbody.appendChild(fragment);
-
     // --- Totals row ---
     const tfoot = document.getElementById('holdings-tfoot');
     if (!tfoot) return;
@@ -291,7 +289,7 @@ function displayHoldings(data) {
     const returnSign    = totalReturn >= 0 ? '+' : '';
 
     tfoot.innerHTML = `
-        <tr class="border-t-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold">
+        <tr class="border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold">
             <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
             <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
             <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(totalProfit, 0)}</td>
@@ -300,6 +298,7 @@ function displayHoldings(data) {
         </tr>
     `;
 
+    tbody.insertBefore(fragment, tbody.firstChild);
     stopRefreshSpin();
 }
 
