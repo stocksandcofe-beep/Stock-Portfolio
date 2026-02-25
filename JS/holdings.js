@@ -260,10 +260,7 @@ function displayHoldings(data) {
         fragment.appendChild(tr);
     });
 
-    // --- Totals row ---
-    const tfoot = document.getElementById('holdings-tfoot');
-    if (!tfoot) return;
-
+    // --- Totals row — prepended as first row of tbody ---
     let totalValue  = 0;
     let totalCost   = 0;
     let totalProfit = 0;
@@ -276,29 +273,30 @@ function displayHoldings(data) {
         const activeRate       = liveData ? liveData.rate : 1.0;
         const curValueGBP      = shares * activePriceLocal * activeRate;
         const costGBP          = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
-
         totalValue  += curValueGBP;
         totalCost   += costGBP;
         totalProfit += (curValueGBP - costGBP);
     });
 
-    const totalReturn   = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
-    const profitClass   = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
-    const returnClass   = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
-    const profitSign    = totalProfit >= 0 ? '+' : '';
-    const returnSign    = totalReturn >= 0 ? '+' : '';
+    const totalReturn = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
+    const profitClass = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const returnClass = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const profitSign  = totalProfit >= 0 ? '+' : '';
+    const returnSign  = totalReturn >= 0 ? '+' : '';
 
-    tfoot.innerHTML = `
-        <tr class="border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold">
-            <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
-            <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
-            <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(totalProfit, 0)}</td>
-            <td class="p-4 text-center ${returnClass}">${returnSign}${totalReturn.toFixed(2)}%</td>
-            <td class="p-4 text-center text-zinc-400">100%</td>
-        </tr>
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
+    totalTr.innerHTML = `
+        <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider" colspan="4">Total Portfolio</td>
+        <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
+        <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(totalProfit, 0)}</td>
+        <td class="p-4 text-center ${returnClass}">${returnSign}${totalReturn.toFixed(2)}%</td>
+        <td class="p-4 text-center text-zinc-400">100%</td>
     `;
 
-    tbody.insertBefore(fragment, tbody.firstChild);
+    // Append all data rows first, then insert totals at the very top
+    tbody.appendChild(fragment);
+    tbody.insertBefore(totalTr, tbody.firstChild);
     stopRefreshSpin();
 }
 
