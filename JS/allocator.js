@@ -142,6 +142,9 @@ async function fetchQuotes(symbol) {
         </span>`;
 
     lastAllocPrice = d.c * m;
+
+    // Store volume for use in fetchFinancials
+    window.lastQuoteVolume = d.v ?? null;
 }
 
 
@@ -164,54 +167,43 @@ async function fetchFinancials(symbol) {
     const m  = finnhubResult.status === 'fulfilled' ? (finnhubResult.value?.metric || null) : null;
     let   yf = null;
 
+    // Yahoo as fallback for fields Finnhub may miss
     if (yahooResult.status === 'fulfilled') {
         try {
             const result = yahooResult.value?.quoteSummary?.result?.[0] || {};
-            const sd  = result?.summaryDetail      || {};
-            const ks  = result?.defaultKeyStatistics || {};
-            const fd  = result?.financialData      || {};
-            const pr  = result?.price              || {};
+            const sd = result?.summaryDetail        || {};
+            const ks = result?.defaultKeyStatistics || {};
             yf = {
                 divYield: sd?.dividendYield?.raw || sd?.trailingAnnualDividendYield?.raw || null,
                 pe:       sd?.trailingPE?.raw    || ks?.forwardPE?.raw                  || null,
                 peg:      ks?.pegRatio?.raw      || null,
                 beta:     sd?.beta?.raw          || null,
-                mcap:     sd?.marketCap?.raw     || pr?.marketCap?.raw                  || null,
+                mcap:     sd?.marketCap?.raw     || null,
                 high52:   sd?.fiftyTwoWeekHigh?.raw || null,
                 low52:    sd?.fiftyTwoWeekLow?.raw  || null,
-                ter:      ks?.annualReportExpenseRatio?.raw || null,
-                ytd:      ks?.ytdReturn?.raw         || pr?.ytdReturn?.raw              || null,
-                margin:   fd?.profitMargins?.raw      || null,
-                volume:   pr?.regularMarketVolume?.raw || sd?.volume?.raw               || null,
             };
         } catch (e) {
             console.warn('Yahoo parse failed:', e);
         }
     }
 
-    // Finnhub first, Yahoo fills nulls
+    // Finnhub primary, Yahoo fills nulls
     const mcap     = m?.marketCapitalization ?? (yf?.mcap ? yf.mcap / 1_000_000 : null);
     const divYield = m?.dividendYieldIndicatedAnnual || m?.dividendYield || m?.dividendYieldNormalizedAnnual || yf?.divYield || null;
-    const pe       = m?.peBasicExclExtraTTM ?? yf?.pe    ?? null;
-    const peg      = m?.pegRatio            ?? yf?.peg   ?? null;
-    const beta     = m?.beta                ?? yf?.beta  ?? null;
+    const pe       = m?.peBasicExclExtraTTM ?? yf?.pe   ?? null;
+    const peg      = m?.pegRatio            ?? yf?.peg  ?? null;
+    const beta     = m?.beta                ?? yf?.beta ?? null;
     const high52   = m?.['52WeekHigh']      ?? yf?.high52 ?? null;
     const low52    = m?.['52WeekLow']       ?? yf?.low52  ?? null;
-    const ter      = yf?.ter   ?? null;
-    const ytd      = yf?.ytd   ?? null;
-    const margin   = yf?.margin ?? null;
-    const volume   = yf?.volume ?? null;
+    const volume   = window.lastQuoteVolume ?? null;
 
-    document.getElementById('metric-mcap').textContent   = formatBillions(mcap);
-    document.getElementById('metric-div').textContent    = divYield != null ? `${(divYield * 100 > 1 ? divYield : divYield * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('metric-pe').textContent     = formatValue(pe);
-    document.getElementById('metric-peg').textContent    = formatValue(peg);
-    document.getElementById('metric-52w').textContent    = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
-    document.getElementById('metric-beta').textContent   = formatValue(beta);
-    document.getElementById('metric-ter').textContent    = ter    != null ? `${(ter * 100).toFixed(2)}%`    : 'N/A';
-    document.getElementById('metric-ytd').textContent    = ytd    != null ? `${(ytd * 100).toFixed(2)}%`    : 'N/A';
-    document.getElementById('metric-margin').textContent = margin != null ? `${(margin * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('metric-volume').textContent = volume != null ? volume.toLocaleString()          : 'N/A';
+    document.getElementById('metric-mcap').textContent = formatBillions(mcap);
+    document.getElementById('metric-div').textContent  = divYield != null ? `${(divYield * 100 > 1 ? divYield : divYield * 100).toFixed(2)}%` : 'N/A';
+    document.getElementById('metric-pe').textContent   = formatValue(pe);
+    document.getElementById('metric-peg').textContent  = formatValue(peg);
+    document.getElementById('metric-52w').textContent  = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
+    document.getElementById('metric-beta').textContent = formatValue(beta);
+    document.getElementById('metric-volume').textContent = volume != null ? volume.toLocaleString() : 'N/A';
 }
 
 
