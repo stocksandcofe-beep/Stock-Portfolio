@@ -158,7 +158,7 @@ async function fetchFinancials(symbol) {
     // Both requests fire at the same time
     const [finnhubResult, yahooResult] = await Promise.allSettled([
         fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`).then(r => r.json()),
-        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?modules=summaryDetail,defaultKeyStatistics,financialData`).then(r => r.json()),
+        fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=summaryDetail,defaultKeyStatistics,financialData,price`).then(r => r.json()),
     ]);
 
     const m  = finnhubResult.status === 'fulfilled' ? (finnhubResult.value?.metric || null) : null;
@@ -166,23 +166,23 @@ async function fetchFinancials(symbol) {
 
     if (yahooResult.status === 'fulfilled') {
         try {
-            const data    = yahooResult.value;
-            const modules = data?.chart?.result?.[0]?.meta || {};
-            const summary = data?.quoteSummary?.result?.[0] || {};
+            const result = yahooResult.value?.quoteSummary?.result?.[0] || {};
+            const sd  = result?.summaryDetail      || {};
+            const ks  = result?.defaultKeyStatistics || {};
+            const fd  = result?.financialData      || {};
+            const pr  = result?.price              || {};
             yf = {
-                divYield: summary?.summaryDetail?.dividendYield?.raw
-                       || summary?.summaryDetail?.trailingAnnualDividendYield?.raw
-                       || modules.dividendYield
-                       || null,
-                pe:       summary?.summaryDetail?.trailingPE?.raw
-                       || summary?.defaultKeyStatistics?.forwardPE?.raw
-                       || null,
-                peg:      summary?.defaultKeyStatistics?.pegRatio?.raw || null,
-                eps:      summary?.defaultKeyStatistics?.earningsQuarterlyGrowth?.raw || null,
-                beta:     summary?.summaryDetail?.beta?.raw || null,
-                mcap:     summary?.summaryDetail?.marketCap?.raw || null,
-                high52:   summary?.summaryDetail?.fiftyTwoWeekHigh?.raw || null,
-                low52:    summary?.summaryDetail?.fiftyTwoWeekLow?.raw  || null,
+                divYield: sd?.dividendYield?.raw || sd?.trailingAnnualDividendYield?.raw || null,
+                pe:       sd?.trailingPE?.raw    || ks?.forwardPE?.raw                  || null,
+                peg:      ks?.pegRatio?.raw      || null,
+                beta:     sd?.beta?.raw          || null,
+                mcap:     sd?.marketCap?.raw     || pr?.marketCap?.raw                  || null,
+                high52:   sd?.fiftyTwoWeekHigh?.raw || null,
+                low52:    sd?.fiftyTwoWeekLow?.raw  || null,
+                ter:      ks?.annualReportExpenseRatio?.raw || null,
+                ytd:      ks?.ytdReturn?.raw         || pr?.ytdReturn?.raw              || null,
+                margin:   fd?.profitMargins?.raw      || null,
+                volume:   pr?.regularMarketVolume?.raw || sd?.volume?.raw               || null,
             };
         } catch (e) {
             console.warn('Yahoo parse failed:', e);
@@ -192,22 +192,26 @@ async function fetchFinancials(symbol) {
     // Finnhub first, Yahoo fills nulls
     const mcap     = m?.marketCapitalization ?? (yf?.mcap ? yf.mcap / 1_000_000 : null);
     const divYield = m?.dividendYieldIndicatedAnnual || m?.dividendYield || m?.dividendYieldNormalizedAnnual || yf?.divYield || null;
-    const pe       = m?.peBasicExclExtraTTM ?? yf?.pe   ?? null;
-    const peg      = m?.pegRatio            ?? yf?.peg  ?? null;
-    const eps      = m?.epsGrowthNext5Y     ?? yf?.eps  ?? null;
-    const beta     = m?.beta                ?? yf?.beta ?? null;
+    const pe       = m?.peBasicExclExtraTTM ?? yf?.pe    ?? null;
+    const peg      = m?.pegRatio            ?? yf?.peg   ?? null;
+    const beta     = m?.beta                ?? yf?.beta  ?? null;
     const high52   = m?.['52WeekHigh']      ?? yf?.high52 ?? null;
     const low52    = m?.['52WeekLow']       ?? yf?.low52  ?? null;
+    const ter      = yf?.ter   ?? null;
+    const ytd      = yf?.ytd   ?? null;
+    const margin   = yf?.margin ?? null;
+    const volume   = yf?.volume ?? null;
 
-    document.getElementById('metric-mcap').textContent = formatBillions(mcap);
-    document.getElementById('metric-div').textContent  = divYield != null ? `${divYield.toFixed(2)}%` : 'N/A';
-    document.getElementById('metric-pe').textContent   = formatValue(pe);
-    document.getElementById('metric-peg').textContent  = formatValue(peg);
-    document.getElementById('metric-52w').textContent  = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
-    document.getElementById('metric-beta').textContent = formatValue(beta);
-
-    const terEl = document.getElementById('metric-ter');
-    if (terEl) terEl.textContent = '-';
+    document.getElementById('metric-mcap').textContent   = formatBillions(mcap);
+    document.getElementById('metric-div').textContent    = divYield != null ? `${(divYield * 100 > 1 ? divYield : divYield * 100).toFixed(2)}%` : 'N/A';
+    document.getElementById('metric-pe').textContent     = formatValue(pe);
+    document.getElementById('metric-peg').textContent    = formatValue(peg);
+    document.getElementById('metric-52w').textContent    = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
+    document.getElementById('metric-beta').textContent   = formatValue(beta);
+    document.getElementById('metric-ter').textContent    = ter    != null ? `${(ter * 100).toFixed(2)}%`    : 'N/A';
+    document.getElementById('metric-ytd').textContent    = ytd    != null ? `${(ytd * 100).toFixed(2)}%`    : 'N/A';
+    document.getElementById('metric-margin').textContent = margin != null ? `${(margin * 100).toFixed(2)}%` : 'N/A';
+    document.getElementById('metric-volume').textContent = volume != null ? volume.toLocaleString()          : 'N/A';
 }
 
 
