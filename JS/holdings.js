@@ -106,19 +106,38 @@ Papa.parse(PERF_CSV, {
     },
 });
 
-function fetchLivePrices() {
+async function fetchLivePrices() {
+    // Fetch FX rates from Frankfurter API directly — more reliable than
+    // relying on Google Sheets GOOGLEFINANCE formulas which often export
+    // as "Loading..." before they finish calculating
+    let fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0 };
+    try {
+        const res  = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,EUR');
+        const data = await res.json();
+        // Frankfurter returns rates FROM GBP, so we need to invert them
+        // e.g. if 1 GBP = 1.27 USD, then 1 USD = 1/1.27 GBP = 0.787 GBP
+        if (data?.rates) {
+            fxRates.USD = data.rates.USD ? 1 / data.rates.USD : 1.0;
+            fxRates.EUR = data.rates.EUR ? 1 / data.rates.EUR : 1.0;
+            fxRates.GBP = 1.0;
+        }
+    } catch (e) {
+        console.warn('FX fetch failed, defaulting rates to 1.0:', e);
+    }
+
     Papa.parse(LIVE_CSV, {
         download: true, header: false, skipEmptyLines: true,
         complete(results) {
             results.data.forEach(row => {
-                const ticker = row[0]?.toUpperCase().trim();
+                const ticker       = row[0]?.toUpperCase().trim();
+                const currencyCode = row[3]?.toUpperCase().trim() || 'USD';
                 if (!ticker) return;
-                // Diagnostic log — remove once confirmed working
-                console.log('LIVE ROW:', ticker, '| price:', row[1], '| rate:', row[2], '| currency:', row[3]);
                 livePriceMap[ticker] = {
                     price:        cleanNum(row[1]),
-                    rate:         cleanNum(row[2]) || 1.0,
-                    currencyCode: row[3]?.toUpperCase().trim() || null,
+                    // Use Frankfurter rate instead of the Google Sheets formula
+                    // which frequently exports as "Loading..." before it resolves
+                    rate:         fxRates[currencyCode] ?? 1.0,
+                    currencyCode: currencyCode,
                 };
             });
             fetchHoldings();
