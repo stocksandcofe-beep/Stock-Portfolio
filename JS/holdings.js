@@ -113,6 +113,7 @@ function fetchLivePrices() {
             results.data.forEach(row => {
                 const ticker = row[0]?.toUpperCase().trim();
                 if (!ticker) return;
+                    console.log('LIVE ROW:', row[0], row[1], row[2], row[3]);
                 livePriceMap[ticker] = {
                     price:        cleanNum(row[1]),
                     rate:         cleanNum(row[2]) || 1.0,
