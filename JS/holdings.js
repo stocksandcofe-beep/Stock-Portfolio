@@ -3,7 +3,7 @@
 // =============================================================================
 const PERF_CSV      = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/performance.csv';
 const HOLD_CSV      = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv';
-const LIVE_CSV      = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVR2VvNcIVmx4XkQT4A92MLsfxxdO_J8HTzif8khgRy023wnHTeIVY7DrgXuJvG6_5bnXZSyUcOhTy/pub?gid=0&single=true&output=csv';
+const LIVE_CSV      = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfe4R4WmXqdloLQnh7aX7GN3l_TvLZrbHbNUx5_l5CriBdSSk2X5_FqnmEoO0piA/pub?gid=182157152&single=true&output=csv';
 const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Images/';
 const FINNHUB_KEY   = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
 
@@ -141,8 +141,23 @@ function fetchHoldings() {
 }
 
 function refreshLivePrices() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = true;
+        const icon = btn.querySelector('svg');
+        if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+    }
     livePriceMap = {};
     fetchLivePrices();
+}
+
+function stopRefreshSpin() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = false;
+        const icon = btn.querySelector('svg');
+        if (icon) icon.style.animation = '';
+    }
 }
 
 
@@ -151,6 +166,19 @@ function refreshLivePrices() {
 // =============================================================================
 function sortHoldings(key) {
     if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+
+    // Reset all arrows, highlight the active one
+    document.querySelectorAll('.sort-arrow').forEach(el => {
+        el.textContent = '↕';
+        el.classList.remove('text-emerald-400');
+        el.classList.add('text-zinc-600');
+    });
+    const activeArrow = document.getElementById(`sort-${key}`);
+    if (activeArrow) {
+        activeArrow.textContent = sortDir === 1 ? '↓' : '↑';
+        activeArrow.classList.remove('text-zinc-600');
+        activeArrow.classList.add('text-emerald-400');
+    }
 
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
@@ -232,7 +260,48 @@ function displayHoldings(data) {
         fragment.appendChild(tr);
     });
 
+    // --- Totals row — prepended as first row of tbody ---
+    let totalValue  = 0;
+    let totalCost   = 0;
+    let totalProfit = 0;
+    let totalShares = 0;
+
+    data.forEach(row => {
+        const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const liveData         = livePriceMap[ticker];
+        const shares           = cleanNum(getCol(row, ['Shares']));
+        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activeRate       = liveData ? liveData.rate : 1.0;
+        const curValueGBP      = shares * activePriceLocal * activeRate;
+        const costGBP          = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
+        totalValue  += curValueGBP;
+        totalCost   += costGBP;
+        totalProfit += (curValueGBP - costGBP);
+        totalShares += shares;
+    });
+
+    const totalReturn      = totalCost !== 0 ? ((totalValue / totalCost) - 1) * 100 : 0;
+    const totalProfitClass = totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const totalReturnClass = totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    const totalProfitSign  = totalProfit >= 0 ? '+' : '';
+    const totalReturnSign  = totalReturn >= 0 ? '+' : '';
+
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
+    totalTr.innerHTML = `
+        <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider">Total Portfolio</td>
+        <td class="p-4 text-center font-mono text-zinc-300">${totalShares.toLocaleString()}</td>
+        <td class="p-4" colspan="2"></td>
+        <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
+        <td class="p-4 text-center ${totalProfitClass}">${totalProfitSign}${formatGBP(totalProfit, 0)}</td>
+        <td class="p-4 text-center ${totalReturnClass}">${totalReturnSign}${totalReturn.toFixed(2)}%</td>
+        <td class="p-4 text-center text-zinc-400">100%</td>
+    `;
+
+    // Append data rows then insert totals at the very top
     tbody.appendChild(fragment);
+    tbody.insertBefore(totalTr, tbody.firstChild);
+    stopRefreshSpin();
 }
 
 
