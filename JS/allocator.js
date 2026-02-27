@@ -134,7 +134,7 @@ async function fetchQuotes(symbol) {
     if (prevCloseEl) prevCloseEl.textContent = formatPrice(d.pc * m);
 
     const hloEl = document.getElementById('metric-hlo');
-    if (hloEl) hloEl.textContent = `${(d.h * m).toFixed(2)} / ${(d.l * m).toFixed(2)} / ${(d.o * m).toFixed(2)}`;
+    if (hloEl) hloEl.textContent = `${formatPrice(d.h * m)} / ${formatPrice(d.l * m)} / ${formatPrice(d.o * m)}`;
 
     document.getElementById('metric-change').innerHTML = `
         <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
@@ -203,7 +203,7 @@ async function fetchFinancials(symbol) {
     document.getElementById('metric-div').textContent  = divYield != null ? `${divYield.toFixed(2)}%` : 'N/A';
     document.getElementById('metric-pe').textContent   = formatValue(pe);
     document.getElementById('metric-peg').textContent  = formatValue(peg);
-    document.getElementById('metric-52w').textContent  = (high52 && low52) ? `${high52} / ${low52}` : 'N/A';
+    document.getElementById('metric-52w').textContent  = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
     document.getElementById('metric-beta').textContent = formatValue(beta);
 
     const terEl = document.getElementById('metric-ter');
