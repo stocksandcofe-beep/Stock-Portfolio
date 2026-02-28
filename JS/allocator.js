@@ -307,14 +307,14 @@ toggleBtn.addEventListener('click', () => {
         manualForm.classList.remove('hidden');
         manualForm.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
         toggleBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i> Cancel';
-        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50');
-        toggleBtn.classList.remove('text-zinc-400');
+        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
+        toggleBtn.classList.remove('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
     } else {
         manualForm.classList.add('hidden');
         manualForm.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
         toggleBtn.innerHTML = '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add';
-        toggleBtn.classList.remove('text-rose-400', 'border-rose-500/50');
-        toggleBtn.classList.add('text-zinc-400');
+        toggleBtn.classList.remove('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
+        toggleBtn.classList.add('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
     }
     lucide.createIcons();
 });
