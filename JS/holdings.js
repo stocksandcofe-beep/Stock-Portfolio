@@ -204,8 +204,11 @@ function sortHoldings(key) {
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
         if (key === 'Allocation') {
-            valA = cleanNum(getCol(a, ['Current Value']));
-            valB = cleanNum(getCol(b, ['Current Value']));
+            // Sort by live GBP value
+            const ldA = livePriceMap[getCol(a, ['Ticker'])?.toUpperCase().trim()];
+            const ldB = livePriceMap[getCol(b, ['Ticker'])?.toUpperCase().trim()];
+            valA = cleanNum(getCol(a, ['Shares'])) * (ldA ? ldA.price * ldA.rate : 0);
+            valB = cleanNum(getCol(b, ['Shares'])) * (ldB ? ldB.price * ldB.rate : 0);
         } else if (key === 'BEP') {
             valA = cleanNum(getCol(a, ['BEP Price']));
             valB = cleanNum(getCol(b, ['BEP Price']));
@@ -239,12 +242,13 @@ function displayHoldings(data) {
         const shares           = cleanNum(getCol(row, ['Shares']));
         const bepLocal         = cleanNum(getCol(row, ['BEP Price']));
         const liveData         = livePriceMap[ticker];
-        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activePriceLocal = liveData ? liveData.price : 0;
         const activeRate       = liveData ? liveData.rate : 1.0;
 
         const curValueGBP = shares * activePriceLocal * activeRate;
         const weight      = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
-        const costGBP     = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
+        // Cost is read directly from CSV — already in GBP, no conversion needed
+        const costGBP     = cleanNum(getCol(row, ['Total Purchase Cost']));
         const profitGBP   = curValueGBP - costGBP;
         const percReturn  = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
 
@@ -291,10 +295,10 @@ function displayHoldings(data) {
         const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const liveData         = livePriceMap[ticker];
         const shares           = cleanNum(getCol(row, ['Shares']));
-        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activePriceLocal = liveData ? liveData.price : 0;
         const activeRate       = liveData ? liveData.rate : 1.0;
         const curValueGBP      = shares * activePriceLocal * activeRate;
-        const costGBP          = cleanNum(getCol(row, ['Current Value'])) - cleanNum(getCol(row, ['Total Unrealised P/L']));
+        const costGBP          = cleanNum(getCol(row, ['Total Purchase Cost']));
         totalValue  += curValueGBP;
         totalCost   += costGBP;
         totalProfit += (curValueGBP - costGBP);
@@ -388,7 +392,7 @@ async function buildCharts(data) {
         const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const liveData         = livePriceMap[ticker];
         const shares           = cleanNum(getCol(row, ['Shares']));
-        const activePriceLocal = liveData ? liveData.price : cleanNum(getCol(row, ['Current Price']));
+        const activePriceLocal = liveData ? liveData.price : 0;
         const activeRate       = liveData ? liveData.rate : 1.0;
         const curValueGBP      = shares * activePriceLocal * activeRate;
 
