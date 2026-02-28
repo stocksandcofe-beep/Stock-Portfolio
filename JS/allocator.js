@@ -300,16 +300,23 @@ const tickerObserver = new MutationObserver(() => {
 });
 tickerObserver.observe(document.getElementById('selected-ticker'), { childList: true });
 
-// Toggle manual ETF form
+// Toggle manual ETF form — button label swaps between "+ Manual Add" and "✕ Cancel"
 toggleBtn.addEventListener('click', () => {
     const isHidden = manualForm.classList.contains('hidden');
     if (isHidden) {
         manualForm.classList.remove('hidden');
         manualForm.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+        toggleBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i> Cancel';
+        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50');
+        toggleBtn.classList.remove('text-zinc-400');
     } else {
         manualForm.classList.add('hidden');
         manualForm.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+        toggleBtn.innerHTML = '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add';
+        toggleBtn.classList.remove('text-rose-400', 'border-rose-500/50');
+        toggleBtn.classList.add('text-zinc-400');
     }
+    lucide.createIcons();
 });
 
 // Add asset from search
