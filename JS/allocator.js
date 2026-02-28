@@ -374,22 +374,25 @@ function parseMcapValue(str) {
 // Rebuild the allocation table with FX-aware share calculations
 // FIX: rows are now built into a DocumentFragment and appended once (no repeated reflows)
 // FIX: lucide.createIcons() is called once after all rows are in the DOM
+// FIX: FX rates fetched BEFORE clearing rows to avoid blank-table flicker during async wait
 async function updateCalculatorUI() {
-    calcTableBody.querySelectorAll('.asset-row').forEach(row => row.remove());
-
     if (portfolioItems.length === 0) {
+        calcTableBody.querySelectorAll('.asset-row').forEach(row => row.remove());
         calcEmptyRow.style.display = 'table-row';
         return;
     }
-
-    calcEmptyRow.style.display = 'none';
 
     const portfolioCurrency = currencySelect.value;
     const totalMcap         = portfolioItems.reduce((acc, item) => acc + item.mcap, 0);
     const totalInvestment   = parseFloat(investmentInput.value) || 0;
 
-    // FX rates are cached — only makes a network call the first time per currency
+    // Fetch FX rates FIRST — before touching the DOM — so the table is never
+    // visibly empty while waiting for the async response
     const fxRates = await getFxRates(portfolioCurrency);
+
+    // Now safe to clear and rebuild
+    calcTableBody.querySelectorAll('.asset-row').forEach(row => row.remove());
+    calcEmptyRow.style.display = 'none';
 
     // Build all rows off-DOM then append once to avoid repeated reflows
     const fragment = document.createDocumentFragment();
