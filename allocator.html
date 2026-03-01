@@ -107,7 +107,7 @@
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="flex flex-col md:flex-row md:items-center gap-6 mb-10 w-full">
             <div class="flex-shrink-0">
-                <h1 class="text-4xl font-bold tracking-tight">Asset Allocator</h1>
+                <h1 class="text-3xl font-bold tracking-tight">Asset Allocator</h1>
                 <p class="text-zinc-400 mt-1">Plan and rebalance your portfolio targets.</p>
             </div>
             <div class="grow relative">
@@ -128,8 +128,8 @@
         </header>
 
         <div id="selection-container" class="hidden">
-            <h2 id="selected-ticker">---</h2>
-            <p id="selected-name">No Asset Selected</p>
+            <h2 id="selected-ticker" class="text-sm font-bold text-emerald-400">---</h2>
+            <p id="selected-name" class="text-xs text-zinc-400">No Asset Selected</p>
             <span id="live-price">£0.00</span>
         </div>
 
@@ -148,23 +148,23 @@
                 <div class="space-y-4 text-sm">
                     <div class="flex justify-between border-b border-zinc-800/50 pb-2">
                         <span class="text-zinc-400">Current Price:</span>
-                        <span id="metric-price" class="text-white font-mono">---</span>
+                        <span id="metric-price" class="text-white text-sm">---</span>
                     </div>
                     <div class="flex justify-between border-b border-zinc-800/50 pb-2">
                         <span class="text-zinc-400">Change & % Change:</span>
-                        <span id="metric-change" class="text-white font-mono">---</span>
+                        <span id="metric-change" class="text-white text-sm">---</span>
                     </div>
                     <div class="flex justify-between border-b border-zinc-800/50 pb-2">
                         <span class="text-zinc-400">High / Low / Open:</span>
-                        <span id="metric-hlo" class="text-white font-mono text-right text-xs">---</span>
+                        <span id="metric-hlo" class="text-white text-right text-xs">---</span>
                     </div>
                     <div class="flex justify-between border-b border-zinc-800/50 pb-2">
                         <span class="text-zinc-400">Previous Close:</span>
-                        <span id="metric-pc" class="text-white font-mono">---</span>
+                        <span id="metric-pc" class="text-white text-sm">---</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-zinc-400">52-Week High / Low:</span>
-                        <span id="metric-52w" class="text-white font-mono text-right text-xs">---</span>
+                        <span id="metric-52w" class="text-white text-right text-xs">---</span>
                     </div>
                 </div>
             </div>
@@ -229,7 +229,7 @@
                             <option value="EUR">EUR (€)</option>
                             <option value="GBP" selected>GBP (£)</option>
                         </select>
-                        <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 font-mono outline-none">
+                        <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 outline-none">
                     </div>
                 </div>
 
