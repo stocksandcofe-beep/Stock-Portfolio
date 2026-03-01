@@ -128,9 +128,11 @@ function initDashboard() {
     const displayPerc = currentPeriod === 'all' ? allReturnPerc : periodReturnPerc;
 
     // --- Hero: shows return % (Value mode) or profit % (Profit mode) ---
-    // Profit % = period profit / opening value, so it reflects true cash gain rate
-    const profitPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
-    const heroPerc   = currentChartMode === 'profit' ? profitPerc : displayPerc;
+    // Value mode: return % = profit / (opening value + deposits) — growth rate
+    // Profit mode: profit % = profit / cost basis — return on invested capital
+    const costBasisPeriod = valEnd - cleanNum(end[COL_PROFIT]) + cleanNum(start[COL_PROFIT]);
+    const profitPerc      = costBasisPeriod !== 0 ? (pProfit / costBasisPeriod) * 100 : 0;
+    const heroPerc        = currentChartMode === 'profit' ? profitPerc : displayPerc;
     const heroEl     = document.getElementById('hero-val');
     heroEl.innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
     heroEl.className = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
