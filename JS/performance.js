@@ -80,8 +80,10 @@ function updatePeriod(p) {
 
 function updateChartMode(m) {
     currentChartMode = m;
-    document.getElementById('btn-growth').classList.toggle('active', m === 'growth');
-    document.getElementById('btn-profit').classList.toggle('active', m === 'profit');
+    ['growth', 'profit'].forEach(id => {
+        const btn = document.getElementById('btn-' + id);
+        if (btn) btn.classList.toggle('active', id === m);
+    });
     initDashboard();
 }
 
@@ -145,13 +147,13 @@ function initDashboard() {
     // --- Total Net Value card (formerly Total Return) — shows absolute GBP value ---
     const trVal = document.getElementById('stat-total-return');
     trVal.innerText = formatGBP(valEnd);
-    trVal.parentElement.className = 'card p-6 border-l-4 border-zinc-700';
+    trVal.parentElement.className = 'card p-6 border-l border-zinc-700';
     trVal.className = `text-lg font-bold ${valEnd >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     // --- Net Profit card ---
     const npVal = document.getElementById('stat-profit');
     npVal.innerText = (pProfit >= 0 ? '+' : '') + formatGBP(pProfit);
-    npVal.parentElement.className = 'card p-6 border-l-4 border-zinc-700';
+    npVal.parentElement.className = 'card p-6 border-l border-zinc-700';
     npVal.className = `text-lg font-bold ${pProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     calculateMetrics(filtered);
@@ -199,7 +201,7 @@ function calculateMetrics(data) {
     const twr    = (cumFactor - 1) * 100;
     const twrEl  = document.getElementById('stat-twr');
     twrEl.innerText = (twr >= 0 ? '+' : '') + twr.toFixed(2) + '%';
-    twrEl.parentElement.className = 'card p-6 border-l-4 border-zinc-700';
+    twrEl.parentElement.className = 'card p-6 border-l border-zinc-700';
     twrEl.className = `text-lg font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     if (pairedRets.length > 1) {
