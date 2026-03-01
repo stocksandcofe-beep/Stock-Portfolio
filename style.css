@@ -89,22 +89,6 @@ body {
     background: #10b9810d;
 }
 
-.refresh-btn {
-    background-color: #10b981;
-    color: #000000;
-    font-weight: 700;
-    font-size: 12px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-    cursor: pointer;
-}
-
-.refresh-btn:hover {
-    background-color: #059669;
-}
-
-
 /* =============================================================================
    SOCIAL ICONS
 ============================================================================= */
@@ -301,4 +285,18 @@ body {
     main {
         padding-top: calc(56px + 24px) !important;
     }
+}
+
+
+/* =============================================================================
+   HOLDINGS TABLE — sort arrows & refresh spin animation
+============================================================================= */
+.sort-arrow {
+    font-size: 9px;
+    opacity: 0.6;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
