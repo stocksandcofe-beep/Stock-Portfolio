@@ -200,7 +200,7 @@ function calculateMetrics(data) {
     const twrEl  = document.getElementById('stat-twr');
     twrEl.innerText = (twr >= 0 ? '+' : '') + twr.toFixed(2) + '%';
     twrEl.parentElement.className = 'card p-6 border-l-4 border-zinc-700';
-    twrEl.className = `text-2xl font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    twrEl.className = `text-lg font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     if (pairedRets.length > 1) {
         const portRets = pairedRets.map(p => p.port);
