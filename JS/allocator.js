@@ -79,7 +79,7 @@ function displaySearchResults(assets) {
                 <span class="text-white font-bold group-hover:text-emerald-400">${asset.symbol}</span>
                 <span class="text-zinc-500 text-xs truncate max-w-[200px]">${asset.description}</span>
             </div>
-            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-mono">${asset.type || 'Stock'}</span>
+            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-bold">${asset.type || 'Stock'}</span>
         `;
         item.onclick = () => selectAsset(asset.symbol, asset.description);
         resultsDiv.appendChild(item);
@@ -423,8 +423,8 @@ async function updateCalculatorUI() {
         row.className = 'asset-row border-b border-zinc-800/30 hover:bg-zinc-900/40 transition-colors';
         row.innerHTML = `
             <td class="py-4 px-2 text-white font-medium">${item.name}</td>
-            <td class="py-4 text-center font-mono text-zinc-400">${item.ticker}</td>
-            <td class="py-4 text-center font-mono text-zinc-300 relative group">
+            <td class="py-4 text-center text-xs text-zinc-400">${item.ticker}</td>
+            <td class="py-4 text-center text-sm text-zinc-300 relative group">
                 <span class="${item.localCurrency !== portfolioCurrency ? 'cursor-help' : ''}">${formatLocalCurrency(item.price, item.localCurrency)}</span>
                 ${fxTooltip}
             </td>
