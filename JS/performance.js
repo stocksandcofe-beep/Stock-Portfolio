@@ -127,11 +127,13 @@ function initDashboard() {
 
     const displayPerc = currentPeriod === 'all' ? allReturnPerc : periodReturnPerc;
 
-    // --- Hero: now shows Total Return % (changes with period) ---
-    const heroPerc = displayPerc;
-    const heroEl   = document.getElementById('hero-val');
-    heroEl.innerText  = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
-    heroEl.className  = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    // --- Hero: shows return % (Value mode) or profit % (Profit mode) ---
+    // Profit % = period profit / opening value, so it reflects true cash gain rate
+    const profitPerc = baseValue !== 0 ? (pProfit / baseValue) * 100 : 0;
+    const heroPerc   = currentChartMode === 'profit' ? profitPerc : displayPerc;
+    const heroEl     = document.getElementById('hero-val');
+    heroEl.innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
+    heroEl.className = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
     document.getElementById('date-label').innerText = start[COL_DATE] + ' — ' + end[COL_DATE];
 
     // --- Hero badge: hidden — % is now the main hero value ---
