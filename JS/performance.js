@@ -129,7 +129,9 @@ function initDashboard() {
 
     // --- Hero: now shows Total Return % (changes with period) ---
     const heroPerc = displayPerc;
-    document.getElementById('hero-val').innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
+    const heroEl   = document.getElementById('hero-val');
+    heroEl.innerText  = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
+    heroEl.className  = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
     document.getElementById('date-label').innerText = start[COL_DATE] + ' — ' + end[COL_DATE];
 
     // --- Hero badge: hidden — % is now the main hero value ---
