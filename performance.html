@@ -107,7 +107,7 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <header class="flex justify-between items-end mb-8">
+        <header class="mb-8">
             <div>
                 <p class="text-zinc-400 text-sm mb-1">Total Return</p>
                 <div class="flex items-center gap-3">
@@ -115,25 +115,24 @@
                     <span id="hero-badge" class="hidden text-sm font-bold px-3 py-1 rounded-full"></span>
                 </div>
             </div>
-            <div class="text-right">
-                <p id="date-label" class="text-zinc-400 text-sm">--/--/----</p>
-            </div>
+
         </header>
 
-        <div class="flex gap-2 mb-8">
+        <div class="flex items-center gap-2 mb-8">
             <button id="p-all"  onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
             <button id="p-ytd"  onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
             <button id="p-1y"   onclick="updatePeriod('1y')"  class="period-btn px-4 py-2">1Y</button>
             <button id="p-ly"   onclick="updatePeriod('ly')"  class="period-btn px-4 py-2">Last Year</button>
+            <div class="flex bg-black/40 p-1 rounded-xl ml-2">
+                <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
+                <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+            </div>
         </div>
 
         <div class="card p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-semibold text-zinc-200">Portfolio Growth</h3>
-                <div class="flex bg-black/40 p-1 rounded-xl">
-                    <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
-                    <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
-                </div>
+                <h3 class="font-semibold text-zinc-200">Portfolio Performance</h3>
+                <p id="date-label" class="text-zinc-500 text-xs">--/--/----</p>
             </div>
             <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
         </div>
