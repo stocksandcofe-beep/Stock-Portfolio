@@ -358,12 +358,12 @@ submitManualBtn.addEventListener('click', () => {
         localCurrency: localCurr,
     });
 
+    // Clear fields but keep the form open so the user can add more assets
     document.getElementById('man-name').value   = '';
     document.getElementById('man-ticker').value = '';
     document.getElementById('man-price').value  = '';
     document.getElementById('man-mcap').value   = '';
-    manualForm.classList.add('hidden');
-    manualForm.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+    document.getElementById('man-name').focus();
 
     updateCalculatorUI();
 });
