@@ -107,25 +107,21 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <header class="mb-8">
+        <div class="flex items-center justify-between mb-8">
             <div>
                 <p id="hero-label" class="text-zinc-400 text-sm mb-1">Total Return</p>
-                <div class="flex items-center gap-3">
-                    <h1 id="hero-val" class="text-3xl font-bold tracking-tight">£0.00</h1>
-                    <span id="hero-badge" class="hidden text-sm font-bold px-3 py-1 rounded-full"></span>
-                </div>
+                <h1 id="hero-val" class="text-3xl font-bold tracking-tight">£0.00</h1>
+                <span id="hero-badge" class="hidden text-sm font-bold px-3 py-1 rounded-full"></span>
             </div>
-
-        </header>
-
-        <div class="flex items-center gap-2 mb-8">
-            <button id="p-all"  onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
-            <button id="p-ytd"  onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
-            <button id="p-1y"   onclick="updatePeriod('1y')"  class="period-btn px-4 py-2">1Y</button>
-            <button id="p-ly"   onclick="updatePeriod('ly')"  class="period-btn px-4 py-2">Last Year</button>
-            <div class="flex bg-black/40 p-1 rounded-xl ml-2">
-                <button id="btn-growth" onclick="updateChartMode('growth')" class="toggle-btn active px-4 py-1.5">Value</button>
-                <button id="btn-profit" onclick="updateChartMode('profit')" class="toggle-btn px-4 py-1.5 ml-1">Profit</button>
+            <div class="flex items-center gap-2">
+                <button id="p-all"  onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
+                <button id="p-ytd"  onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
+                <button id="p-1y"   onclick="updatePeriod('1y')"  class="period-btn px-4 py-2">1Y</button>
+                <button id="p-ly"   onclick="updatePeriod('ly')"  class="period-btn px-4 py-2">Last Year</button>
+                <div class="flex p-1 rounded-xl ml-2 gap-1">
+                    <button id="btn-growth" onclick="updateChartMode('growth')" class="period-btn active px-4 py-2">Value</button>
+                    <button id="btn-profit" onclick="updateChartMode('profit')" class="period-btn px-4 py-2">Profit</button>
+                </div>
             </div>
         </div>
 
