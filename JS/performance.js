@@ -137,6 +137,7 @@ function initDashboard() {
     heroEl.innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
     heroEl.className = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
     document.getElementById('date-label').innerText = start[COL_DATE] + ' — ' + end[COL_DATE];
+    document.getElementById('hero-label').innerText = currentChartMode === 'profit' ? 'Total Net Profit' : 'Total Return';
 
     // --- Hero badge: hidden — % is now the main hero value ---
     document.getElementById('hero-badge').classList.add('hidden');
@@ -241,19 +242,35 @@ function renderChart(data) {
     gradient.addColorStop(0, `rgba(${color}, 0.2)`);
     gradient.addColorStop(1, `rgba(${color}, 0)`);
 
+    // For profit mode, colour line segments red when value is negative
+    const profitData = data.map(r => cleanNum(r[COL_PROFIT]));
+    const segmentColor = !isGrowth
+        ? {
+            borderColor: ctx2 => {
+                const i = ctx2.p1DataIndex;
+                return profitData[i] < 0 ? 'rgb(244, 63, 94)' : `rgb(${color})`;
+            },
+            backgroundColor: ctx2 => {
+                const i = ctx2.p1DataIndex;
+                return profitData[i] < 0 ? 'rgba(244, 63, 94, 0.15)' : gradient;
+            },
+          }
+        : {};
+
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.map(r => parseDate(r[COL_DATE])),
             datasets: [{
                 data: data.map(r => isGrowth ? cleanNum(r[COL_VALUE]) : cleanNum(r[COL_PROFIT])),
-                borderColor:             `rgb(${color})`,
+                borderColor:             isGrowth ? `rgb(${color})` : undefined,
                 borderWidth:             2,
                 pointRadius:             0,
                 tension:                 0.4,
                 cubicInterpolationMode:  'monotone',
                 fill:                    true,
-                backgroundColor:         gradient,
+                backgroundColor:         isGrowth ? gradient : undefined,
+                segment:                 segmentColor,
             }],
         },
         options: {
