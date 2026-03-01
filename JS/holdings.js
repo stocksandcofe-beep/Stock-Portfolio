@@ -201,21 +201,42 @@ function sortHoldings(key) {
         activeArrow.classList.add('text-emerald-400');
     }
 
+    // Helper: compute live GBP value for a row
+    function liveGBP(row) {
+        const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const ld     = livePriceMap[ticker];
+        const shares = cleanNum(getCol(row, ['Shares']));
+        const price  = ld ? ld.price : 0;
+        const rate   = ld ? ld.rate  : 1.0;
+        return shares * price * rate;
+    }
+
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
-        if (key === 'Allocation') {
-            // Sort by live GBP value
-            const ldA = livePriceMap[getCol(a, ['Ticker'])?.toUpperCase().trim()];
-            const ldB = livePriceMap[getCol(b, ['Ticker'])?.toUpperCase().trim()];
-            valA = cleanNum(getCol(a, ['Shares'])) * (ldA ? ldA.price * ldA.rate : 0);
-            valB = cleanNum(getCol(b, ['Shares'])) * (ldB ? ldB.price * ldB.rate : 0);
-        } else if (key === 'BEP') {
-            valA = cleanNum(getCol(a, ['BEP Price']));
-            valB = cleanNum(getCol(b, ['BEP Price']));
-        } else if (key === 'Company') {
+        if (key === 'Company') {
             valA = getCol(a, ['Company']) || '';
             valB = getCol(b, ['Company']) || '';
             return valA.localeCompare(valB) * sortDir;
+        } else if (key === 'BEP') {
+            valA = cleanNum(getCol(a, ['BEP Price']));
+            valB = cleanNum(getCol(b, ['BEP Price']));
+        } else if (key === 'Shares') {
+            valA = cleanNum(getCol(a, ['Shares']));
+            valB = cleanNum(getCol(b, ['Shares']));
+        } else if (key === 'Current Value' || key === 'Allocation') {
+            // Sort by live GBP value
+            valA = liveGBP(a);
+            valB = liveGBP(b);
+        } else if (key === 'Total Unrealised P/L') {
+            // Sort by live P/L = live value - total purchase cost
+            valA = liveGBP(a) - cleanNum(getCol(a, ['Total Purchase Cost']));
+            valB = liveGBP(b) - cleanNum(getCol(b, ['Total Purchase Cost']));
+        } else if (key === '% Return') {
+            // Sort by % return = (live value / cost) - 1
+            const costA = cleanNum(getCol(a, ['Total Purchase Cost']));
+            const costB = cleanNum(getCol(b, ['Total Purchase Cost']));
+            valA = costA !== 0 ? liveGBP(a) / costA : 0;
+            valB = costB !== 0 ? liveGBP(b) / costB : 0;
         } else {
             valA = cleanNum(getCol(a, [key]));
             valB = cleanNum(getCol(b, [key]));
