@@ -135,7 +135,7 @@ function initDashboard() {
     const heroPerc        = currentChartMode === 'profit' ? profitPerc : displayPerc;
     const heroEl     = document.getElementById('hero-val');
     heroEl.innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
-    heroEl.className = `text-5xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    heroEl.className = `text-3xl font-bold tracking-tight ${heroPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
     document.getElementById('date-label').innerText = start[COL_DATE] + ' — ' + end[COL_DATE];
     document.getElementById('hero-label').innerText = currentChartMode === 'profit' ? 'Total Net Profit' : 'Total Return';
 
