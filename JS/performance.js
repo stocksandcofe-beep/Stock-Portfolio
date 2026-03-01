@@ -127,25 +127,19 @@ function initDashboard() {
 
     const displayPerc = currentPeriod === 'all' ? allReturnPerc : periodReturnPerc;
 
-    // --- Hero value ---
-    document.getElementById('hero-val').innerText = formatGBP(valEnd);
+    // --- Hero: now shows Total Return % (changes with period) ---
+    const heroPerc = displayPerc;
+    document.getElementById('hero-val').innerText = (heroPerc >= 0 ? '+' : '') + heroPerc.toFixed(2) + '%';
     document.getElementById('date-label').innerText = start[COL_DATE] + ' — ' + end[COL_DATE];
 
-    // --- Hero badge: overall return % pill next to the portfolio value ---
-    const badge = document.getElementById('hero-badge');
-    badge.innerText = (displayPerc >= 0 ? '+' : '') + displayPerc.toFixed(2) + '%';
-    badge.className = `text-sm font-bold px-3 py-1 rounded-full ${
-        displayPerc >= 0
-            ? 'bg-emerald-500/15 text-emerald-400'
-            : 'bg-rose-500/15 text-rose-400'
-    }`;
-    badge.classList.remove('hidden');
+    // --- Hero badge: hidden — % is now the main hero value ---
+    document.getElementById('hero-badge').classList.add('hidden');
 
-    // --- Total Return card ---
+    // --- Total Net Value card (formerly Total Return) — shows absolute GBP value ---
     const trVal = document.getElementById('stat-total-return');
-    trVal.innerText = (displayPerc >= 0 ? '+' : '') + displayPerc.toFixed(2) + '%';
-    trVal.parentElement.className = `card p-6 border-l-4 ${displayPerc >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
-    trVal.className = `text-2xl font-bold ${displayPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    trVal.innerText = formatGBP(valEnd);
+    trVal.parentElement.className = `card p-6 border-l-4 ${valEnd >= 0 ? 'border-emerald-500' : 'border-rose-500'}`;
+    trVal.className = `text-2xl font-bold ${valEnd >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     // --- Net Profit card ---
     const npVal = document.getElementById('stat-profit');
