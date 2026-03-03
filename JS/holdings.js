@@ -2,7 +2,7 @@
 // CONSTANTS & STATE
 // =============================================================================
 const HOLD_CSV      = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv';
-const WKL_CSV       = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVR2VvNcIVmx4XkQT4A92MLsfxxdO_J8HTzif8khgRy023wnHTeIVY7DrgXuJvG6_5bnXZSyUcOhTy/pub?gid=0&single=true&output=csv'; // Google Sheets published CSV — WKL only
+const WKL_CSV       = 'PASTE_GOOGLE_SHEETS_CSV_URL_HERE'; // Google Sheets published CSV — WKL only
 const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Images/';
 const FINNHUB_KEY   = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
 
@@ -103,16 +103,38 @@ function showTableError(msg) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400 text-sm">${msg}</td></tr>`;
 }
 
-// Fetch a single quote from Finnhub
-async function fetchFinnhubQuote(ticker) {
+// Fetch a single quote from Finnhub, with one retry on rate limit
+async function fetchFinnhubQuote(ticker, retry = true) {
     try {
         const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`);
         const data = await res.json();
-        if (data.error || !data.c) return { ticker, price: 0 };
-        return { ticker, price: data.c };
+        if (data.error) {
+            // Rate limited — wait 2s and retry once
+            if (retry) {
+                await new Promise(r => setTimeout(r, 2000));
+                return fetchFinnhubQuote(ticker, false);
+            }
+            return { ticker, price: 0 };
+        }
+        return { ticker, price: data.c || 0 };
     } catch (e) {
         return { ticker, price: 0 };
     }
+}
+
+// Fetch Finnhub quotes in batches to avoid rate limits
+// Free tier = 60 calls/min — batches of 5 with 300ms gap is safe
+async function fetchFinnhubQuotesBatched(tickers, batchSize = 5, delayMs = 300) {
+    const results = [];
+    for (let i = 0; i < tickers.length; i += batchSize) {
+        const batch = tickers.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(t => fetchFinnhubQuote(t)));
+        results.push(...batchResults);
+        if (i + batchSize < tickers.length) {
+            await new Promise(r => setTimeout(r, delayMs));
+        }
+    }
+    return results;
 }
 
 // Fetch WKL price from Google Sheets CSV
@@ -164,7 +186,7 @@ async function loadAll() {
     const finnhubTickers = allTickers.filter(t => !SHEETS_TICKERS.has(t));
 
     // Fetch all Finnhub quotes in parallel
-    const finnhubQuotes = await Promise.all(finnhubTickers.map(fetchFinnhubQuote));
+    const finnhubQuotes = await fetchFinnhubQuotesBatched(finnhubTickers);
 
     // Build live price map — Finnhub tickers
     finnhubQuotes.forEach(({ ticker, price }) => {
