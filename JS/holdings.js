@@ -1,10 +1,11 @@
 // =============================================================================
 // CONSTANTS & STATE
 // =============================================================================
-const PERF_CSV      = `https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/performance.csv?t=${Date.now()}`;
-const HOLD_CSV      = `https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv?t=${Date.now()}`;
+// PERF_CSV removed — totalValLatest computed from live prices directly,
+// eliminating the heaviest network request from the load chain.
+const HOLD_CSV      = `https://cdn.jsdelivr.net/gh/stocksandcohe-beep/Stock-Portfolio@main/Files/holdings.csv?t=${Date.now()}`;
 const LIVE_CSV      = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVR2VvNcIVmx4XkQT4A92MLsfxxdO_J8HTzif8khgRy023wnHTeIVY7DrgXuJvG6_5bnXZSyUcOhTy/pub?gid=0&single=true&output=csv';
-const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Images/';
+const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcohe-beep/Stock-Portfolio@main/Images/';
 const FINNHUB_KEY   = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
 
 let currentHoldingsData = [];
@@ -13,43 +14,30 @@ let totalValLatest      = 0;
 let sortKey             = '';
 let sortDir             = 1;
 
-// Read which view to show from the URL — defaults to 'table'
 const urlParams  = new URLSearchParams(window.location.search);
 const activeView = urlParams.get('view') || 'table';
 
 
 // =============================================================================
-// VIEW SWITCHING — show/hide table vs charts, highlight correct sub-nav item,
-// keep accordion open, update page title
+// VIEW SWITCHING
 // =============================================================================
 function initView() {
     const isCharts = activeView === 'charts';
-
-    // Show/hide main content areas
     document.getElementById('view-table').classList.toggle('hidden', isCharts);
     document.getElementById('view-charts').classList.toggle('hidden', !isCharts);
-
-    // Update page title
     document.getElementById('page-title').textContent = isCharts ? 'Sector & Region' : 'Holdings';
-
-    // Highlight correct sub-nav item in both desktop and mobile sidebars
     document.querySelectorAll('.holdings-submenu').forEach(submenu => {
         submenu.querySelectorAll('.sub-nav-item').forEach(link => {
-            const isActive = isCharts
-                ? link.href.includes('view=charts')
-                : link.href.includes('view=table');
+            const isActive = isCharts ? link.href.includes('view=charts') : link.href.includes('view=table');
             link.classList.toggle('text-emerald-400', isActive);
             link.classList.toggle('bg-emerald-500/10', isActive);
             link.classList.toggle('text-zinc-400', !isActive);
         });
     });
-
-    // Refresh button — only meaningful on table view
     const refreshBtn = document.getElementById('refresh-btn');
     if (refreshBtn) refreshBtn.classList.toggle('hidden', isCharts);
 }
 
-// Accordion toggle — only toggles the submenu and chevron within the same nav block
 function toggleHoldingsMenu(btn) {
     const parent  = btn.parentElement;
     const submenu = parent.querySelector('.holdings-submenu');
@@ -85,27 +73,20 @@ function formatGBP(val, decimals = 2) {
 function getCurrencySymbol(ticker) {
     const liveData = livePriceMap[ticker];
     if (!liveData) return '$';
-    if (liveData.currencyCode) {
-        const map = { GBP: '£', EUR: '€', USD: '$' };
-        return map[liveData.currencyCode] || '$';
-    }
-    return '$';
+    const map = { GBP: '£', EUR: '€', USD: '$' };
+    return map[liveData.currencyCode] || '$';
 }
 
 
 // =============================================================================
-// DATA LOADING — all requests fire in parallel via Promise.all
+// DATA LOADING — 3 parallel requests
 // =============================================================================
-
-// Wraps PapaParse in a Promise so it can be used with Promise.all
 function parseCsv(url, opts = {}) {
     return new Promise(resolve => {
         Papa.parse(url, {
-            download: true,
-            skipEmptyLines: true,
-            ...opts,
+            download: true, skipEmptyLines: true, ...opts,
             complete: results => resolve(results.data),
-            error:    ()      => resolve([]), // never reject — return empty on failure
+            error:    ()      => resolve([]),
         });
     });
 }
@@ -116,9 +97,7 @@ function showTableError(msg) {
 }
 
 async function loadAll() {
-    // Fire all four requests simultaneously
-    const [perfRows, liveRows, holdRows, fxData] = await Promise.all([
-        parseCsv(PERF_CSV, { header: false }),
+    const [liveRows, holdRows, fxData] = await Promise.all([
         parseCsv(LIVE_CSV, { header: false }),
         parseCsv(HOLD_CSV, { header: true }),
         fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,EUR')
@@ -126,11 +105,7 @@ async function loadAll() {
             .catch(() => ({})),
     ]);
 
-    // Portfolio total from performance CSV
-    const latest = perfRows.filter(r => r[0] && r[47]).pop();
-    totalValLatest = cleanNum(latest?.[47]);
-
-    // FX rates
+    // FX rates — Frankfurter returns rates FROM GBP so invert them
     const fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0 };
     if (fxData?.rates) {
         fxRates.USD = fxData.rates.USD ? 1 / fxData.rates.USD : 1.0;
@@ -158,6 +133,14 @@ async function loadAll() {
         showTableError('No holdings data found. Check that the CSV is up to date and has a Ticker and Shares column.');
         return;
     }
+
+    // Compute portfolio total from live prices — replaces old PERF_CSV fetch
+    totalValLatest = currentHoldingsData.reduce((sum, row) => {
+        const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const ld     = livePriceMap[ticker];
+        const shares = cleanNum(getCol(row, ['Shares']));
+        return sum + (ld ? shares * ld.price * ld.rate : 0);
+    }, 0);
 
     if (activeView === 'charts') {
         buildCharts(currentHoldingsData);
@@ -195,7 +178,6 @@ function stopRefreshSpin() {
 function sortHoldings(key) {
     if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
 
-    // Reset all arrows, highlight the active one
     document.querySelectorAll('.sort-arrow').forEach(el => {
         el.textContent = '↕';
         el.classList.remove('text-emerald-400');
@@ -208,22 +190,17 @@ function sortHoldings(key) {
         activeArrow.classList.add('text-emerald-400');
     }
 
-    // Helper: compute live GBP value for a row
     function liveGBP(row) {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const ld     = livePriceMap[ticker];
         const shares = cleanNum(getCol(row, ['Shares']));
-        const price  = ld ? ld.price : 0;
-        const rate   = ld ? ld.rate  : 1.0;
-        return shares * price * rate;
+        return ld ? shares * ld.price * ld.rate : 0;
     }
 
     currentHoldingsData.sort((a, b) => {
         let valA, valB;
         if (key === 'Company') {
-            valA = getCol(a, ['Company']) || '';
-            valB = getCol(b, ['Company']) || '';
-            return valA.localeCompare(valB) * sortDir;
+            return (getCol(a, ['Company']) || '').localeCompare(getCol(b, ['Company']) || '') * sortDir;
         } else if (key === 'BEP') {
             valA = cleanNum(getCol(a, ['BEP Price']));
             valB = cleanNum(getCol(b, ['BEP Price']));
@@ -231,15 +208,12 @@ function sortHoldings(key) {
             valA = cleanNum(getCol(a, ['Shares']));
             valB = cleanNum(getCol(b, ['Shares']));
         } else if (key === 'Current Value' || key === 'Allocation') {
-            // Sort by live GBP value
             valA = liveGBP(a);
             valB = liveGBP(b);
         } else if (key === 'Total Unrealised P/L') {
-            // Sort by live P/L = live value - total purchase cost
             valA = liveGBP(a) - cleanNum(getCol(a, ['Total Purchase Cost']));
             valB = liveGBP(b) - cleanNum(getCol(b, ['Total Purchase Cost']));
         } else if (key === '% Return') {
-            // Sort by % return = (live value / cost) - 1
             const costA = cleanNum(getCol(a, ['Total Purchase Cost']));
             const costB = cleanNum(getCol(b, ['Total Purchase Cost']));
             valA = costA !== 0 ? liveGBP(a) / costA : 0;
@@ -271,20 +245,17 @@ function displayHoldings(data) {
         const bepLocal         = cleanNum(getCol(row, ['BEP Price']));
         const liveData         = livePriceMap[ticker];
         const activePriceLocal = liveData ? liveData.price : 0;
-        const activeRate       = liveData ? liveData.rate : 1.0;
-
-        const curValueGBP = shares * activePriceLocal * activeRate;
-        const weight      = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
-        // Cost is read directly from CSV — already in GBP, no conversion needed
-        const costGBP     = cleanNum(getCol(row, ['Total Purchase Cost']));
-        const profitGBP   = curValueGBP - costGBP;
-        const percReturn  = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
-
-        const sym         = getCurrencySymbol(ticker);
-        const profitSign  = profitGBP  >= 0 ? '+' : '-';
-        const returnSign  = percReturn >= 0 ? '+' : '-';
-        const profitClass = profitGBP  >= 0 ? 'text-emerald-400' : 'text-rose-400';
-        const returnClass = percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const activeRate       = liveData ? liveData.rate  : 1.0;
+        const curValueGBP      = shares * activePriceLocal * activeRate;
+        const weight           = totalValLatest > 0 ? (curValueGBP / totalValLatest) * 100 : 0;
+        const costGBP          = cleanNum(getCol(row, ['Total Purchase Cost']));
+        const profitGBP        = curValueGBP - costGBP;
+        const percReturn       = costGBP !== 0 ? ((curValueGBP / costGBP) - 1) * 100 : 0;
+        const sym              = getCurrencySymbol(ticker);
+        const profitSign       = profitGBP  >= 0 ? '+' : '-';
+        const returnSign       = percReturn >= 0 ? '+' : '-';
+        const profitClass      = profitGBP  >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const returnClass      = percReturn >= 0 ? 'text-emerald-400' : 'text-rose-400';
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-white/5 transition border-b border-zinc-800/50 text-sm';
@@ -313,23 +284,17 @@ function displayHoldings(data) {
         fragment.appendChild(tr);
     });
 
-    // --- Totals row — prepended as first row of tbody ---
-    let totalValue  = 0;
-    let totalCost   = 0;
-    let totalProfit = 0;
-    let totalShares = 0;
-
+    // Totals row
+    let totalValue = 0, totalCost = 0, totalProfit = 0, totalShares = 0;
     data.forEach(row => {
-        const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
-        const liveData         = livePriceMap[ticker];
-        const shares           = cleanNum(getCol(row, ['Shares']));
-        const activePriceLocal = liveData ? liveData.price : 0;
-        const activeRate       = liveData ? liveData.rate : 1.0;
-        const curValueGBP      = shares * activePriceLocal * activeRate;
-        const costGBP          = cleanNum(getCol(row, ['Total Purchase Cost']));
-        totalValue  += curValueGBP;
-        totalCost   += costGBP;
-        totalProfit += (curValueGBP - costGBP);
+        const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const ld     = livePriceMap[ticker];
+        const shares = cleanNum(getCol(row, ['Shares']));
+        const val    = ld ? shares * ld.price * ld.rate : 0;
+        const cost   = cleanNum(getCol(row, ['Total Purchase Cost']));
+        totalValue  += val;
+        totalCost   += cost;
+        totalProfit += val - cost;
         totalShares += shares;
     });
 
@@ -340,7 +305,7 @@ function displayHoldings(data) {
     const totalReturnSign  = totalReturn >= 0 ? '+' : '';
 
     const totalTr = document.createElement('tr');
-    totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
+    totalTr.className = 'border-t-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
     totalTr.innerHTML = `
         <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider">Total Portfolio</td>
         <td class="p-4 text-center text-zinc-300">${totalShares.toLocaleString()}</td>
@@ -350,8 +315,6 @@ function displayHoldings(data) {
         <td class="p-4 text-center ${totalReturnClass}">${totalReturnSign}${totalReturn.toFixed(2)}%</td>
         <td class="p-4 text-center text-zinc-400">100%</td>
     `;
-
-    // Append data rows then append totals at the bottom
     tbody.appendChild(fragment);
     tbody.appendChild(totalTr);
     stopRefreshSpin();
@@ -360,8 +323,6 @@ function displayHoldings(data) {
 
 // =============================================================================
 // CHARTS — Sector & Region breakdown
-// Fetches Finnhub profile for each ticker in parallel, aggregates by GBP value,
-// then renders two donut charts via Chart.js
 // =============================================================================
 const CHART_COLOURS = [
     '#10b981', '#6366f1', '#f59e0b', '#3b82f6', '#ec4899',
@@ -369,29 +330,26 @@ const CHART_COLOURS = [
     '#06b6d4', '#d946ef', '#0ea5e9', '#a3e635', '#fb923c',
 ];
 
-// Maps ISO 2-letter country codes to readable names
 const COUNTRY_NAMES = {
     US: 'United States', GB: 'United Kingdom', DE: 'Germany',
-    FR: 'France', JP: 'Japan', CN: 'China', CA: 'Canada',
-    AU: 'Australia', CH: 'Switzerland', NL: 'Netherlands',
-    SE: 'Sweden', DK: 'Denmark', IE: 'Ireland', SG: 'Singapore',
-    HK: 'Hong Kong', IN: 'India', BR: 'Brazil', KR: 'South Korea',
-    ES: 'Spain', IT: 'Italy', NO: 'Norway', FI: 'Finland',
-    NZ: 'New Zealand', MX: 'Mexico', ZA: 'South Africa',
+    FR: 'France',        JP: 'Japan',          CN: 'China',
+    CA: 'Canada',        AU: 'Australia',       CH: 'Switzerland',
+    NL: 'Netherlands',   SE: 'Sweden',          DK: 'Denmark',
+    IE: 'Ireland',       SG: 'Singapore',       HK: 'Hong Kong',
+    IN: 'India',         BR: 'Brazil',          KR: 'South Korea',
+    ES: 'Spain',         IT: 'Italy',           NO: 'Norway',
+    FI: 'Finland',       NZ: 'New Zealand',     MX: 'Mexico',
+    ZA: 'South Africa',
 };
 
-// Fetches a Finnhub profile with one retry on empty/rate-limited responses
 async function fetchProfile(ticker) {
     const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FINNHUB_KEY}`;
     try {
         const res  = await fetch(url);
         const data = await res.json();
-        // If response is empty (rate limited), wait 1s and retry once
         if (!data?.name) {
             await new Promise(r => setTimeout(r, 1000));
-            const res2  = await fetch(url);
-            const data2 = await res2.json();
-            return data2;
+            return await (await fetch(url)).json();
         }
         return data;
     } catch (e) {
@@ -403,7 +361,6 @@ async function buildCharts(data) {
     const loading = document.getElementById('charts-loading');
     const content = document.getElementById('charts-content');
 
-    // Fetch all profiles — stagger slightly to avoid hitting rate limits
     const profiles = [];
     for (let i = 0; i < data.length; i++) {
         const ticker = getCol(data[i], ['Ticker'])?.toUpperCase().trim();
@@ -412,31 +369,24 @@ async function buildCharts(data) {
     }
     const profileResults = await Promise.allSettled(profiles);
 
-    // Aggregate sector and country values weighted by current GBP value
     const sectorMap = {};
     const regionMap = {};
 
     data.forEach((row, i) => {
-        const ticker           = getCol(row, ['Ticker'])?.toUpperCase().trim();
-        const liveData         = livePriceMap[ticker];
-        const shares           = cleanNum(getCol(row, ['Shares']));
-        const activePriceLocal = liveData ? liveData.price : 0;
-        const activeRate       = liveData ? liveData.rate : 1.0;
-        const curValueGBP      = shares * activePriceLocal * activeRate;
-
-        const profile = profileResults[i].status === 'fulfilled' ? profileResults[i].value : {};
-
+        const ticker      = getCol(row, ['Ticker'])?.toUpperCase().trim();
+        const ld          = livePriceMap[ticker];
+        const shares      = cleanNum(getCol(row, ['Shares']));
+        const curValueGBP = ld ? shares * ld.price * ld.rate : 0;
+        const profile     = profileResults[i].status === 'fulfilled' ? profileResults[i].value : {};
         const sector      = profile?.finnhubIndustry || 'Other';
         const countryCode = profile?.country || '';
         const country     = COUNTRY_NAMES[countryCode] || (countryCode || 'Other');
-
         sectorMap[sector]  = (sectorMap[sector]  || 0) + curValueGBP;
         regionMap[country] = (regionMap[country] || 0) + curValueGBP;
     });
 
-    // Sort by value descending
-    const sortedSectors  = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
-    const sortedRegions  = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
+    const sortedSectors = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
+    const sortedRegions = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
 
     const chartDefaults = {
         type: 'doughnut',
@@ -457,7 +407,7 @@ async function buildCharts(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => {
+                        label: ctx => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                             const pct   = ((ctx.parsed / total) * 100).toFixed(1);
                             return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${pct}%)`;
@@ -468,43 +418,28 @@ async function buildCharts(data) {
         },
     };
 
-    // Sector chart
     new Chart(document.getElementById('sector-chart'), {
         ...chartDefaults,
         data: {
             labels:   sortedSectors.map(([k]) => k),
-            datasets: [{
-                data:            sortedSectors.map(([, v]) => v),
-                backgroundColor: CHART_COLOURS.slice(0, sortedSectors.length),
-                borderColor:     '#0B0E11',
-                borderWidth:     3,
-                hoverOffset:     6,
-            }],
+            datasets: [{ data: sortedSectors.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedSectors.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
         },
     });
 
-    // Region chart
     new Chart(document.getElementById('region-chart'), {
         ...chartDefaults,
         data: {
             labels:   sortedRegions.map(([k]) => k),
-            datasets: [{
-                data:            sortedRegions.map(([, v]) => v),
-                backgroundColor: CHART_COLOURS.slice(0, sortedRegions.length),
-                borderColor:     '#0B0E11',
-                borderWidth:     3,
-                hoverOffset:     6,
-            }],
+            datasets: [{ data: sortedRegions.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedRegions.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
         },
     });
 
-    // Reveal charts, hide spinner
     loading.classList.add('hidden');
     content.style.display = 'grid';
 }
 
 
 // =============================================================================
-// INIT — run view setup as soon as the script loads
+// INIT
 // =============================================================================
 initView();
