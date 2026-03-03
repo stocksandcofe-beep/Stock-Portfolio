@@ -282,7 +282,7 @@ function displayHoldings(data) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-white/5 transition border-b border-zinc-800/50 text-sm';
         tr.innerHTML = `
-            <td class="p-4 text-left" style="background: linear-gradient(90deg, rgba(16,185,129,0.1) ${weight}%, transparent ${weight}%);">
+            <td class="p-4 text-left">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-800">
                         <img src="${LOGO_BASE_URL}${ticker}.png"
@@ -344,9 +344,9 @@ function displayHoldings(data) {
         <td class="p-4 text-center text-zinc-400">100%</td>
     `;
 
-    // Append data rows then insert totals at the very top
+    // Append data rows then append totals at the bottom
     tbody.appendChild(fragment);
-    tbody.insertBefore(totalTr, tbody.firstChild);
+    tbody.appendChild(totalTr);
     stopRefreshSpin();
 }
 
