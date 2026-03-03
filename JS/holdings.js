@@ -3,6 +3,7 @@
 // =============================================================================
 const HOLD_CSV      = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv';
 const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Images/';
+const FMP_KEY       = 'EGveW9bfshAjosvsA7J76WShKx8u6MCr';
 const FINNHUB_KEY   = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
 
 // Map tickers that Finnhub needs with an exchange suffix
@@ -117,14 +118,30 @@ function showTableError(msg) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400 text-sm">${msg}</td></tr>`;
 }
 
+async function fetchQuoteFromFMP(ticker) {
+    const sym = finnhubSymbol(ticker);
+    try {
+        const res  = await fetch(`https://financialmodelingprep.com/api/v3/quote-short/${sym}?apikey=${FMP_KEY}`);
+        const data = await res.json();
+        const price = Array.isArray(data) && data[0] ? data[0].price : 0;
+        return { ticker, sym, price };
+    } catch (e) {
+        return { ticker, sym, price: 0 };
+    }
+}
+
 async function fetchQuote(ticker) {
     const sym = finnhubSymbol(ticker);
     try {
         const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`);
         const data = await res.json();
-        return { ticker, sym, price: data.c || 0 };
+        // Finnhub returns {"error":"..."} for tickers behind paywall — fall back to FMP
+        if (data.error || !data.c) {
+            return fetchQuoteFromFMP(ticker);
+        }
+        return { ticker, sym, price: data.c };
     } catch (e) {
-        return { ticker, sym, price: 0 };
+        return fetchQuoteFromFMP(ticker);
     }
 }
 
