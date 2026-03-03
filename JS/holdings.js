@@ -1,12 +1,20 @@
 // =============================================================================
 // CONSTANTS & STATE
 // =============================================================================
-// PERF_CSV removed — totalValLatest computed from live prices directly,
-// eliminating the heaviest network request from the load chain.
-const HOLD_CSV      = `https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv`;
-const LIVE_CSV      = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVR2VvNcIVmx4XkQT4A92MLsfxxdO_J8HTzif8khgRy023wnHTeIVY7DrgXuJvG6_5bnXZSyUcOhTy/pub?gid=0&single=true&output=csv';
+const HOLD_CSV      = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Files/holdings.csv';
 const LOGO_BASE_URL = 'https://cdn.jsdelivr.net/gh/stocksandcofe-beep/Stock-Portfolio@main/Images/';
 const FINNHUB_KEY   = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
+
+// Map tickers that Finnhub needs with an exchange suffix
+const TICKER_MAP = {
+    WKL: 'WKL.AS', // Wolters Kluwer — Amsterdam (AEX)
+};
+
+// Currency per ticker — Finnhub quotes are in the local currency of the exchange
+const TICKER_CURRENCY = {
+    'WKL.AS': 'EUR',
+    // US stocks default to USD, UK stocks to GBP — extend here as needed
+};
 
 let currentHoldingsData = [];
 let livePriceMap        = {};
@@ -77,9 +85,22 @@ function getCurrencySymbol(ticker) {
     return map[liveData.currencyCode] || '$';
 }
 
+// Resolve ticker to Finnhub symbol, and determine its currency
+function finnhubSymbol(ticker) {
+    return TICKER_MAP[ticker] || ticker;
+}
+
+function tickerCurrency(finnhubTicker) {
+    if (TICKER_CURRENCY[finnhubTicker]) return TICKER_CURRENCY[finnhubTicker];
+    // Heuristic: .L = GBp (pence), .AS/.PA/.DE etc = EUR, default = USD
+    if (finnhubTicker.endsWith('.L'))  return 'GBP_PENCE';
+    if (/\.(AS|PA|DE|MI|MC|BR|HE|ST|CO|OL)$/.test(finnhubTicker)) return 'EUR';
+    return 'USD';
+}
+
 
 // =============================================================================
-// DATA LOADING — 3 parallel requests
+// DATA LOADING — HOLD_CSV + Finnhub quotes + FX, all parallel
 // =============================================================================
 function parseCsv(url, opts = {}) {
     return new Promise(resolve => {
@@ -96,9 +117,20 @@ function showTableError(msg) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400 text-sm">${msg}</td></tr>`;
 }
 
+async function fetchQuote(ticker) {
+    const sym = finnhubSymbol(ticker);
+    try {
+        const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`);
+        const data = await res.json();
+        return { ticker, sym, price: data.c || 0 };
+    } catch (e) {
+        return { ticker, sym, price: 0 };
+    }
+}
+
 async function loadAll() {
-    const [liveRows, holdRows, fxData] = await Promise.all([
-        parseCsv(LIVE_CSV, { header: false }),
+    // Step 1: fetch holdings CSV and FX rates in parallel
+    const [holdRows, fxData] = await Promise.all([
         parseCsv(HOLD_CSV, { header: true }),
         fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,EUR')
             .then(r => r.json())
@@ -106,25 +138,14 @@ async function loadAll() {
     ]);
 
     // FX rates — Frankfurter returns rates FROM GBP so invert them
-    const fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0 };
+    const fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0, GBP_PENCE: 0.01 };
     if (fxData?.rates) {
         fxRates.USD = fxData.rates.USD ? 1 / fxData.rates.USD : 1.0;
         fxRates.EUR = fxData.rates.EUR ? 1 / fxData.rates.EUR : 1.0;
+        fxRates.GBP_PENCE = fxRates.GBP * 0.01; // pence to GBP
     }
 
-    // Build live price map
-    liveRows.forEach(row => {
-        const ticker       = row[0]?.toUpperCase().trim();
-        const currencyCode = row[3]?.toUpperCase().trim() || 'USD';
-        if (!ticker) return;
-        livePriceMap[ticker] = {
-            price:        cleanNum(row[1]),
-            rate:         fxRates[currencyCode] ?? 1.0,
-            currencyCode: currencyCode,
-        };
-    });
-
-    // Filter valid holdings rows
+    // Filter valid holdings
     currentHoldingsData = holdRows.filter(
         r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0
     );
@@ -134,7 +155,21 @@ async function loadAll() {
         return;
     }
 
-    // Compute portfolio total from live prices — replaces old PERF_CSV fetch
+    // Step 2: fetch all Finnhub quotes in parallel
+    const tickers = currentHoldingsData.map(r => getCol(r, ['Ticker'])?.toUpperCase().trim());
+    const quotes  = await Promise.all(tickers.map(fetchQuote));
+
+    // Build live price map
+    quotes.forEach(({ ticker, sym, price }) => {
+        const currency = tickerCurrency(sym);
+        livePriceMap[ticker] = {
+            price:        price,
+            rate:         fxRates[currency] ?? 1.0,
+            currencyCode: currency === 'GBP_PENCE' ? 'GBP' : currency,
+        };
+    });
+
+    // Compute portfolio total from live prices
     totalValLatest = currentHoldingsData.reduce((sum, row) => {
         const ticker = getCol(row, ['Ticker'])?.toUpperCase().trim();
         const ld     = livePriceMap[ticker];
@@ -208,8 +243,7 @@ function sortHoldings(key) {
             valA = cleanNum(getCol(a, ['Shares']));
             valB = cleanNum(getCol(b, ['Shares']));
         } else if (key === 'Current Value' || key === 'Allocation') {
-            valA = liveGBP(a);
-            valB = liveGBP(b);
+            valA = liveGBP(a); valB = liveGBP(b);
         } else if (key === 'Total Unrealised P/L') {
             valA = liveGBP(a) - cleanNum(getCol(a, ['Total Purchase Cost']));
             valB = liveGBP(b) - cleanNum(getCol(b, ['Total Purchase Cost']));
@@ -343,7 +377,8 @@ const COUNTRY_NAMES = {
 };
 
 async function fetchProfile(ticker) {
-    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FINNHUB_KEY}`;
+    const sym = finnhubSymbol(ticker);
+    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FINNHUB_KEY}`;
     try {
         const res  = await fetch(url);
         const data = await res.json();
@@ -391,48 +426,16 @@ async function buildCharts(data) {
     const chartDefaults = {
         type: 'doughnut',
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#a1a1aa',
-                        font: { family: 'Plus Jakarta Sans', size: 11 },
-                        padding: 16,
-                        usePointStyle: true,
-                        pointStyleWidth: 8,
-                    },
-                },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => {
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            const pct   = ((ctx.parsed / total) * 100).toFixed(1);
-                            return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${pct}%)`;
-                        },
-                    },
-                },
+                legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { family: 'Plus Jakarta Sans', size: 11 }, padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+                tooltip: { callbacks: { label: ctx => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${((ctx.parsed/t)*100).toFixed(1)}%)`; } } },
             },
         },
     };
 
-    new Chart(document.getElementById('sector-chart'), {
-        ...chartDefaults,
-        data: {
-            labels:   sortedSectors.map(([k]) => k),
-            datasets: [{ data: sortedSectors.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedSectors.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
-        },
-    });
-
-    new Chart(document.getElementById('region-chart'), {
-        ...chartDefaults,
-        data: {
-            labels:   sortedRegions.map(([k]) => k),
-            datasets: [{ data: sortedRegions.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedRegions.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
-        },
-    });
+    new Chart(document.getElementById('sector-chart'), { ...chartDefaults, data: { labels: sortedSectors.map(([k])=>k), datasets: [{ data: sortedSectors.map(([,v])=>v), backgroundColor: CHART_COLOURS.slice(0,sortedSectors.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }] } });
+    new Chart(document.getElementById('region-chart'), { ...chartDefaults, data: { labels: sortedRegions.map(([k])=>k), datasets: [{ data: sortedRegions.map(([,v])=>v), backgroundColor: CHART_COLOURS.slice(0,sortedRegions.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }] } });
 
     loading.classList.add('hidden');
     content.style.display = 'grid';
