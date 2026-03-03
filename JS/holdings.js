@@ -94,62 +94,19 @@ function getCurrencySymbol(ticker) {
 
 
 // =============================================================================
-// DATA LOADING — chained: Portfolio Total → Live Prices → Holdings
-// On load, routes to either the table display or the charts display
+// DATA LOADING — all requests fire in parallel via Promise.all
 // =============================================================================
-Papa.parse(PERF_CSV, {
-    download: true, header: false, skipEmptyLines: true,
-    complete(results) {
-        const latest = results.data.filter(r => r[0] && r[47]).pop();
-        totalValLatest = cleanNum(latest?.[47]);
-        fetchLivePrices();
-    },
-    error(err) {
-        console.warn('PERF_CSV failed, continuing without portfolio total:', err);
-        fetchLivePrices(); // still continue — totalValLatest stays 0
-    },
-});
 
-async function fetchLivePrices() {
-    // Fetch FX rates from Frankfurter API directly — more reliable than
-    // relying on Google Sheets GOOGLEFINANCE formulas which often export
-    // as "Loading..." before they finish calculating
-    let fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0 };
-    try {
-        const res  = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,EUR');
-        const data = await res.json();
-        // Frankfurter returns rates FROM GBP, so we need to invert them
-        // e.g. if 1 GBP = 1.27 USD, then 1 USD = 1/1.27 GBP = 0.787 GBP
-        if (data?.rates) {
-            fxRates.USD = data.rates.USD ? 1 / data.rates.USD : 1.0;
-            fxRates.EUR = data.rates.EUR ? 1 / data.rates.EUR : 1.0;
-            fxRates.GBP = 1.0;
-        }
-    } catch (e) {
-        console.warn('FX fetch failed, defaulting rates to 1.0:', e);
-    }
-
-    Papa.parse(LIVE_CSV, {
-        download: true, header: false, skipEmptyLines: true,
-        complete(results) {
-            results.data.forEach(row => {
-                const ticker       = row[0]?.toUpperCase().trim();
-                const currencyCode = row[3]?.toUpperCase().trim() || 'USD';
-                if (!ticker) return;
-                livePriceMap[ticker] = {
-                    price:        cleanNum(row[1]),
-                    // Use Frankfurter rate instead of the Google Sheets formula
-                    // which frequently exports as "Loading..." before it resolves
-                    rate:         fxRates[currencyCode] ?? 1.0,
-                    currencyCode: currencyCode,
-                };
-            });
-            fetchHoldings();
-        },
-        error(err) {
-            console.warn('LIVE_CSV failed, continuing without live prices:', err);
-            fetchHoldings(); // still show holdings, just without live prices
-        },
+// Wraps PapaParse in a Promise so it can be used with Promise.all
+function parseCsv(url, opts = {}) {
+    return new Promise(resolve => {
+        Papa.parse(url, {
+            download: true,
+            skipEmptyLines: true,
+            ...opts,
+            complete: results => resolve(results.data),
+            error:    ()      => resolve([]), // never reject — return empty on failure
+        });
     });
 }
 
@@ -158,29 +115,58 @@ function showTableError(msg) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400 text-sm">${msg}</td></tr>`;
 }
 
-function fetchHoldings() {
-    Papa.parse(HOLD_CSV, {
-        download: true, header: true, skipEmptyLines: true,
-        complete(results) {
-            currentHoldingsData = results.data.filter(
-                r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0
-            );
-            if (!currentHoldingsData.length) {
-                showTableError('No holdings data found. Check that the CSV is up to date and has a Ticker and Shares column.');
-                return;
-            }
-            if (activeView === 'charts') {
-                buildCharts(currentHoldingsData);
-            } else {
-                displayHoldings(currentHoldingsData);
-            }
-        },
-        error(err) {
-            console.error('HOLD_CSV failed:', err);
-            showTableError('Failed to load holdings data. Check your network connection and try refreshing.');
-        },
+async function loadAll() {
+    // Fire all four requests simultaneously
+    const [perfRows, liveRows, holdRows, fxData] = await Promise.all([
+        parseCsv(PERF_CSV, { header: false }),
+        parseCsv(LIVE_CSV, { header: false }),
+        parseCsv(HOLD_CSV, { header: true }),
+        fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,EUR')
+            .then(r => r.json())
+            .catch(() => ({})),
+    ]);
+
+    // Portfolio total from performance CSV
+    const latest = perfRows.filter(r => r[0] && r[47]).pop();
+    totalValLatest = cleanNum(latest?.[47]);
+
+    // FX rates
+    const fxRates = { USD: 1.0, EUR: 1.0, GBP: 1.0 };
+    if (fxData?.rates) {
+        fxRates.USD = fxData.rates.USD ? 1 / fxData.rates.USD : 1.0;
+        fxRates.EUR = fxData.rates.EUR ? 1 / fxData.rates.EUR : 1.0;
+    }
+
+    // Build live price map
+    liveRows.forEach(row => {
+        const ticker       = row[0]?.toUpperCase().trim();
+        const currencyCode = row[3]?.toUpperCase().trim() || 'USD';
+        if (!ticker) return;
+        livePriceMap[ticker] = {
+            price:        cleanNum(row[1]),
+            rate:         fxRates[currencyCode] ?? 1.0,
+            currencyCode: currencyCode,
+        };
     });
+
+    // Filter valid holdings rows
+    currentHoldingsData = holdRows.filter(
+        r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0
+    );
+
+    if (!currentHoldingsData.length) {
+        showTableError('No holdings data found. Check that the CSV is up to date and has a Ticker and Shares column.');
+        return;
+    }
+
+    if (activeView === 'charts') {
+        buildCharts(currentHoldingsData);
+    } else {
+        displayHoldings(currentHoldingsData);
+    }
 }
+
+loadAll();
 
 function refreshLivePrices() {
     const btn = document.getElementById('refresh-btn');
@@ -190,7 +176,7 @@ function refreshLivePrices() {
         if (icon) icon.style.animation = 'spin 0.8s linear infinite';
     }
     livePriceMap = {};
-    fetchLivePrices();
+    loadAll();
 }
 
 function stopRefreshSpin() {
