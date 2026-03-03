@@ -104,6 +104,10 @@ Papa.parse(PERF_CSV, {
         totalValLatest = cleanNum(latest?.[47]);
         fetchLivePrices();
     },
+    error(err) {
+        console.warn('PERF_CSV failed, continuing without portfolio total:', err);
+        fetchLivePrices(); // still continue — totalValLatest stays 0
+    },
 });
 
 async function fetchLivePrices() {
@@ -142,7 +146,16 @@ async function fetchLivePrices() {
             });
             fetchHoldings();
         },
+        error(err) {
+            console.warn('LIVE_CSV failed, continuing without live prices:', err);
+            fetchHoldings(); // still show holdings, just without live prices
+        },
     });
+}
+
+function showTableError(msg) {
+    const tbody = document.getElementById('holdings-table-body');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400 text-sm">${msg}</td></tr>`;
 }
 
 function fetchHoldings() {
@@ -152,11 +165,19 @@ function fetchHoldings() {
             currentHoldingsData = results.data.filter(
                 r => getCol(r, ['Ticker']) && cleanNum(getCol(r, ['Shares'])) > 0
             );
+            if (!currentHoldingsData.length) {
+                showTableError('No holdings data found. Check that the CSV is up to date and has a Ticker and Shares column.');
+                return;
+            }
             if (activeView === 'charts') {
                 buildCharts(currentHoldingsData);
             } else {
                 displayHoldings(currentHoldingsData);
             }
+        },
+        error(err) {
+            console.error('HOLD_CSV failed:', err);
+            showTableError('Failed to load holdings data. Check your network connection and try refreshing.');
         },
     });
 }
