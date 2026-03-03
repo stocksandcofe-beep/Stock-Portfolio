@@ -295,13 +295,13 @@ function displayHoldings(data) {
                     <div class="font-bold text-white leading-tight">${getCol(row, ['Company'])}</div>
                 </div>
             </td>
-            <td class="p-4 text-center font-mono text-zinc-400">${shares}</td>
+            <td class="p-4 text-center text-zinc-400">${shares.toLocaleString()}</td>
             <td class="p-4 text-center text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
-            <td class="p-4 text-center font-bold text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
-            <td class="p-4 text-center font-medium text-white">${formatGBP(curValueGBP)}</td>
-            <td class="p-4 text-center font-semibold ${profitClass}">${profitSign}${formatGBP(Math.abs(profitGBP), 0)}</td>
-            <td class="p-4 text-center font-bold ${returnClass}">${returnSign}${Math.abs(percReturn).toFixed(2)}%</td>
-            <td class="p-4 text-center font-medium text-zinc-300">${weight.toFixed(1)}%</td>
+            <td class="p-4 text-center text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
+            <td class="p-4 text-center text-white">${formatGBP(curValueGBP)}</td>
+            <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(Math.abs(profitGBP), 0)}</td>
+            <td class="p-4 text-center ${returnClass}">${returnSign}${Math.abs(percReturn).toFixed(2)}%</td>
+            <td class="p-4 text-center text-zinc-300">${weight.toFixed(1)}%</td>
         `;
         fragment.appendChild(tr);
     });
@@ -336,7 +336,7 @@ function displayHoldings(data) {
     totalTr.className = 'border-b-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
     totalTr.innerHTML = `
         <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider">Total Portfolio</td>
-        <td class="p-4 text-center font-mono text-zinc-300">${totalShares.toLocaleString()}</td>
+        <td class="p-4 text-center text-zinc-300">${totalShares.toLocaleString()}</td>
         <td class="p-4" colspan="2"></td>
         <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
         <td class="p-4 text-center ${totalProfitClass}">${totalProfitSign}${formatGBP(totalProfit, 0)}</td>
@@ -493,7 +493,7 @@ async function buildCharts(data) {
 
     // Reveal charts, hide spinner
     loading.classList.add('hidden');
-    content.classList.remove('hidden');
+    content.style.display = 'grid';
 }
 
 
