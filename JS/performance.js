@@ -301,7 +301,7 @@ function renderChart(data) {
                 const spy = cleanNum(r[COL_SPY]);
                 return spy > 0 ? spy : null;
             }),
-            borderColor:            'rgba(148, 163, 184, 0.5)', // slate-400 muted
+            borderColor:            'rgb(251, 191, 36)', // amber-400
             borderWidth:            1.5,
             borderDash:             [4, 4],
             pointRadius:            0,
@@ -347,9 +347,9 @@ function renderChart(data) {
             ySpy: {
                 position: 'left',
                 ticks: {
-                    color: '#52525b',
+                    color: '#92400e', // amber-800 — muted to not compete with portfolio axis
                     font:  { size: 10 },
-                    callback: v => '$' + v.toFixed(0),
+                    callback: v => '$' + (v / 1000).toFixed(1) + 'k',
                 },
                 grid: { display: false },
             },
@@ -372,11 +372,20 @@ function renderChart(data) {
                     position: 'top',
                     align:    'end',
                     labels: {
-                        color:          '#a1a1aa',
-                        font:           { size: 11, family: 'Plus Jakarta Sans' },
-                        boxWidth:       16,
-                        usePointStyle:  true,
-                        pointStyleWidth: 8,
+                        color:           '#a1a1aa',
+                        font:            { size: 11, family: 'Plus Jakarta Sans' },
+                        usePointStyle:   true,
+                        pointStyleWidth: 24,
+                        generateLabels: chart => chart.data.datasets.map((ds, i) => ({
+                            text:        ds.label,
+                            strokeStyle: ds.borderColor,
+                            fillStyle:   'transparent',
+                            lineWidth:   ds.borderWidth,
+                            lineDash:    ds.borderDash || [],
+                            pointStyle:  'line',
+                            hidden:      !chart.isDatasetVisible(i),
+                            datasetIndex: i,
+                        })),
                     },
                 },
                 tooltip: {
@@ -388,7 +397,7 @@ function renderChart(data) {
                         label: context => {
                             const v = context.parsed.y;
                             if (context.dataset.label === 'SPY (USD)') {
-                                return ' SPY: $' + (v !== null ? v.toFixed(2) : '--');
+                                return ' SPY: $' + (v !== null ? (v / 1000).toFixed(1) + 'k' : '--');
                             }
                             return ' Portfolio: ' + formatGBP(v);
                         },
