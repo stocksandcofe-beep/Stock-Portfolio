@@ -360,9 +360,11 @@ function renderChart(data) {
                 color:    '#71717a',
                 font:     { size: 10 },
                 stepSize: portStep,
-                callback: v => isGrowth
-                    ? '£' + (v / 1000).toFixed(0) + 'k'
-                    : (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(0) + 'k',
+                callback: v => {
+                    const dec = portStep < 1000 ? 1 : 0;
+                    if (isGrowth) return '£' + (v / 1000).toFixed(dec) + 'k';
+                    return (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(dec) + 'k';
+                },
             },
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
         },
@@ -373,7 +375,10 @@ function renderChart(data) {
                     color:    '#d97706',
                     font:     { size: 10 },
                     stepSize: spyStep,
-                    callback: v => '$' + (v / 1000).toFixed(1) + 'k',
+                    callback: v => {
+                        const dec = spyStep < 100 ? 2 : 1;
+                        return '$' + (v / 1000).toFixed(dec) + 'k';
+                    },
                 },
                 grid: { display: false },
             },
