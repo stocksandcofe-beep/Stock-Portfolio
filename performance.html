@@ -181,15 +181,19 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card p-6 border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-2 flex items-center gap-1">
-                    TWR
-                    <span class="tooltip">?
-                        <span class="tooltiptext">Time-Weighted Return measures compound growth excluding external cash flow effects.</span>
-                    </span>
-                </p>
-                <p id="stat-twr" class="text-lg font-bold">0.00%</p>
-                <p class="text-zinc-500 text-xs mt-2 uppercase tracking-wide">SPY Return</p>
-                <p id="stat-spy-return" class="text-sm font-semibold mt-1 text-zinc-500">--</p>
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-zinc-400 text-xs font-bold uppercase flex items-center gap-1">
+                        TWR
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Time-Weighted Return measures compound growth excluding external cash flow effects.</span>
+                        </span>
+                    </p>
+                    <p class="text-zinc-400 text-xs font-bold uppercase">SPY Return</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <p id="stat-twr" class="text-lg font-bold">0.00%</p>
+                    <p id="stat-spy-return" class="text-lg font-bold text-zinc-500">--</p>
+                </div>
             </div>
             <div class="card p-6 border-l border-zinc-700">
                 <p class="text-zinc-400 text-xs font-bold uppercase mb-2 flex items-center gap-1">
