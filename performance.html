@@ -142,21 +142,19 @@
         </div>
 
         <div class="card p-6 mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-semibold text-zinc-200">Portfolio Performance</h3>
-                <div class="flex items-center gap-4">
-                    <div id="chart-legend" class="hidden flex items-center gap-3">
-                        <span class="flex items-center gap-2 text-xs text-zinc-500">
-                            <svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="24" y2="5" stroke="rgb(16,185,129)" stroke-width="2"/></svg>
-                            Portfolio (GBP)
-                        </span>
-                        <span class="flex items-center gap-2 text-xs text-zinc-500">
-                            <svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="24" y2="5" stroke="rgb(251,191,36)" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
-                            SPY (USD)
-                        </span>
-                    </div>
-                    <p id="date-label" class="text-zinc-500 text-xs">--/--/----</p>
+            <div class="flex items-center mb-6">
+                <h3 class="font-semibold text-zinc-200 flex-none">Portfolio Performance</h3>
+                <div id="chart-legend" class="hidden flex-1 flex justify-center items-center gap-3">
+                    <span class="flex items-center gap-2 text-xs text-zinc-500">
+                        <svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="24" y2="5" stroke="rgb(16,185,129)" stroke-width="2"/></svg>
+                        Portfolio (GBP)
+                    </span>
+                    <span class="flex items-center gap-2 text-xs text-zinc-500">
+                        <svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="24" y2="5" stroke="rgb(251,191,36)" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+                        SPY (USD)
+                    </span>
                 </div>
+                <p id="date-label" class="text-zinc-500 text-xs flex-none ml-auto"></p>
             </div>
             <div class="h-[350px]"><canvas id="mainChart"></canvas></div>
         </div>
