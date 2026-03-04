@@ -360,11 +360,9 @@ function renderChart(data) {
                 color:    '#71717a',
                 font:     { size: 10 },
                 stepSize: portStep,
-                callback: v => {
-                    const decimals = portStep < 1000 ? 1 : 0;
-                    if (isGrowth) return '£' + (v / 1000).toFixed(decimals) + 'k';
-                    return (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(decimals) + 'k';
-                },
+                callback: v => isGrowth
+                    ? '£' + (v / 1000).toFixed(0) + 'k'
+                    : (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(0) + 'k',
             },
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
         },
@@ -375,15 +373,16 @@ function renderChart(data) {
                     color:    '#d97706',
                     font:     { size: 10 },
                     stepSize: spyStep,
-                    callback: v => {
-                        const decimals = spyStep < 100 ? 2 : 1;
-                        return '$' + (v / 1000).toFixed(decimals) + 'k';
-                    },
+                    callback: v => '$' + (v / 1000).toFixed(1) + 'k',
                 },
                 grid: { display: false },
             },
         } : {}),
     };
+
+    // Toggle HTML legend — only visible in Value mode when SPY data exists
+    const legendEl = document.getElementById('chart-legend');
+    if (legendEl) legendEl.classList.toggle('hidden', !hasSpy);
 
     chartInstance = new Chart(ctx, {
         type: 'line',
@@ -396,30 +395,9 @@ function renderChart(data) {
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: {
-                    display:  hasSpy,
-                    position: 'top',
-                    align:    'end',
-                    labels: {
-                        color:           '#71717a',
-                        font:            { size: 11, family: 'Plus Jakarta Sans' },
-                        usePointStyle:   true,
-                        pointStyleWidth: 24,
-                        generateLabels: chart => chart.data.datasets.map((ds, i) => ({
-                            text:         ds.label,
-                            fontColor:    '#71717a',
-                            strokeStyle:  ds.borderColor,
-                            fillStyle:    'transparent',
-                            lineWidth:    ds.borderWidth,
-                            lineDash:     ds.borderDash || [],
-                            pointStyle:   'line',
-                            hidden:       !chart.isDatasetVisible(i),
-                            datasetIndex: i,
-                        })),
-                    },
-                },
+                legend: { display: false },
                 tooltip: {
-                    displayColors: hasSpy,
+                    displayColors: false,
                     padding:       10,
                     bodySpacing:   5,
                     callbacks: {
