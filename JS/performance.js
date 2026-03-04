@@ -335,8 +335,9 @@ function renderChart(data) {
         y: {
             position: 'right',
             ticks: {
-                color: '#71717a',
-                font:  { size: 10 },
+                color:         '#71717a',
+                font:          { size: 10 },
+                maxTicksLimit: 6,
                 callback: v => isGrowth
                     ? '£' + (v / 1000).toFixed(0) + 'k'
                     : (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(0) + 'k',
@@ -347,8 +348,9 @@ function renderChart(data) {
             ySpy: {
                 position: 'left',
                 ticks: {
-                    color: '#92400e', // amber-800 — muted to not compete with portfolio axis
-                    font:  { size: 10 },
+                    color:         '#d97706', // amber-600 — matches SPY line but lighter than amber-400
+                    font:          { size: 10 },
+                    maxTicksLimit: 6,
                     callback: v => '$' + (v / 1000).toFixed(1) + 'k',
                 },
                 grid: { display: false },
@@ -372,7 +374,7 @@ function renderChart(data) {
                     position: 'top',
                     align:    'end',
                     labels: {
-                        color:           '#a1a1aa',
+                        color:           '#71717a',
                         font:            { size: 11, family: 'Plus Jakarta Sans' },
                         usePointStyle:   true,
                         pointStyleWidth: 24,
