@@ -107,18 +107,34 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <div class="flex items-center justify-between mb-8">
+
+        <!-- Loading state — shown while CSV is fetching -->
+        <div id="loading-state" class="flex items-center justify-center h-64">
+            <div class="flex flex-col items-center gap-3">
+                <svg class="animate-spin w-6 h-6 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <p class="text-zinc-500 text-sm">Loading performance data…</p>
+            </div>
+        </div>
+
+        <!-- Dashboard — hidden until CSV loads -->
+        <div id="dashboard-content" class="hidden">
+
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-8">
             <div>
                 <p id="hero-label" class="text-zinc-400 text-sm mb-1">Total Return</p>
-                <h1 id="hero-val" class="text-3xl font-bold tracking-tight">£0.00</h1>
+                <h1 id="hero-val" class="text-3xl font-bold tracking-tight">--</h1>
                 <span id="hero-badge" class="hidden text-sm font-bold px-3 py-1 rounded-full"></span>
+                <p id="last-updated" class="text-zinc-600 text-xs mt-2">Last updated: --</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button id="p-all"  onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
                 <button id="p-ytd"  onclick="updatePeriod('ytd')" class="period-btn px-4 py-2">YTD</button>
                 <button id="p-1y"   onclick="updatePeriod('1y')"  class="period-btn px-4 py-2">1Y</button>
                 <button id="p-ly"   onclick="updatePeriod('ly')"  class="period-btn px-4 py-2">Last Year</button>
-                <div class="flex p-1 rounded-xl ml-2 gap-1">
+                <div class="flex p-1 rounded-xl gap-1">
                     <button id="btn-growth" onclick="updateChartMode('growth')" class="period-btn active px-4 py-2">Value</button>
                     <button id="btn-profit" onclick="updateChartMode('profit')" class="period-btn px-4 py-2">Profit</button>
                 </div>
@@ -182,6 +198,7 @@
                 <p id="stat-beta" class="text-lg font-bold text-amber-400">0.00</p>
             </div>
         </div>
+        </div><!-- /dashboard-content -->
     </main>
 
     <script src="JS/performance.js"></script>
