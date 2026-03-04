@@ -331,23 +331,27 @@ function renderChart(data) {
     ];
 
     // Scales — portfolio GBP on right, SPY USD on left (only in Value mode)
-    // Compute step sizes from data range so short periods (YTD) get clean £500/$50 increments
+    // niceStep: picks the smallest value from [1,2,2.5,5,10] * 10^n that gives 4–6 ticks
+    function niceStep(range) {
+        if (!range || range <= 0) return 1;
+        const rough    = range / 5; // target ~5 ticks
+        const mag      = Math.pow(10, Math.floor(Math.log10(rough)));
+        const frac     = rough / mag;
+        // Pick the next clean multiplier above frac
+        const steps    = [1, 2, 2.5, 5, 10];
+        const mult     = steps.find(s => s >= frac) || 10;
+        return mult * mag;
+    }
+
     const portValues = data.map(r => isGrowth ? cleanNum(r[COL_VALUE]) : cleanNum(r[COL_PROFIT])).filter(Boolean);
     const portMin    = Math.min(...portValues);
     const portMax    = Math.max(...portValues);
-    const portRange  = portMax - portMin;
-    // Round step up to nearest clean increment (500, 1000, 2000, 5000...)
-    const portRaw    = portRange / 5;
-    const portMag    = Math.pow(10, Math.floor(Math.log10(portRaw)));
-    const portStep   = Math.ceil(portRaw / portMag) * portMag;
+    const portStep   = niceStep(portMax - portMin);
 
     const spyValues  = hasSpy ? data.map(r => cleanNum(r[COL_SPY])).filter(Boolean) : [];
     const spyMin     = hasSpy ? Math.min(...spyValues) : 0;
     const spyMax     = hasSpy ? Math.max(...spyValues) : 0;
-    const spyRange   = spyMax - spyMin;
-    const spyRaw     = spyRange / 5;
-    const spyMag     = Math.pow(10, Math.floor(Math.log10(spyRaw || 1)));
-    const spyStep    = Math.ceil(spyRaw / spyMag) * spyMag;
+    const spyStep    = niceStep(spyMax - spyMin);
 
     const yScales = {
         y: {
@@ -366,7 +370,7 @@ function renderChart(data) {
             ySpy: {
                 position: 'left',
                 ticks: {
-                    color:    '#d97706', // amber-600
+                    color:    '#d97706',
                     font:     { size: 10 },
                     stepSize: spyStep,
                     callback: v => '$' + (v / 1000).toFixed(1) + 'k',
