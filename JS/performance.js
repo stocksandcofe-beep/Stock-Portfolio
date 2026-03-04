@@ -224,6 +224,21 @@ function calculateMetrics(data) {
     twrEl.parentElement.className = 'card p-6 border-l border-zinc-700';
     twrEl.className = `text-lg font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
+    // SPY total return for the period — (last / first) - 1
+    const spyFirst = cleanNum(data[0][COL_SPY]);
+    const spyLast  = cleanNum(data[data.length - 1][COL_SPY]);
+    const spyRet   = spyFirst > 0 ? ((spyLast / spyFirst) - 1) * 100 : null;
+    const spyRetEl = document.getElementById('stat-spy-return');
+    if (spyRetEl) {
+        if (spyRet !== null) {
+            spyRetEl.innerText = (spyRet >= 0 ? '+' : '') + spyRet.toFixed(2) + '%';
+            spyRetEl.className = `text-sm font-semibold mt-1 ${spyRet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        } else {
+            spyRetEl.innerText = '--';
+            spyRetEl.className = 'text-sm font-semibold mt-1 text-zinc-500';
+        }
+    }
+
     if (pairedRets.length > 1) {
         const portRets = pairedRets.map(p => p.port);
         const spyRets  = pairedRets.map(p => p.spy);
@@ -238,8 +253,8 @@ function calculateMetrics(data) {
         const sharpeEl    = document.getElementById('stat-sharpe');
         sharpeEl.innerText = sharpe.toFixed(2);
         sharpeEl.className = `text-lg font-bold ${
-            sharpe >= 2 ? 'text-emerald-400' :
-            sharpe >= 1 ? 'text-amber-400'   :
+            sharpe >= 1 ? 'text-emerald-400' :
+            sharpe >= 0 ? 'text-amber-400'   :
                           'text-rose-400'
         }`;
 
