@@ -331,13 +331,31 @@ function renderChart(data) {
     ];
 
     // Scales — portfolio GBP on right, SPY USD on left (only in Value mode)
+    // Compute step sizes from data range so short periods (YTD) get clean £500/$50 increments
+    const portValues = data.map(r => isGrowth ? cleanNum(r[COL_VALUE]) : cleanNum(r[COL_PROFIT])).filter(Boolean);
+    const portMin    = Math.min(...portValues);
+    const portMax    = Math.max(...portValues);
+    const portRange  = portMax - portMin;
+    // Round step up to nearest clean increment (500, 1000, 2000, 5000...)
+    const portRaw    = portRange / 5;
+    const portMag    = Math.pow(10, Math.floor(Math.log10(portRaw)));
+    const portStep   = Math.ceil(portRaw / portMag) * portMag;
+
+    const spyValues  = hasSpy ? data.map(r => cleanNum(r[COL_SPY])).filter(Boolean) : [];
+    const spyMin     = hasSpy ? Math.min(...spyValues) : 0;
+    const spyMax     = hasSpy ? Math.max(...spyValues) : 0;
+    const spyRange   = spyMax - spyMin;
+    const spyRaw     = spyRange / 5;
+    const spyMag     = Math.pow(10, Math.floor(Math.log10(spyRaw || 1)));
+    const spyStep    = Math.ceil(spyRaw / spyMag) * spyMag;
+
     const yScales = {
         y: {
             position: 'right',
             ticks: {
-                color:         '#71717a',
-                font:          { size: 10 },
-                maxTicksLimit: 6,
+                color:    '#71717a',
+                font:     { size: 10 },
+                stepSize: portStep,
                 callback: v => isGrowth
                     ? '£' + (v / 1000).toFixed(0) + 'k'
                     : (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(0) + 'k',
@@ -348,9 +366,9 @@ function renderChart(data) {
             ySpy: {
                 position: 'left',
                 ticks: {
-                    color:         '#d97706', // amber-600 — matches SPY line but lighter than amber-400
-                    font:          { size: 10 },
-                    maxTicksLimit: 6,
+                    color:    '#d97706', // amber-600
+                    font:     { size: 10 },
+                    stepSize: spyStep,
                     callback: v => '$' + (v / 1000).toFixed(1) + 'k',
                 },
                 grid: { display: false },
@@ -379,13 +397,14 @@ function renderChart(data) {
                         usePointStyle:   true,
                         pointStyleWidth: 24,
                         generateLabels: chart => chart.data.datasets.map((ds, i) => ({
-                            text:        ds.label,
-                            strokeStyle: ds.borderColor,
-                            fillStyle:   'transparent',
-                            lineWidth:   ds.borderWidth,
-                            lineDash:    ds.borderDash || [],
-                            pointStyle:  'line',
-                            hidden:      !chart.isDatasetVisible(i),
+                            text:         ds.label,
+                            fontColor:    '#71717a',
+                            strokeStyle:  ds.borderColor,
+                            fillStyle:    'transparent',
+                            lineWidth:    ds.borderWidth,
+                            lineDash:     ds.borderDash || [],
+                            pointStyle:   'line',
+                            hidden:       !chart.isDatasetVisible(i),
                             datasetIndex: i,
                         })),
                     },
