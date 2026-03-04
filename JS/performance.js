@@ -221,7 +221,6 @@ function calculateMetrics(data) {
     const twr   = (cumFactor - 1) * 100;
     const twrEl = document.getElementById('stat-twr');
     twrEl.innerText = (twr >= 0 ? '+' : '') + twr.toFixed(2) + '%';
-    twrEl.parentElement.className = 'card p-6 border-l border-zinc-700';
     twrEl.className = `text-lg font-bold ${twr >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     // SPY total return for the period — (last / first) - 1
