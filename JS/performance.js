@@ -232,10 +232,10 @@ function calculateMetrics(data) {
     if (spyRetEl) {
         if (spyRet !== null) {
             spyRetEl.innerText = (spyRet >= 0 ? '+' : '') + spyRet.toFixed(2) + '%';
-            spyRetEl.className = `text-sm font-semibold mt-1 ${spyRet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            spyRetEl.className = `text-lg font-bold ${spyRet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
         } else {
             spyRetEl.innerText = '--';
-            spyRetEl.className = 'text-sm font-semibold mt-1 text-zinc-500';
+            spyRetEl.className = 'text-lg font-bold text-zinc-500';
         }
     }
 
