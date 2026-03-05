@@ -390,10 +390,12 @@ function renderChart(data) {
         return mult * mag;
     }
 
-    const portValues = data.map(r => isGrowth ? cleanNum(r[COL_VALUE]) : cleanNum(r[COL_PROFIT])).filter(Boolean);
+    const portValues = data.map(r => isGrowth ? cleanNum(r[COL_VALUE]) : cleanNum(r[COL_PROFIT]));
     const portMin    = Math.min(...portValues);
     const portMax    = Math.max(...portValues);
-    const portStep   = niceStep(portMax - portMin);
+    // In profit mode always use £500 minimum step so ticks stay clean (e.g. £0.5k, £1k)
+    const portStepRaw = niceStep(portMax - portMin);
+    const portStep    = !isGrowth ? Math.max(portStepRaw, 500) : portStepRaw;
 
     const spyValues  = hasSpy ? data.map(r => cleanNum(r[COL_SPY])).filter(Boolean) : [];
     const spyMin     = hasSpy ? Math.min(...spyValues) : 0;
