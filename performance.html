@@ -126,7 +126,10 @@
             <div>
                 <p id="hero-label" class="text-zinc-400 text-sm mb-1">Total Return</p>
                 <h1 id="hero-val" class="text-3xl font-bold tracking-tight">--</h1>
-                <p id="last-updated" class="text-zinc-600 text-xs mt-2">Last updated: -- <span id="vs-spy-badge" class="hidden ml-2 text-xs font-semibold px-2 py-0.5 rounded-full"></span></p>
+                <div class="flex items-center gap-2 mt-2">
+                    <p id="last-updated" class="text-zinc-600 text-xs">Last updated: --</p>
+                    <span id="vs-spy-badge" class="hidden text-xs font-semibold px-2 rounded-full"></span>
+                </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <button id="p-all"  onclick="updatePeriod('all')" class="period-btn active px-4 py-2">Since Inception</button>
