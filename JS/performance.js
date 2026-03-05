@@ -306,6 +306,10 @@ function renderChart(data) {
         : {};
 
     // SPY benchmark — actual USD price on left y-axis, Value mode only
+    const spyGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    spyGradient.addColorStop(0, 'rgba(251, 191, 36, 0.15)');
+    spyGradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+
     const spyDataset = [];
     const hasSpy     = isGrowth && cleanNum(data[0][COL_SPY]) > 0;
     if (hasSpy) {
@@ -321,7 +325,8 @@ function renderChart(data) {
             pointRadius:            0,
             tension:                0.4,
             cubicInterpolationMode: 'monotone',
-            fill:                   false,
+            fill:                   true,
+            backgroundColor:        spyGradient,
             yAxisID:                'ySpy',
         });
     }
@@ -437,13 +442,22 @@ function renderChart(data) {
                     ticks: {
                         color:         '#71717a',
                         font:          { size: 10 },
-                        autoSkip:      true,
-                        maxTicksLimit: 8,
-                        callback: function(val) {
+                        autoSkip:      currentPeriod !== 'ytd',
+                        maxTicksLimit: currentPeriod !== 'ytd' ? 8 : undefined,
+                        callback: function(val, index) {
                             const date = this.getLabelForValue(val);
                             if (!date) return '';
+                            if (currentPeriod === 'ytd') {
+                                // Only label the first occurrence of each month
+                                if (index === 0) return date.toLocaleString('default', { month: 'short' });
+                                const prevDate = this.getLabelForValue(this.ticks[index - 1].value);
+                                if (!prevDate || date.getMonth() !== prevDate.getMonth()) {
+                                    return date.toLocaleString('default', { month: 'short' });
+                                }
+                                return '';
+                            }
                             return currentPeriod === 'all'
-                                ? date.getFullYear() + ' ' + date.toLocaleString('default', { month: 'short' })
+    ? date.toLocaleString('default', { month: 'short' }) + ' \'' + String(date.getFullYear()).slice(2)
                                 : date.toLocaleString('default', { month: 'short' });
                         },
                     },
