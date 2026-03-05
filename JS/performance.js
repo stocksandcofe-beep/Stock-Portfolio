@@ -158,7 +158,6 @@ function initDashboard() {
     document.getElementById('hero-label').innerText =
         currentChartMode === 'profit' ? 'Total Net Profit' : 'Total Return';
 
-    document.getElementById('hero-badge').classList.add('hidden');
 
     // Last Updated label — taken from the last row's date in the CSV
     const lastUpdatedEl = document.getElementById('last-updated');
@@ -237,6 +236,7 @@ function calculateMetrics(data) {
             spyRetEl.className = 'text-lg font-bold text-zinc-500';
         }
     }
+
 
     if (pairedRets.length > 1) {
         const portRets = pairedRets.map(p => p.port);
@@ -331,6 +331,19 @@ function renderChart(data) {
         });
     }
 
+    // Zero baseline — shown only in Profit mode as a subtle reference line
+    const zeroLine = !isGrowth ? [{
+        label:       '_zero',
+        data:        data.map(() => 0),
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        borderDash:  [4, 4],
+        pointRadius: 0,
+        fill:        false,
+        tension:     0,
+        yAxisID:     'y',
+    }] : [];
+
     // Portfolio dataset — always uses its own right y-axis in GBP
     const datasets = [
         {
@@ -347,6 +360,7 @@ function renderChart(data) {
             yAxisID:                'y',
         },
         ...spyDataset,
+        ...zeroLine,
     ];
 
     // Scales — portfolio GBP on right, SPY USD on left (only in Value mode)
@@ -382,7 +396,7 @@ function renderChart(data) {
                 callback: v => {
                     const dec = portStep < 1000 ? 1 : 0;
                     if (isGrowth) return '£' + (v / 1000).toFixed(dec) + 'k';
-                    return '£' + (Math.abs(v) / 1000).toFixed(dec) + 'k';
+                    return (v < 0 ? '-' : '') + '£' + (Math.abs(v) / 1000).toFixed(dec) + 'k';
                 },
             },
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
