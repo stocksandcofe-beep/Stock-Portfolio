@@ -386,7 +386,7 @@ function renderChart(data) {
             ySpy: {
                 position: 'left',
                 ticks: {
-                    color:    '#d97706',
+                    color:    '#fbbf24',
                     font:     { size: 10 },
                     stepSize: spyStep,
                     callback: v => {
