@@ -461,6 +461,14 @@ function renderChart(data) {
                             if (context.dataset.label === 'SPY (USD)') {
                                 return ' SPY: $' + (v !== null ? (v / 1000).toFixed(1) + 'k' : '--');
                             }
+                            if (context.dataset.label === '_zero') return null;
+                            if (!isGrowth) {
+                                const portVal = cleanNum(data[context.dataIndex][COL_VALUE]);
+                                return [
+                                    ' Profit: ' + (v >= 0 ? '+' : '') + formatGBP(v),
+                                    ' Value: '  + formatGBP(portVal),
+                                ];
+                            }
                             return ' Portfolio: ' + formatGBP(v);
                         },
                     },
