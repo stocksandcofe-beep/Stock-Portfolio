@@ -382,7 +382,7 @@ function renderChart(data) {
                 callback: v => {
                     const dec = portStep < 1000 ? 1 : 0;
                     if (isGrowth) return '£' + (v / 1000).toFixed(dec) + 'k';
-                    return (v >= 0 ? '+£' : '-£') + (Math.abs(v) / 1000).toFixed(dec) + 'k';
+                    return '£' + (Math.abs(v) / 1000).toFixed(dec) + 'k';
                 },
             },
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -443,6 +443,7 @@ function renderChart(data) {
                         color:         '#71717a',
                         font:          { size: 10 },
                         autoSkip:      currentPeriod !== 'ytd',
+                        maxRotation:   0,
                         maxTicksLimit: currentPeriod !== 'ytd' ? 8 : undefined,
                         callback: function(val, index) {
                             const date = this.getLabelForValue(val);
