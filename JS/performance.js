@@ -237,6 +237,20 @@ function calculateMetrics(data) {
         }
     }
 
+    // vs SPY badge below hero — TWR minus SPY return
+    const alphaVal = spyRet !== null ? twr - spyRet : null;
+    const badgeEl  = document.getElementById('vs-spy-badge');
+    if (badgeEl) {
+        if (alphaVal !== null) {
+            const isPos = alphaVal >= 0;
+            badgeEl.innerText = (isPos ? '▲ +' : '▼ ') + alphaVal.toFixed(2) + '% vs SPY';
+            badgeEl.className = `text-xs font-semibold px-2 py-0.5 rounded-full ${isPos ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`;
+            badgeEl.classList.remove('hidden');
+        } else {
+            badgeEl.classList.add('hidden');
+        }
+    }
+
 
     if (pairedRets.length > 1) {
         const portRets = pairedRets.map(p => p.port);
