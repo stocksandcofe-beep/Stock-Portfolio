@@ -168,13 +168,13 @@ function initDashboard() {
     // Total Net Value card
     const trVal = document.getElementById('stat-total-return');
     trVal.innerText = formatGBP(valEnd);
-    trVal.parentElement.className = 'card p-6 border-l border-zinc-700';
+    trVal.parentElement.className = 'card p-6 border-l border-zinc-700 text-center';
     trVal.className = `text-lg font-bold ${valEnd >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     // Net Profit card
     const npVal = document.getElementById('stat-profit');
     npVal.innerText = (pProfit >= 0 ? '+' : '') + formatGBP(pProfit);
-    npVal.parentElement.className = 'card p-6 border-l border-zinc-700';
+    npVal.parentElement.className = 'card p-6 border-l border-zinc-700 text-center';
     npVal.className = `text-lg font-bold ${pProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     calculateMetrics(filtered);
