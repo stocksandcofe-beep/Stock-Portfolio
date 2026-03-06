@@ -53,6 +53,15 @@ body {
 .nav-item.active {
     background: #10b9811a;
     color: #10b981;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    padding-left: calc(0.75rem - 3px);
+}
+
+.nav-item:not(.active) {
+    border-left: 3px solid transparent;
+    border-radius: 0 8px 8px 0;
+    padding-left: calc(0.75rem - 3px);
 }
 
 
@@ -226,6 +235,16 @@ body {
 .sub-nav-item.active,
 .sub-nav-item.text-emerald-400 {
     color: #10b981;
+    border-left: 2px solid #10b981;
+    border-radius: 0 6px 6px 0;
+    padding-left: calc(0.75rem - 2px);
+    background: #10b9810d;
+}
+
+.sub-nav-item:not(.text-emerald-400) {
+    border-left: 2px solid transparent;
+    border-radius: 0 6px 6px 0;
+    padding-left: calc(0.75rem - 2px);
 }
 
 
