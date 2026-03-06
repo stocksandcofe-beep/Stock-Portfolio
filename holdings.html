@@ -154,12 +154,6 @@
             </div>
         </header>
 
-        <!-- Landing state -->
-        <div id="landing-state" class="flex flex-col items-center justify-center py-32 text-zinc-600 gap-3">
-            <i data-lucide="wallet-cards" class="w-10 h-10"></i>
-            <p class="text-sm">Select a view from the menu to get started.</p>
-        </div>
-
         <!-- Summary bar -->
         <div id="summary-bar" class="hidden grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="card p-4 text-center border-l border-zinc-700">
@@ -230,7 +224,6 @@
     <script>
         lucide.createIcons();
         function showHoldings() {
-            document.getElementById('landing-state').classList.add('hidden');
             document.getElementById('summary-bar').classList.remove('hidden');
             document.getElementById('summary-bar').classList.add('grid');
             document.getElementById('view-table').classList.remove('hidden');
@@ -239,6 +232,7 @@
                 el.classList.add('text-emerald-400', 'bg-emerald-500/10');
             });
         }
+        showHoldings();
         function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
         function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
     </script>
