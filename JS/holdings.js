@@ -462,52 +462,142 @@ async function fetchProfile(ticker) {
 }
 
 async function buildCharts(data) {
-    const loading = document.getElementById('charts-loading');
-    const content = document.getElementById('charts-content');
+    const loadingEl = document.getElementById('charts-loading');
+    const errorEl   = document.getElementById('charts-error');
+    const contentEl = document.getElementById('charts-content');
 
-    const profiles = [];
-    for (let i = 0; i < data.length; i++) {
-        const ticker = getCol(data[i], ['Ticker'])?.toUpperCase().trim();
-        if (i > 0 && i % 5 === 0) await new Promise(r => setTimeout(r, 500));
-        profiles.push(fetchProfile(ticker));
+    try {
+        const profiles = [];
+        for (let i = 0; i < data.length; i++) {
+            const ticker = getCol(data[i], ['Ticker'])?.toUpperCase().trim();
+            if (i > 0 && i % 5 === 0) await new Promise(r => setTimeout(r, 500));
+            profiles.push(fetchProfile(ticker));
+        }
+        const profileResults = await Promise.allSettled(profiles);
+
+        const sectorMap         = {};
+        const regionMap         = {};
+        const sectorHoldingsMap = {}; // sector -> [{company, ticker, value, pct}]
+
+        data.forEach((row, i) => {
+            const ticker      = getCol(row, ['Ticker'])?.toUpperCase().trim();
+            const company     = getCol(row, ['Company']) || ticker;
+            const ld          = livePriceMap[ticker];
+            const shares      = cleanNum(getCol(row, ['Shares']));
+            const curValueGBP = ld ? shares * ld.price * ld.rate : 0;
+            const profile     = profileResults[i].status === 'fulfilled' ? profileResults[i].value : {};
+            const sector      = profile?.finnhubIndustry || 'Other';
+            const countryCode = profile?.country || '';
+            const country     = COUNTRY_NAMES[countryCode] || (countryCode || 'Other');
+            sectorMap[sector]  = (sectorMap[sector]  || 0) + curValueGBP;
+            regionMap[country] = (regionMap[country] || 0) + curValueGBP;
+            if (!sectorHoldingsMap[sector]) sectorHoldingsMap[sector] = [];
+            sectorHoldingsMap[sector].push({ company, ticker, value: curValueGBP });
+        });
+
+        const sortedSectors = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
+        const sortedRegions = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
+        const totalSector   = sortedSectors.reduce((s, [, v]) => s + v, 0);
+        const totalRegion   = sortedRegions.reduce((s, [, v]) => s + v, 0);
+
+        // Concentration warnings
+        const maxSectorPct = sortedSectors[0] ? (sortedSectors[0][1] / totalSector) * 100 : 0;
+        const maxRegionPct = sortedRegions[0] ? (sortedRegions[0][1] / totalRegion) * 100 : 0;
+        const sectorWarn   = document.getElementById('sector-warning');
+        const regionWarn   = document.getElementById('region-warning');
+        if (sectorWarn) sectorWarn.classList.toggle('hidden', maxSectorPct < 40);
+        if (regionWarn) regionWarn.classList.toggle('hidden', maxRegionPct < 40);
+
+        // Chart config — no built-in legend (we build HTML legends)
+        function makeChartConfig(sorted, total, canvasId, legendId, drillMap) {
+            const labels = sorted.map(([k]) => k);
+            const values = sorted.map(([, v]) => v);
+            const colours = CHART_COLOURS.slice(0, sorted.length);
+
+            // HTML legend
+            const legendEl = document.getElementById(legendId);
+            if (legendEl) {
+                legendEl.innerHTML = sorted.map(([label, val], i) => {
+                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                    return `<div class="flex items-center justify-between gap-2 text-xs cursor-pointer hover:text-white transition-colors"
+                                 onclick="showSectorDrill('${label.replace(/'/g, "\'")}', ${JSON.stringify(drillMap[label] || []).replace(/"/g, '&quot;')}, ${total})">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${colours[i]}"></span>
+                            <span class="text-zinc-400 truncate">${label}</span>
+                        </div>
+                        <span class="text-zinc-300 font-semibold flex-shrink-0">${pct}%</span>
+                    </div>`;
+                }).join('');
+            }
+
+            return {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{ data: values, backgroundColor: colours, borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => {
+                            const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${((ctx.parsed / t) * 100).toFixed(1)}%)`;
+                        }}},
+                    },
+                    onClick: (_, elements) => {
+                        if (!elements.length) return;
+                        const label = labels[elements[0].index];
+                        showSectorDrill(label, drillMap[label] || [], total);
+                    },
+                },
+            };
+        }
+
+        new Chart(document.getElementById('sector-chart'), makeChartConfig(sortedSectors, totalSector, 'sector-chart', 'sector-legend', sectorHoldingsMap));
+        new Chart(document.getElementById('region-chart'), makeChartConfig(sortedRegions, totalRegion, 'region-chart', 'region-legend', {}));
+
+        loadingEl.classList.add('hidden');
+        contentEl.style.display = 'block';
+
+    } catch (e) {
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
     }
-    const profileResults = await Promise.allSettled(profiles);
+}
 
-    const sectorMap = {};
-    const regionMap = {};
+function showSectorDrill(label, holdings, total) {
+    const panel     = document.getElementById('sector-drill');
+    const titleEl   = document.getElementById('sector-drill-title');
+    const bodyEl    = document.getElementById('sector-drill-body');
+    if (!panel || !titleEl || !bodyEl) return;
 
-    data.forEach((row, i) => {
-        const ticker      = getCol(row, ['Ticker'])?.toUpperCase().trim();
-        const ld          = livePriceMap[ticker];
-        const shares      = cleanNum(getCol(row, ['Shares']));
-        const curValueGBP = ld ? shares * ld.price * ld.rate : 0;
-        const profile     = profileResults[i].status === 'fulfilled' ? profileResults[i].value : {};
-        const sector      = profile?.finnhubIndustry || 'Other';
-        const countryCode = profile?.country || '';
-        const country     = COUNTRY_NAMES[countryCode] || (countryCode || 'Other');
-        sectorMap[sector]  = (sectorMap[sector]  || 0) + curValueGBP;
-        regionMap[country] = (regionMap[country] || 0) + curValueGBP;
-    });
+    const sectorTotal = holdings.reduce((s, h) => s + h.value, 0);
+    const pct         = total > 0 ? ((sectorTotal / total) * 100).toFixed(1) : '0.0';
+    titleEl.textContent = `${label} — ${pct}% of portfolio`;
 
-    const sortedSectors = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
-    const sortedRegions = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
+    const sorted = [...holdings].sort((a, b) => b.value - a.value);
+    bodyEl.innerHTML = sorted.map(h => {
+        const hPct = sectorTotal > 0 ? ((h.value / sectorTotal) * 100).toFixed(1) : '0.0';
+        return `<div class="flex items-center justify-between gap-3 bg-zinc-900/60 rounded-xl px-4 py-3">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-800">
+                    <img src="${LOGO_BASE_URL}${h.ticker}.png"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                         class="w-full h-full object-contain p-0.5" alt="${h.ticker}">
+                    <div class="hidden w-full h-full items-center justify-center text-[9px] font-bold text-zinc-500 bg-zinc-900 uppercase">${h.ticker.substring(0, 2)}</div>
+                </div>
+                <span class="text-zinc-200 text-sm font-medium truncate">${h.company}</span>
+            </div>
+            <div class="text-right flex-shrink-0">
+                <p class="text-white text-sm font-semibold">${formatGBP(h.value, 0)}</p>
+                <p class="text-zinc-500 text-xs">${hPct}%</p>
+            </div>
+        </div>`;
+    }).join('');
 
-    const chartDefaults = {
-        type: 'doughnut',
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '65%',
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { family: 'Plus Jakarta Sans', size: 11 }, padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
-                tooltip: { callbacks: { label: ctx => { const t = ctx.dataset.data.reduce((a, b) => a + b, 0); return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${((ctx.parsed / t) * 100).toFixed(1)}%)`; } } },
-            },
-        },
-    };
-
-    new Chart(document.getElementById('sector-chart'), { ...chartDefaults, data: { labels: sortedSectors.map(([k]) => k), datasets: [{ data: sortedSectors.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedSectors.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }] } });
-    new Chart(document.getElementById('region-chart'), { ...chartDefaults, data: { labels: sortedRegions.map(([k]) => k), datasets: [{ data: sortedRegions.map(([, v]) => v), backgroundColor: CHART_COLOURS.slice(0, sortedRegions.length), borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }] } });
-
-    loading.classList.add('hidden');
-    content.style.display = 'grid';
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 
