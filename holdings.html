@@ -231,6 +231,9 @@
             document.getElementById('summary-bar').classList.add('grid');
             document.getElementById('view-table').classList.remove('hidden');
             document.getElementById('header-actions').classList.remove('hidden');
+            document.querySelectorAll('a[onclick*="showHoldings"]').forEach(el => {
+                el.classList.add('text-emerald-400', 'bg-emerald-500/10');
+            });
         }
         function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
         function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
