@@ -165,12 +165,7 @@
                 <p id="sum-pl" class="text-base font-bold">--</p>
             </div>
             <div class="card p-4 text-center border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-1 flex items-center justify-center gap-1">
-                    Overall Return
-                    <span class="tooltip">?
-                        <span class="tooltiptext">Simple return: current live portfolio value vs total amount invested. This differs from the Performance page because: (1) Total Return uses historical CSV data, not live prices; (2) TWR strips out the effect of deposits and withdrawals to measure pure investment performance.</span>
-                    </span>
-                </p>
+                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Overall Return</p>
                 <p id="sum-return" class="text-base font-bold">--</p>
             </div>
         </div>
@@ -199,10 +194,7 @@
                                 <span class="flex items-center justify-center gap-1">Cost Basis <span id="sort-Cost Basis" class="sort-arrow">↕</span></span>
                             </th>
                             <th class="p-4 text-center text-emerald-400">
-                                <span class="flex items-center justify-center gap-2">
-                                    Live Price
-                                   
-                                </span>
+                                <span class="flex items-center justify-center gap-2">Live Price</span>
                             </th>
                             <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Current Value')">
                                 <span class="flex items-center justify-center gap-1">£ Value <span id="sort-Current Value" class="sort-arrow">↕</span></span>
@@ -227,22 +219,47 @@
         <div id="view-charts" class="hidden">
             <div id="charts-loading" class="flex items-center justify-center py-20 text-zinc-500 gap-3">
                 <i data-lucide="loader" class="w-5 h-5 animate-spin"></i>
-                <span>Fetching sector & region data...</span>
+                <span>Fetching sector &amp; region data...</span>
             </div>
-            <div id="charts-content" class="hidden grid-cols-1 lg:grid-cols-2 gap-8" style="display:none">
-                <div class="card p-6">
-                    <h3 class="text-zinc-300 font-semibold mb-1">Sector Breakdown</h3>
-                    <p class="text-zinc-500 text-xs mb-6">Weighted by portfolio value</p>
-                    <div class="relative h-[300px] flex items-center justify-center">
-                        <canvas id="sector-chart"></canvas>
+            <div id="charts-error" class="hidden flex items-center justify-center py-20 gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-400"></i>
+                <span class="text-rose-400 text-sm">Failed to load sector &amp; region data. Please refresh and try again.</span>
+            </div>
+            <div id="charts-content" class="hidden" style="display:none">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Sector card -->
+                    <div class="card p-6">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-zinc-300 font-semibold">Sector Breakdown</h3>
+                            <span id="sector-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">⚠ Concentrated</span>
+                        </div>
+                        <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
+                        <div class="flex gap-6 items-start">
+                            <div class="relative h-[240px] w-[240px] flex-shrink-0">
+                                <canvas id="sector-chart"></canvas>
+                            </div>
+                            <div id="sector-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
+                        </div>
+                    </div>
+                    <!-- Region card -->
+                    <div class="card p-6">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-zinc-300 font-semibold">Region Breakdown</h3>
+                            <span id="region-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">⚠ Concentrated</span>
+                        </div>
+                        <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
+                        <div class="flex gap-6 items-start">
+                            <div class="relative h-[240px] w-[240px] flex-shrink-0">
+                                <canvas id="region-chart"></canvas>
+                            </div>
+                            <div id="region-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="card p-6">
-                    <h3 class="text-zinc-300 font-semibold mb-1">Region Breakdown</h3>
-                    <p class="text-zinc-500 text-xs mb-6">Weighted by portfolio value</p>
-                    <div class="relative h-[300px] flex items-center justify-center">
-                        <canvas id="region-chart"></canvas>
-                    </div>
+                <!-- Holdings per sector panel -->
+                <div id="sector-drill" class="hidden card p-6">
+                    <h4 id="sector-drill-title" class="text-zinc-300 font-semibold mb-4">Holdings in sector</h4>
+                    <div id="sector-drill-body" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
                 </div>
             </div>
         </div>
