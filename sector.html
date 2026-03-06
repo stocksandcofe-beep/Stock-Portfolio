@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Structure</title>
+    <title>Sector &amp; Region</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
@@ -69,11 +69,11 @@
                     <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
                 </button>
                 <div class="holdings-submenu ml-4 mt-1 space-y-1">
-                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-zinc-400">
                         <i data-lucide="table" class="w-3 h-3"></i>
                         <span>Holdings</span>
                     </a>
-                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-emerald-400 bg-emerald-500/10">
                         <i data-lucide="pie-chart" class="w-3 h-3"></i>
                         <span>Sector & Region</span>
                     </a>
@@ -121,11 +121,11 @@
                     <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
                 </button>
                 <div class="holdings-submenu ml-4 mt-1 space-y-1">
-                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-zinc-400">
                         <i data-lucide="table" class="w-3 h-3"></i>
                         <span>Holdings</span>
                     </a>
-                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-emerald-400 bg-emerald-500/10">
                         <i data-lucide="pie-chart" class="w-3 h-3"></i>
                         <span>Sector & Region</span>
                     </a>
@@ -139,84 +139,63 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <header class="mb-10 flex justify-between items-center">
-            <h1 id="page-title" class="text-3xl font-bold tracking-tight">Holdings</h1>
-            <div class="flex items-center gap-2 text-zinc-500 text-xs">
-                <span id="last-refreshed"></span>
-                <button id="header-refresh-btn" onclick="refreshLivePrices()" title="Refresh live prices" class="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                    <span class="text-xs">Refresh</span>
-                </button>
-            </div>
+        <header class="mb-10">
+            <h1 class="text-3xl font-bold tracking-tight">Sector &amp; Region</h1>
         </header>
 
-        <!-- Summary bar -->
-        <div id="summary-bar" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="card p-4 text-center border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Portfolio Value</p>
-                <p id="sum-value" class="text-base font-bold text-white">--</p>
-            </div>
-            <div class="card p-4 text-center border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Total Cost</p>
-                <p id="sum-cost" class="text-base font-bold text-zinc-300">--</p>
-            </div>
-            <div class="card p-4 text-center border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Unrealised P/L</p>
-                <p id="sum-pl" class="text-base font-bold">--</p>
-            </div>
-            <div class="card p-4 text-center border-l border-zinc-700">
-                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Overall Return</p>
-                <p id="sum-return" class="text-base font-bold">--</p>
-            </div>
+        <!-- Loading -->
+        <div id="charts-loading" class="flex items-center justify-center py-20 text-zinc-500 gap-3">
+            <i data-lucide="loader" class="w-5 h-5 animate-spin"></i>
+            <span>Fetching sector &amp; region data...</span>
         </div>
 
-        <!-- Table view -->
-        <div id="view-table">
-            <div class="card overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="text-zinc-400 uppercase text-[10px] font-bold tracking-wider border-b border-zinc-800">
-                        <tr>
-                            <th class="p-4 text-left cursor-pointer hover:text-white" onclick="sortHoldings('Company')">
-                                <span class="flex items-center gap-1">Company Name <span id="sort-Company" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Shares')">
-                                <span class="flex items-center justify-center gap-1">Shares <span id="sort-Shares" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('BEP')">
-                                <div class="flex items-center justify-center gap-1">
-                                    <span class="flex items-center gap-1">BEP <span id="sort-BEP" class="sort-arrow">↕</span></span>
-                                    <span class="tooltip">?
-                                        <span class="tooltiptext">Is the price at which an asset, if sold, would pay for the costs of ownership. Any amount beyond the break-even price is profit</span>
-                                    </span>
-                                </div>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Cost Basis')">
-                                <span class="flex items-center justify-center gap-1">Cost Basis <span id="sort-Cost Basis" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center text-emerald-400">
-                                <span class="flex items-center justify-center gap-2">Live Price</span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Current Value')">
-                                <span class="flex items-center justify-center gap-1">£ Value <span id="sort-Current Value" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Total Unrealised P/L')">
-                                <span class="flex items-center justify-center gap-1">Profit / Loss <span id="sort-Total Unrealised P/L" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('% Return')">
-                                <span class="flex items-center justify-center gap-1">Return % <span id="sort-% Return" class="sort-arrow">↕</span></span>
-                            </th>
-                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Allocation')">
-                                <span class="flex items-center justify-center gap-1">Allocation <span id="sort-Allocation" class="sort-arrow">↕</span></span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="holdings-table-body" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
-                </table>
+        <!-- Error -->
+        <div id="charts-error" class="hidden items-center justify-center py-20 gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-rose-400"></i>
+            <span class="text-rose-400 text-sm">Failed to load sector &amp; region data. Please refresh and try again.</span>
+        </div>
+
+        <!-- Content -->
+        <div id="charts-content" style="display:none">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Sector card -->
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-zinc-300 font-semibold">Sector Breakdown</h3>
+                        <span id="sector-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">&#9888; Concentrated</span>
+                    </div>
+                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
+                    <div class="flex gap-6 items-start">
+                        <div class="relative h-[240px] w-[240px] flex-shrink-0">
+                            <canvas id="sector-chart"></canvas>
+                        </div>
+                        <div id="sector-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
+                    </div>
+                </div>
+                <!-- Region card -->
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-zinc-300 font-semibold">Region Breakdown</h3>
+                        <span id="region-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">&#9888; Concentrated</span>
+                    </div>
+                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
+                    <div class="flex gap-6 items-start">
+                        <div class="relative h-[240px] w-[240px] flex-shrink-0">
+                            <canvas id="region-chart"></canvas>
+                        </div>
+                        <div id="region-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Holdings drill-down panel -->
+            <div id="sector-drill" class="hidden card p-6">
+                <h4 id="sector-drill-title" class="text-zinc-300 font-semibold mb-4">Holdings in sector</h4>
+                <div id="sector-drill-body" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
         </div>
     </main>
 
-    <script src="JS/holdings.js"></script>
+    <script src="JS/sector.js"></script>
     <script>
         lucide.createIcons();
         function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
