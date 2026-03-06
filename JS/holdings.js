@@ -14,6 +14,7 @@ let livePriceMap        = {};
 let totalValLatest      = 0;
 let sortKey             = '';
 let sortDir             = 1;
+let lastRefreshedAt     = null;
 
 const urlParams  = new URLSearchParams(window.location.search);
 const activeView = urlParams.get('view') || 'table';
@@ -227,23 +228,36 @@ async function loadAll() {
 loadAll();
 
 function refreshLivePrices() {
-    const btn = document.getElementById('refresh-btn');
-    if (btn) {
-        btn.disabled = true;
-        const icon = btn.querySelector('svg');
-        if (icon) icon.style.animation = 'spin 0.8s linear infinite';
-    }
+    ['refresh-btn', 'header-refresh-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = true;
+            const icon = btn.querySelector('svg');
+            if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+        }
+    });
     livePriceMap = {};
     loadAll();
 }
 
 function stopRefreshSpin() {
-    const btn = document.getElementById('refresh-btn');
-    if (btn) {
-        btn.disabled = false;
-        const icon = btn.querySelector('svg');
-        if (icon) icon.style.animation = '';
-    }
+    ['refresh-btn', 'header-refresh-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = false;
+            const icon = btn.querySelector('svg');
+            if (icon) icon.style.animation = '';
+        }
+    });
+    lastRefreshedAt = new Date();
+    updateRefreshLabel();
+}
+
+function updateRefreshLabel() {
+    const el = document.getElementById('last-refreshed');
+    if (!el || !lastRefreshedAt) return;
+    const mins = Math.floor((new Date() - lastRefreshedAt) / 60000);
+    el.textContent = mins === 0 ? 'just now' : mins + 'm ago';
 }
 
 
@@ -282,6 +296,9 @@ function sortHoldings(key) {
         } else if (key === 'Shares') {
             valA = cleanNum(getCol(a, ['Shares']));
             valB = cleanNum(getCol(b, ['Shares']));
+        } else if (key === 'Cost Basis') {
+            valA = cleanNum(getCol(a, ['Total Purchase Cost']));
+            valB = cleanNum(getCol(b, ['Total Purchase Cost']));
         } else if (key === 'Current Value' || key === 'Allocation') {
             valA = liveGBP(a); valB = liveGBP(b);
         } else if (key === 'Total Unrealised P/L') {
@@ -349,11 +366,19 @@ function displayHoldings(data) {
             </td>
             <td class="p-4 text-center text-zinc-400">${shares.toLocaleString()}</td>
             <td class="p-4 text-center text-zinc-300">${sym}${bepLocal.toFixed(2)}</td>
+            <td class="p-4 text-center text-zinc-400">${formatGBP(costGBP, 0)}</td>
             <td class="p-4 text-center text-emerald-400">${liveData ? sym + activePriceLocal.toFixed(2) : '--'}</td>
             <td class="p-4 text-center text-white">${formatGBP(curValueGBP)}</td>
             <td class="p-4 text-center ${profitClass}">${profitSign}${formatGBP(Math.abs(profitGBP), 0)}</td>
             <td class="p-4 text-center ${returnClass}">${returnSign}${Math.abs(percReturn).toFixed(2)}%</td>
-            <td class="p-4 text-center text-zinc-300">${weight.toFixed(1)}%</td>
+            <td class="p-4 text-center text-zinc-300">
+                <div class="flex flex-col items-center gap-1">
+                    <span>${weight.toFixed(1)}%</span>
+                    <div class="w-16 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500 rounded-full" style="width:${Math.min(weight, 100).toFixed(1)}%"></div>
+                    </div>
+                </div>
+            </td>
         `;
         fragment.appendChild(tr);
     });
@@ -378,19 +403,24 @@ function displayHoldings(data) {
     const totalProfitSign  = totalProfit >= 0 ? '+' : '';
     const totalReturnSign  = totalReturn >= 0 ? '+' : '';
 
-    const totalTr = document.createElement('tr');
-    totalTr.className = 'border-t-2 border-zinc-700 bg-zinc-900/60 text-sm font-bold';
-    totalTr.innerHTML = `
-        <td class="p-4 text-left text-zinc-300 uppercase text-xs tracking-wider">Total Portfolio</td>
-        <td class="p-4 text-center text-zinc-300">${totalShares.toLocaleString()}</td>
-        <td class="p-4" colspan="2"></td>
-        <td class="p-4 text-center text-white">${formatGBP(totalValue)}</td>
-        <td class="p-4 text-center ${totalProfitClass}">${totalProfitSign}${formatGBP(totalProfit, 0)}</td>
-        <td class="p-4 text-center ${totalReturnClass}">${totalReturnSign}${totalReturn.toFixed(2)}%</td>
-        <td class="p-4 text-center text-zinc-400">100%</td>
-    `;
     tbody.appendChild(fragment);
-    tbody.appendChild(totalTr);
+
+    // Update summary bar
+    const sumValue  = document.getElementById('sum-value');
+    const sumCost   = document.getElementById('sum-cost');
+    const sumPl     = document.getElementById('sum-pl');
+    const sumReturn = document.getElementById('sum-return');
+    if (sumValue)  sumValue.textContent  = formatGBP(totalValue);
+    if (sumCost)   sumCost.textContent   = formatGBP(totalCost, 0);
+    if (sumPl) {
+        sumPl.textContent  = (totalProfit >= 0 ? '+' : '') + formatGBP(totalProfit, 0);
+        sumPl.className    = `text-base font-bold ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+    if (sumReturn) {
+        sumReturn.textContent = (totalReturn >= 0 ? '+' : '') + totalReturn.toFixed(2) + '%';
+        sumReturn.className   = `text-base font-bold ${totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+
     stopRefreshSpin();
 }
 
