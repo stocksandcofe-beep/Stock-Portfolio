@@ -224,6 +224,26 @@ body {
 /* =============================================================================
    HOLDINGS SUBMENU
 ============================================================================= */
+.holdings-submenu {
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.holdings-submenu.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+.holdings-chevron {
+    transition: transform 0.3s ease;
+}
+
+.holdings-chevron.rotated {
+    transform: rotate(-180deg);
+}
+
 .sub-nav-item {
     color: #a1a1aa;
     transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
@@ -241,14 +261,12 @@ body {
     border-radius: 0 6px 6px 0;
     padding-left: calc(0.75rem - 2px);
     background: #10b9810d;
-    will-change: color, background, border-color;
 }
 
 .sub-nav-item:not(.text-emerald-400) {
     border-left: 2px solid transparent;
     border-radius: 0 6px 6px 0;
     padding-left: calc(0.75rem - 2px);
-    will-change: color, background, border-color;
 }
 
 
