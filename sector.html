@@ -59,14 +59,28 @@
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </a>
-            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
-                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                <span>Portfolio Structure</span>
-            </a>
-            <a href="sector.html" class="sub-nav-item active flex items-center gap-2 ml-4 px-3 py-2 rounded-lg text-sm bg-emerald-500/10 text-emerald-400">
-                <i data-lucide="pie-chart" class="w-3 h-3"></i>
-                <span>Sector & Region</span>
-            </a>
+            <!-- Holdings accordion -->
+            <div>
+                <button onclick="toggleHoldingsMenu(this)" class="nav-item active w-full flex items-center justify-between p-3 bg-emerald-500/10 text-emerald-400">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                        <span>Portfolio Structure</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
+                </button>
+                <div class="holdings-submenu ml-4 mt-1 space-y-1">
+                    <div>
+                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-zinc-400">
+                        <i data-lucide="table" class="w-3 h-3"></i>
+                        <span>Holdings</span>
+                    </a>
+                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-emerald-400 bg-emerald-500/10">
+                        <i data-lucide="pie-chart" class="w-3 h-3"></i>
+                        <span>Sector & Region</span>
+                    </a>
+                    </div>
+                </div>
+            </div>
             <a href="allocator.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
                 <i data-lucide="pie-chart" class="w-4 h-4"></i>
                 <span>Asset Allocator</span>
@@ -99,14 +113,28 @@
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </a>
-            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
-                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                <span>Portfolio Structure</span>
-            </a>
-            <a href="sector.html" class="sub-nav-item active flex items-center gap-2 ml-4 px-3 py-2 rounded-lg text-sm bg-emerald-500/10 text-emerald-400">
-                <i data-lucide="pie-chart" class="w-3 h-3"></i>
-                <span>Sector & Region</span>
-            </a>
+            <!-- Holdings accordion -->
+            <div>
+                <button onclick="toggleHoldingsMenu(this)" class="nav-item active w-full flex items-center justify-between p-3 bg-emerald-500/10 text-emerald-400">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                        <span>Portfolio Structure</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
+                </button>
+                <div class="holdings-submenu ml-4 mt-1 space-y-1">
+                    <div>
+                    <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-zinc-400">
+                        <i data-lucide="table" class="w-3 h-3"></i>
+                        <span>Holdings</span>
+                    </a>
+                    <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-emerald-400 bg-emerald-500/10">
+                        <i data-lucide="pie-chart" class="w-3 h-3"></i>
+                        <span>Sector & Region</span>
+                    </a>
+                    </div>
+                </div>
+            </div>
             <a href="allocator.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
                 <i data-lucide="pie-chart" class="w-4 h-4"></i>
                 <span>Asset Allocator</span>
