@@ -141,13 +141,39 @@
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="mb-10 flex justify-between items-center">
             <h1 id="page-title" class="text-3xl font-bold tracking-tight">Holdings</h1>
-
+            <div class="flex items-center gap-2 text-zinc-500 text-xs">
+                <span id="last-refreshed"></span>
+                <button id="header-refresh-btn" onclick="refreshLivePrices()" title="Refresh live prices" class="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span class="text-xs">Refresh</span>
+                </button>
+            </div>
         </header>
+
+        <!-- Summary bar -->
+        <div id="summary-bar" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="card p-4 text-center border-l border-zinc-700">
+                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Portfolio Value</p>
+                <p id="sum-value" class="text-base font-bold text-white">--</p>
+            </div>
+            <div class="card p-4 text-center border-l border-zinc-700">
+                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Total Cost</p>
+                <p id="sum-cost" class="text-base font-bold text-zinc-300">--</p>
+            </div>
+            <div class="card p-4 text-center border-l border-zinc-700">
+                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Unrealised P/L</p>
+                <p id="sum-pl" class="text-base font-bold">--</p>
+            </div>
+            <div class="card p-4 text-center border-l border-zinc-700">
+                <p class="text-zinc-400 text-xs font-bold uppercase mb-1">Overall Return</p>
+                <p id="sum-return" class="text-base font-bold">--</p>
+            </div>
+        </div>
 
         <!-- Table view -->
         <div id="view-table">
             <div class="card overflow-x-auto">
-                <table class="w-full text-left min-w-[1200px]">
+                <table class="w-full text-left">
                     <thead class="text-zinc-400 uppercase text-[10px] font-bold tracking-wider border-b border-zinc-800">
                         <tr>
                             <th class="p-4 text-left cursor-pointer hover:text-white" onclick="sortHoldings('Company')">
@@ -164,6 +190,9 @@
                                     </span>
                                 </div>
                             </th>
+                            <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Cost Basis')">
+                                <span class="flex items-center justify-center gap-1">Cost Basis <span id="sort-Cost Basis" class="sort-arrow">↕</span></span>
+                            </th>
                             <th class="p-4 text-center text-emerald-400">
                                 <span class="flex items-center justify-center gap-2">
                                     Live Price
@@ -176,10 +205,10 @@
                                 <span class="flex items-center justify-center gap-1">£ Value <span id="sort-Current Value" class="sort-arrow">↕</span></span>
                             </th>
                             <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Total Unrealised P/L')">
-                                <span class="flex items-center justify-center gap-1">£ P/L <span id="sort-Total Unrealised P/L" class="sort-arrow">↕</span></span>
+                                <span class="flex items-center justify-center gap-1">Profit / Loss <span id="sort-Total Unrealised P/L" class="sort-arrow">↕</span></span>
                             </th>
                             <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('% Return')">
-                                <span class="flex items-center justify-center gap-1">% P/L <span id="sort-% Return" class="sort-arrow">↕</span></span>
+                                <span class="flex items-center justify-center gap-1">Return % <span id="sort-% Return" class="sort-arrow">↕</span></span>
                             </th>
                             <th class="p-4 text-center cursor-pointer hover:text-white" onclick="sortHoldings('Allocation')">
                                 <span class="flex items-center justify-center gap-1">Allocation <span id="sort-Allocation" class="sort-arrow">↕</span></span>
