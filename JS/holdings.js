@@ -369,4 +369,10 @@ function displayHoldings(data) {
 // =============================================================================
 // INIT
 // =============================================================================
-
+function toggleHoldingsMenu(btn) {
+    const parent  = btn.parentElement;
+    const submenu = parent.querySelector('.holdings-submenu');
+    const chevron = btn.querySelector('.holdings-chevron');
+    if (submenu) submenu.classList.toggle('hidden');
+    if (chevron) chevron.classList.toggle('rotate-180');
+}
