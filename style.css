@@ -1,0 +1,359 @@
+/* =============================================================================
+   BASE
+============================================================================= */
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #0B0E11;
+    color: #FFFFFF;
+}
+
+
+/* =============================================================================
+   LAYOUT
+============================================================================= */
+.sidebar {
+    background-color: #15191C;
+    border-right: 1px solid #2B2F36;
+}
+
+.card {
+    background-color: #15191C;
+    border: 1px solid #2B2F36;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px 0 rgba(132, 207, 240,0.35);
+}
+
+.logo-container {
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #1e2327;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+/* =============================================================================
+   NAVIGATION
+============================================================================= */
+.nav-item {
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    color: #71717a;
+}
+
+.nav-item.active {
+    background: #10b9811a;
+    color: #10b981;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    padding-left: calc(0.75rem - 3px);
+    will-change: color, background, border-color;
+}
+
+.nav-item:not(.active) {
+    border-left: 3px solid transparent;
+    border-radius: 0 8px 8px 0;
+    padding-left: calc(0.75rem - 3px);
+    will-change: color, background, border-color;
+}
+
+
+/* =============================================================================
+   BUTTONS
+============================================================================= */
+.toggle-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #71717a;
+}
+
+.toggle-btn.active {
+    background: #10b981;
+    color: #000;
+}
+
+.period-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #1e2327;
+    color: #a1a1aa;
+    border: 1px solid #2B2F36;
+}
+
+.period-btn.active {
+    border-color: #10b981;
+    color: #10b981;
+    background: #10b9810d;
+}
+
+/* =============================================================================
+   SOCIAL ICONS
+============================================================================= */
+.social-icon {
+    color: #71717a;
+    transition: color 0.2s ease;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.social-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.social-icon:hover {
+    color: #10b981;
+}
+
+.social-icon:focus,
+.social-icon:active {
+    outline: none;
+    border: none;
+}
+
+
+/* =============================================================================
+   TOOLTIP
+============================================================================= */
+.tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: #2B2F36;
+    color: #71717a;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: help;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #1e2327;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 11px;
+    border: 1px solid #2B2F36;
+    pointer-events: none;
+    top: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-transform: none;
+    line-height: 1.4;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/* =============================================================================
+   SEARCH
+============================================================================= */
+#asset-search {
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#asset-search:focus {
+    background-color: rgba(24, 24, 27, 0.8);
+    transform: translateY(-1px);
+}
+
+#search-results {
+    background-color: #18181b;
+    border: 1px solid #27272a;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+
+/* =============================================================================
+   HOLDINGS TABLE — hide horizontal scrollbar
+============================================================================= */
+.card.overflow-x-auto {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+}
+
+.card.overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+
+/* =============================================================================
+   ICONS
+============================================================================= */
+.lucide {
+    stroke-width: 2.5px;
+}
+
+
+/* =============================================================================
+   HOLDINGS SUBMENU
+============================================================================= */
+.holdings-submenu {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.holdings-submenu > div,
+.holdings-submenu > a {
+    overflow: hidden;
+}
+
+.holdings-submenu.collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+.holdings-chevron {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.holdings-chevron.rotated {
+    transform: rotate(-180deg);
+}
+
+.sub-nav-item {
+    color: #a1a1aa;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.sub-nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #10b981;
+}
+
+.sub-nav-item.active,
+.sub-nav-item.text-emerald-400 {
+    color: #10b981;
+    border-left: 2px solid #10b981;
+    border-radius: 0 6px 6px 0;
+    padding-left: calc(0.75rem - 2px);
+    background: #10b9810d;
+}
+
+.sub-nav-item:not(.text-emerald-400) {
+    border-left: 2px solid transparent;
+    border-radius: 0 6px 6px 0;
+    padding-left: calc(0.75rem - 2px);
+}
+
+
+/* =============================================================================
+   MOBILE NAVIGATION
+============================================================================= */
+
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #15191C;
+    border-bottom: 1px solid #2B2F36;
+    padding: 0 16px;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 260px;
+    height: 100vh;
+    background: #15191C;
+    border-right: 1px solid #2B2F36;
+    padding: 24px 20px;
+    z-index: 200;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+}
+
+.mobile-sidebar.open {
+    left: 0;
+}
+
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 150;
+}
+
+.mobile-nav-overlay.open {
+    display: block;
+}
+
+@media (max-width: 1023px) {
+    .mobile-topbar {
+        display: flex;
+    }
+
+    main {
+        padding-top: calc(56px + 24px) !important;
+    }
+}
+
+
+/* =============================================================================
+   HOLDINGS TABLE — sort arrows & refresh spin animation
+============================================================================= */
+.sort-arrow {
+    font-size: 9px;
+    opacity: 0.6;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+
+/* =============================================================================
+   ALLOCATOR — fix font on selected ticker / name elements
+============================================================================= */
+#selected-ticker,
+#selected-name {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
