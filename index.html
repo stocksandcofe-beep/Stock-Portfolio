@@ -8,10 +8,98 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@0.574.0"></script>
-    </head>
+    <style>
+        #content-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #0B0E11;
+        }
+        /* On mobile, push iframe below fixed topbar */
+        @media (max-width: 1023px) {
+            #content-wrapper { padding-top: 56px; }
+        }
+    </style>
+</head>
 <body class="flex h-screen overflow-hidden bg-black text-white">
 
-    <aside class="sidebar w-64 flex flex-col p-6 border-r border-zinc-800">
+    <!-- Mobile top bar -->
+    <div class="mobile-topbar">
+        <div class="flex items-center gap-3">
+            <div class="logo-container">
+                <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
+            </div>
+            <span id="mobile-page-title" class="text-base font-bold tracking-tight">Performance</span>
+        </div>
+        <button onclick="openMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Mobile nav overlay -->
+    <div id="mobile-overlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile sidebar -->
+    <div id="mobile-sidebar" class="mobile-sidebar">
+        <div class="mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="logo-container">
+                        <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Portfolio</span>
+                </div>
+                <button onclick="closeMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex gap-4 px-1">
+                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
+                    <img src="https://cdn.simpleicons.org/substack" class="w-4 h-4" alt="Substack">
+                </a>
+                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
+                    <div class="w-4 h-4 bg-black rounded-sm flex items-center justify-center">
+                        <img src="https://cdn.simpleicons.org/x/white" class="w-3 h-3" alt="X">
+                    </div>
+                </a>
+            </div>
+        </div>
+        <nav class="space-y-1">
+            <a id="m-nav-performance" onclick="navigate('performance.html'); closeMobileNav();" class="nav-item flex items-center gap-3 p-3 cursor-pointer">
+                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
+                <span>Performance</span>
+            </a>
+            <div>
+                <button id="m-structure-btn" onclick="toggleHoldingsMenu()" class="nav-item w-full flex items-center justify-between p-3">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                        <span>Portfolio Structure</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron" id="m-chevron"></i>
+                </button>
+                <div class="holdings-submenu collapsed ml-4 mt-1 space-y-1" id="m-submenu">
+                    <div>
+                        <a id="m-nav-holdings" onclick="navigate('holdings.html'); closeMobileNav();" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer">
+                            <i data-lucide="table" class="w-3 h-3"></i>
+                            <span>Holdings</span>
+                        </a>
+                        <a id="m-nav-sector" onclick="navigate('sector.html'); closeMobileNav();" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer">
+                            <i data-lucide="pie-chart" class="w-3 h-3"></i>
+                            <span>Sector &amp; Region</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <a id="m-nav-allocator" onclick="navigate('allocator.html'); closeMobileNav();" class="nav-item flex items-center gap-3 p-3 cursor-pointer">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                <span>Asset Allocator</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Desktop sidebar -->
+    <aside class="sidebar w-64 hidden lg:flex flex-col p-6 border-r border-zinc-800">
         <div class="mb-10">
             <div class="flex items-center gap-3 mb-4">
                 <div class="logo-container">
@@ -30,68 +118,148 @@
                 </a>
             </div>
         </div>
-        <nav class="space-y-2 flex-1">
-            <a href="performance.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
+        <nav class="space-y-1 flex-1">
+            <a id="d-nav-performance" onclick="navigate('performance.html')" class="nav-item flex items-center gap-3 p-3 cursor-pointer">
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </a>
-            <!-- Portfolio Structure accordion -->
             <div>
-                <button onclick="toggleHoldingsMenu(this)" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors w-full flex items-center justify-between p-3">
+                <button id="d-structure-btn" onclick="toggleHoldingsMenu()" class="nav-item w-full flex items-center justify-between p-3">
                     <div class="flex items-center gap-3">
                         <i data-lucide="wallet-cards" class="w-4 h-4"></i>
                         <span>Portfolio Structure</span>
                     </div>
-                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron" id="d-chevron"></i>
                 </button>
-                <div class="holdings-submenu collapsed ml-4 mt-1 space-y-1">
+                <div class="holdings-submenu collapsed ml-4 mt-1 space-y-1" id="d-submenu">
                     <div>
-                        <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                        <a id="d-nav-holdings" onclick="navigate('holdings.html')" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer">
                             <i data-lucide="table" class="w-3 h-3"></i>
                             <span>Holdings</span>
                         </a>
-                        <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                        <a id="d-nav-sector" onclick="navigate('sector.html')" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer">
                             <i data-lucide="pie-chart" class="w-3 h-3"></i>
                             <span>Sector &amp; Region</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <a href="allocator.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
+            <a id="d-nav-allocator" onclick="navigate('allocator.html')" class="nav-item flex items-center gap-3 p-3 cursor-pointer">
                 <i data-lucide="pie-chart" class="w-4 h-4"></i>
                 <span>Asset Allocator</span>
             </a>
         </nav>
     </aside>
 
-    <main class="flex-1 flex items-center justify-center p-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-black to-black">
-        <div class="text-center max-w-md">
-            <h1 class="text-5xl font-bold mb-6 tracking-tighter">Welcome back</h1>
-            <p class="text-zinc-500 text-lg leading-relaxed">Select a section from the sidebar to manage your assets or view performance analytics.</p>
-        </div>
-    </main>
+    <!-- Content iframe — sidebar never reloads, zero flicker -->
+    <div class="flex-1 overflow-hidden" id="content-wrapper">
+        <iframe id="content-frame" src="performance.html" title="Portfolio content"></iframe>
+    </div>
 
     <script>
-        // Initialize Lucide Icons
-        
-        function toggleHoldingsMenu(btn) {
-            const parent  = btn.parentElement;
-            const submenu = parent.querySelector('.holdings-submenu');
-            const chevron = btn.querySelector('.holdings-chevron');
-            if (submenu) submenu.classList.toggle('collapsed');
-            if (chevron) chevron.classList.toggle('rotated');
-        }
         lucide.createIcons();
-        // Page transition — fade out before navigating
-        document.addEventListener('click', function(e) {
-            const link = e.target.closest('a[href]');
-            if (!link) return;
-            const href = link.getAttribute('href');
-            if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto') || link.target === '_blank') return;
-            e.preventDefault();
-            document.body.classList.add('fade-out');
-            setTimeout(() => { window.location.href = href; }, 150);
-        });
+
+        // ── Accordion persistence ─────────────────────────────────────────────
+        const ACCORDION_KEY = 'portfolioStructureOpen';
+
+        function getAccordionOpen() {
+            return localStorage.getItem(ACCORDION_KEY) === '1'; // default: collapsed
+        }
+
+        function applyAccordionState(open) {
+            document.getElementById('d-submenu').classList.toggle('collapsed', !open);
+            document.getElementById('m-submenu').classList.toggle('collapsed', !open);
+            document.getElementById('d-chevron').classList.toggle('rotated', open);
+            document.getElementById('m-chevron').classList.toggle('rotated', open);
+        }
+
+        function toggleHoldingsMenu() {
+            const open = !getAccordionOpen();
+            localStorage.setItem(ACCORDION_KEY, open ? '1' : '0');
+            applyAccordionState(open);
+        }
+
+        // ── Active nav state ──────────────────────────────────────────────────
+        const NAV_IDS = {
+            performance: ['d-nav-performance', 'm-nav-performance'],
+            holdings:    ['d-nav-holdings',    'm-nav-holdings'],
+            sector:      ['d-nav-sector',       'm-nav-sector'],
+            allocator:   ['d-nav-allocator',    'm-nav-allocator'],
+            structure:   ['d-structure-btn',    'm-structure-btn'],
+        };
+
+        const PAGE_META = {
+            'performance.html': { title: 'Performance',        section: 'performance' },
+            'holdings.html':    { title: 'Portfolio Structure', section: 'holdings'   },
+            'sector.html':      { title: 'Portfolio Structure', section: 'sector'     },
+            'allocator.html':   { title: 'Asset Allocator',     section: 'allocator'  },
+        };
+
+        function updateActiveNav(page) {
+            const meta = PAGE_META[page] || PAGE_META['performance.html'];
+
+            // Clear all nav item states
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-emerald-500/10', 'text-emerald-400');
+            });
+            document.querySelectorAll('.sub-nav-item').forEach(el => {
+                el.classList.remove('text-emerald-400', 'bg-emerald-500/10');
+            });
+
+            function activateNavItem(id) {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('active', 'bg-emerald-500/10', 'text-emerald-400');
+            }
+            function activateSubItem(id) {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('text-emerald-400', 'bg-emerald-500/10');
+            }
+
+            if (meta.section === 'performance') {
+                activateNavItem('d-nav-performance');
+                activateNavItem('m-nav-performance');
+            } else if (meta.section === 'holdings') {
+                activateNavItem('d-structure-btn');
+                activateNavItem('m-structure-btn');
+                activateSubItem('d-nav-holdings');
+                activateSubItem('m-nav-holdings');
+            } else if (meta.section === 'sector') {
+                activateNavItem('d-structure-btn');
+                activateNavItem('m-structure-btn');
+                activateSubItem('d-nav-sector');
+                activateSubItem('m-nav-sector');
+            } else if (meta.section === 'allocator') {
+                activateNavItem('d-nav-allocator');
+                activateNavItem('m-nav-allocator');
+            }
+
+            // Update mobile topbar title
+            document.getElementById('mobile-page-title').textContent = meta.title;
+        }
+
+        // ── Navigation ────────────────────────────────────────────────────────
+        let currentPage = 'performance.html';
+
+        function navigate(page) {
+            if (page === currentPage) return;
+            currentPage = page;
+            document.getElementById('content-frame').src = page;
+            updateActiveNav(page);
+        }
+
+        // ── Mobile nav ────────────────────────────────────────────────────────
+        function openMobileNav() {
+            document.getElementById('mobile-sidebar').classList.add('open');
+            document.getElementById('mobile-overlay').classList.add('open');
+        }
+        function closeMobileNav() {
+            document.getElementById('mobile-sidebar').classList.remove('open');
+            document.getElementById('mobile-overlay').classList.remove('open');
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        applyAccordionState(getAccordionOpen());
+        updateActiveNav('performance.html');
     </script>
 </body>
 </html>

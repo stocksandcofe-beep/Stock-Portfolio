@@ -5,17 +5,6 @@ body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #0B0E11;
     color: #FFFFFF;
-    animation: pageIn 0.18s ease-out both;
-}
-
-body.fade-out {
-    opacity: 0;
-    transition: opacity 0.15s ease-in;
-}
-
-@keyframes pageIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
 }
 
 
@@ -341,9 +330,7 @@ body.fade-out {
         display: flex;
     }
 
-    main {
-        padding-top: calc(56px + 24px) !important;
-    }
+    /* content pages have no fixed topbar; shell handles the offset via #content-wrapper padding */
 }
 
 

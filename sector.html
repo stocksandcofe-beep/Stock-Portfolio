@@ -11,138 +11,10 @@
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex h-screen overflow-hidden bg-black text-white">
+<body style="margin:0;background:#0B0E11;color:#fff;font-family:'Plus Jakarta Sans',sans-serif">
 
-    <!-- Mobile top bar -->
-    <div class="mobile-topbar">
-        <div class="flex items-center gap-3">
-            <div class="logo-container">
-                <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
-            </div>
-            <span class="text-base font-bold tracking-tight">Portfolio</span>
-        </div>
-        <button onclick="openMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-    </div>
+    <main class="overflow-y-auto p-6 md:p-10">
 
-    <!-- Mobile nav overlay -->
-    <div id="mobile-overlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
-
-    <!-- Mobile sidebar -->
-    <div id="mobile-sidebar" class="mobile-sidebar">
-        <div class="mb-10">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="logo-container">
-                        <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
-                    </div>
-                    <span class="text-xl font-bold tracking-tight">Portfolio</span>
-                </div>
-                <button onclick="closeMobileNav()" class="text-zinc-400 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="flex gap-4 px-1">
-                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
-                    <img src="https://cdn.simpleicons.org/substack" class="w-4 h-4" alt="Substack">
-                </a>
-                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
-                    <div class="w-4 h-4 bg-black rounded-sm flex items-center justify-center">
-                        <img src="https://cdn.simpleicons.org/x/white" class="w-3 h-3" alt="X">
-                    </div>
-                </a>
-            </div>
-        </div>
-        <nav class="space-y-1">
-            <a href="performance.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
-                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
-                <span>Performance</span>
-            </a>
-            <!-- Portfolio Structure accordion -->
-            <div>
-                <button onclick="toggleHoldingsMenu(this)" class="nav-item active bg-emerald-500/10 text-emerald-400 w-full flex items-center justify-between p-3">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                        <span>Portfolio Structure</span>
-                    </div>
-                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron rotated"></i>
-                </button>
-                <div class="holdings-submenu ml-4 mt-1 space-y-1">
-                    <div>
-                        <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
-                            <i data-lucide="table" class="w-3 h-3"></i>
-                            <span>Holdings</span>
-                        </a>
-                        <a href="sector.html" class="sub-nav-item text-emerald-400 bg-emerald-500/10 flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
-                            <i data-lucide="pie-chart" class="w-3 h-3"></i>
-                            <span>Sector &amp; Region</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <a href="allocator.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
-                <i data-lucide="pie-chart" class="w-4 h-4"></i>
-                <span>Asset Allocator</span>
-            </a>
-        </nav>
-    </div>
-
-    <!-- Desktop sidebar -->
-    <aside class="sidebar w-64 hidden lg:flex flex-col p-6 border-r border-zinc-800">
-        <div class="mb-10">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="logo-container">
-                    <img src="Images/logo.png" alt="Stocks and Coffee logo" class="logo-img">
-                </div>
-                <span class="text-xl font-bold tracking-tight">Portfolio</span>
-            </div>
-            <div class="flex gap-4 px-1">
-                <a href="https://stocksandcoffee.substack.com/" target="_blank" class="social-icon">
-                    <img src="https://cdn.simpleicons.org/substack" class="w-4 h-4" alt="Substack">
-                </a>
-                <a href="https://x.com/StocksandCoffe" target="_blank" class="social-icon">
-                    <div class="w-4 h-4 bg-black rounded-sm flex items-center justify-center">
-                        <img src="https://cdn.simpleicons.org/x/white" class="w-3 h-3" alt="X">
-                    </div>
-                </a>
-            </div>
-        </div>
-        <nav class="space-y-1 flex-1">
-            <a href="performance.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
-                <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
-                <span>Performance</span>
-            </a>
-            <!-- Portfolio Structure accordion -->
-            <div>
-                <button onclick="toggleHoldingsMenu(this)" class="nav-item active bg-emerald-500/10 text-emerald-400 w-full flex items-center justify-between p-3">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                        <span>Portfolio Structure</span>
-                    </div>
-                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron rotated"></i>
-                </button>
-                <div class="holdings-submenu ml-4 mt-1 space-y-1">
-                    <div>
-                        <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
-                            <i data-lucide="table" class="w-3 h-3"></i>
-                            <span>Holdings</span>
-                        </a>
-                        <a href="sector.html" class="sub-nav-item text-emerald-400 bg-emerald-500/10 flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
-                            <i data-lucide="pie-chart" class="w-3 h-3"></i>
-                            <span>Sector &amp; Region</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <a href="allocator.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
-                <i data-lucide="pie-chart" class="w-4 h-4"></i>
-                <span>Asset Allocator</span>
-            </a>
-        </nav>
-    </aside>
-
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
         <header class="mb-10">
             <h1 class="text-3xl font-bold tracking-tight">Sector &amp; Region</h1>
         </header>
@@ -202,18 +74,6 @@
     <script src="JS/sector.js"></script>
     <script>
         lucide.createIcons();
-        // Page transition — fade out before navigating
-        document.addEventListener('click', function(e) {
-            const link = e.target.closest('a[href]');
-            if (!link) return;
-            const href = link.getAttribute('href');
-            if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto') || link.target === '_blank') return;
-            e.preventDefault();
-            document.body.classList.add('fade-out');
-            setTimeout(() => { window.location.href = href; }, 150);
-        });
-        function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
-        function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
     </script>
 </body>
 </html>
