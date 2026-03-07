@@ -159,12 +159,8 @@
     <script>
         lucide.createIcons();
 
-        // ── Accordion persistence ─────────────────────────────────────────────
-        const ACCORDION_KEY = 'portfolioStructureOpen';
-
-        function getAccordionOpen() {
-            return localStorage.getItem(ACCORDION_KEY) === '1'; // default: collapsed
-        }
+        // ── Accordion state (in-memory: always collapsed on fresh load) ──────
+        let accordionOpen = false;
 
         function applyAccordionState(open) {
             document.getElementById('d-submenu').classList.toggle('collapsed', !open);
@@ -174,9 +170,8 @@
         }
 
         function toggleHoldingsMenu() {
-            const open = !getAccordionOpen();
-            localStorage.setItem(ACCORDION_KEY, open ? '1' : '0');
-            applyAccordionState(open);
+            accordionOpen = !accordionOpen;
+            applyAccordionState(accordionOpen);
         }
 
         // ── Active nav state ──────────────────────────────────────────────────
@@ -258,7 +253,7 @@
         }
 
         // ── Init ──────────────────────────────────────────────────────────────
-        applyAccordionState(getAccordionOpen());
+        applyAccordionState(accordionOpen);
         updateActiveNav('performance.html');
         
         // ── Page title sync ──────────────────────────────────────────────────────────────
