@@ -260,6 +260,11 @@
         // ── Init ──────────────────────────────────────────────────────────────
         applyAccordionState(getAccordionOpen());
         updateActiveNav('performance.html');
+        
+        // ── Page title sync ──────────────────────────────────────────────────────────────
+        document.getElementById('content-frame').addEventListener('load', function() {
+        document.title = this.contentDocument?.title || 'Stocks and Coffee';
+        });
     </script>
 </body>
 </html>
