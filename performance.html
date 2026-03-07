@@ -55,15 +55,33 @@
             </div>
         </div>
         <nav class="space-y-2">
-            <a class="nav-item active flex items-center gap-3 p-3 bg-emerald-500/10 text-emerald-400">
+            <a  class="nav-item active bg-emerald-500/10 text-emerald-400 flex items-center gap-3 p-3">
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </a>
-            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
-                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                <span>Portfolio Structure</span>
-            </a>
-            <a href="allocator.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+            <!-- Portfolio Structure accordion -->
+            <div>
+                <button onclick="toggleHoldingsMenu(this)" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors w-full flex items-center justify-between p-3">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                        <span>Portfolio Structure</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
+                </button>
+                <div class="holdings-submenu collapsed ml-4 mt-1 space-y-1">
+                    <div>
+                        <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                            <i data-lucide="table" class="w-3 h-3"></i>
+                            <span>Holdings</span>
+                        </a>
+                        <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                            <i data-lucide="pie-chart" class="w-3 h-3"></i>
+                            <span>Sector &amp; Region</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <a href="allocator.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
                 <i data-lucide="pie-chart" class="w-4 h-4"></i>
                 <span>Asset Allocator</span>
             </a>
@@ -91,15 +109,33 @@
             </div>
         </div>
         <nav class="space-y-2 flex-1">
-            <a class="nav-item active flex items-center gap-3 p-3 bg-emerald-500/10 text-emerald-400">
+            <a  class="nav-item active bg-emerald-500/10 text-emerald-400 flex items-center gap-3 p-3">
                 <i data-lucide="chart-no-axes-combined" class="w-4 h-4"></i>
                 <span>Performance</span>
             </a>
-            <a href="holdings.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
-                <i data-lucide="wallet-cards" class="w-4 h-4"></i>
-                <span>Portfolio Structure</span>
-            </a>
-            <a href="allocator.html" class="nav-item flex items-center gap-3 p-3 hover:bg-zinc-900 hover:text-emerald-400 transition-colors">
+            <!-- Portfolio Structure accordion -->
+            <div>
+                <button onclick="toggleHoldingsMenu(this)" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors w-full flex items-center justify-between p-3">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+                        <span>Portfolio Structure</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200 holdings-chevron"></i>
+                </button>
+                <div class="holdings-submenu collapsed ml-4 mt-1 space-y-1">
+                    <div>
+                        <a href="holdings.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                            <i data-lucide="table" class="w-3 h-3"></i>
+                            <span>Holdings</span>
+                        </a>
+                        <a href="sector.html" class="sub-nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors">
+                            <i data-lucide="pie-chart" class="w-3 h-3"></i>
+                            <span>Sector &amp; Region</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <a href="allocator.html" class="nav-item hover:bg-zinc-900 hover:text-emerald-400 transition-colors flex items-center gap-3 p-3">
                 <i data-lucide="pie-chart" class="w-4 h-4"></i>
                 <span>Asset Allocator</span>
             </a>
@@ -224,6 +260,14 @@
 
     <script src="JS/performance.js"></script>
     <script>
+        
+        function toggleHoldingsMenu(btn) {
+            const parent  = btn.parentElement;
+            const submenu = parent.querySelector('.holdings-submenu');
+            const chevron = btn.querySelector('.holdings-chevron');
+            if (submenu) submenu.classList.toggle('collapsed');
+            if (chevron) chevron.classList.toggle('rotated');
+        }
         lucide.createIcons();
         function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
         function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
