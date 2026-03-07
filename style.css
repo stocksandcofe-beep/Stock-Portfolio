@@ -5,6 +5,17 @@ body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #0B0E11;
     color: #FFFFFF;
+    animation: pageIn 0.18s ease-out both;
+}
+
+body.fade-out {
+    opacity: 0;
+    transition: opacity 0.15s ease-in;
+}
+
+@keyframes pageIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 

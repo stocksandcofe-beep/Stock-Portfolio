@@ -202,6 +202,16 @@
     <script src="JS/sector.js"></script>
     <script>
         lucide.createIcons();
+        // Page transition — fade out before navigating
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            const href = link.getAttribute('href');
+            if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto') || link.target === '_blank') return;
+            e.preventDefault();
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = href; }, 150);
+        });
         function openMobileNav()  { document.getElementById('mobile-sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.add('open'); }
         function closeMobileNav() { document.getElementById('mobile-sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
     </script>

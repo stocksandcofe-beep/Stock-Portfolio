@@ -82,6 +82,16 @@
             if (chevron) chevron.classList.toggle('rotated');
         }
         lucide.createIcons();
+        // Page transition — fade out before navigating
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            const href = link.getAttribute('href');
+            if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto') || link.target === '_blank') return;
+            e.preventDefault();
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = href; }, 150);
+        });
     </script>
 </body>
 </html>
