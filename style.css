@@ -106,22 +106,26 @@ body {
 ============================================================================= */
 .social-icon {
     color: #71717a;
-    transition: color 0.2s ease;
-    width: 18px;
-    height: 18px;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     outline: none;
 }
 
-.social-icon svg {
-    width: 100%;
-    height: 100%;
+.social-icon svg,
+.social-icon img {
+    width: 14px;
+    height: 14px;
 }
 
 .social-icon:hover {
     color: #10b981;
+    background: #10b9811a;
+    box-shadow: 0 0 0 1px #10b98133;
 }
 
 .social-icon:focus,
