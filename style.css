@@ -358,3 +358,28 @@ body {
 #selected-name {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+/* =============================================================================
+   MANUAL FORM PANEL (Asset Allocator) — same accordion pattern as nav submenu
+============================================================================= */
+.manual-form-panel {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.36s cubic-bezier(1, 0, 0.2, 1),
+                opacity 0.36s cubic-bezier(1, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.manual-form-panel.collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+.manual-form-panel > div {
+    overflow: hidden;
+}
+
+.manual-form-chevron.rotated {
+    transform: rotate(-180deg);
+}
