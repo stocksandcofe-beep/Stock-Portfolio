@@ -300,21 +300,23 @@ const tickerObserver = new MutationObserver(() => {
 });
 tickerObserver.observe(document.getElementById('selected-ticker'), { childList: true });
 
-// Toggle manual ETF form — button label swaps between "+ Manual Add" and "✕ Cancel"
+// Toggle manual form — smooth accordion slide with original button style
 toggleBtn.addEventListener('click', () => {
-    const isHidden = manualForm.classList.contains('hidden');
-    if (isHidden) {
-        manualForm.classList.remove('hidden');
-        manualForm.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
-        toggleBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i> Cancel';
-        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
-        toggleBtn.classList.remove('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
-    } else {
-        manualForm.classList.add('hidden');
-        manualForm.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
-        toggleBtn.innerHTML = '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add';
+    const panel   = toggleBtn.closest('.card').querySelector('.manual-form-panel');
+    const chevron = toggleBtn.querySelector('.manual-form-chevron');
+    const isOpen  = !panel.classList.contains('collapsed');
+    panel.classList.toggle('collapsed', isOpen);
+    if (chevron) chevron.classList.toggle('rotated', !isOpen);
+    if (isOpen) {
+        // closing
+        toggleBtn.innerHTML = '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron"></i>';
         toggleBtn.classList.remove('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
         toggleBtn.classList.add('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
+    } else {
+        // opening
+        toggleBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i> Cancel <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron rotated"></i>';
+        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
+        toggleBtn.classList.remove('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
     }
     lucide.createIcons();
 });
