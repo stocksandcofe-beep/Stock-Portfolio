@@ -134,6 +134,229 @@ async function fetchProfile(ticker) {
     }
 }
 
+
+// =============================================================================
+// TREEMAP
+// =============================================================================
+function binaryTreemap(items, x, y, w, h) {
+    if (!items.length) return [];
+    if (items.length === 1) return [{ ...items[0], x, y, w, h }];
+    const total = items.reduce((s, i) => s + i.value, 0);
+    let sum = 0, splitIdx = 0;
+    for (let i = 0; i < items.length - 1; i++) {
+        sum += items[i].value;
+        splitIdx = i + 1;
+        if (sum >= total / 2) break;
+    }
+    const ratio = sum / total;
+    const a = items.slice(0, splitIdx);
+    const b = items.slice(splitIdx);
+    if (w >= h) {
+        return [
+            ...binaryTreemap(a, x,           y, w * ratio,       h),
+            ...binaryTreemap(b, x + w * ratio, y, w * (1 - ratio), h),
+        ];
+    } else {
+        return [
+            ...binaryTreemap(a, x, y,           w, h * ratio),
+            ...binaryTreemap(b, x, y + h * ratio, w, h * (1 - ratio)),
+        ];
+    }
+}
+
+function renderSectorTreemap(sortedSectors, totalSector, sectorHoldingsMap) {
+    const container = document.getElementById('sector-treemap');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const W       = container.offsetWidth || 600;
+    const sectors = sortedSectors ? sortedSectors.length : 8;
+    // Dynamic height: ~60px per sector row (3 cols), minimum 240, max 480
+    const rows    = Math.ceil(sectors / 3);
+    const H       = Math.min(Math.max(rows * 120, 280), 560);
+    const GAP     = 4;
+    container.style.cssText = `position:relative;height:${H}px;`;
+
+    const sectorItems = sortedSectors.map(([label, value], i) => ({
+        label, value,
+        colour:   CHART_COLOURS[i % CHART_COLOURS.length],
+        holdings: (sectorHoldingsMap[label] || []).sort((a, b) => b.value - a.value),
+    }));
+
+    const layout = binaryTreemap(sectorItems, 0, 0, W, H);
+
+    layout.forEach(block => {
+        const { x, y, w, h, label, value, colour, holdings } = block;
+        const pct = totalSector > 0 ? ((value / totalSector) * 100).toFixed(1) : '0.0';
+
+        // ── Sector block ──────────────────────────────────────────────────────
+        const sDiv = document.createElement('div');
+        sDiv.style.cssText = `
+            position:absolute;
+            left:${x + GAP / 2}px; top:${y + GAP / 2}px;
+            width:${Math.max(w - GAP, 1)}px; height:${Math.max(h - GAP, 1)}px;
+            background:${colour}16; border:1.5px solid ${colour}40;
+            border-radius:10px; overflow:hidden;
+            transition:border-color 0.2s, background 0.15s;
+            box-sizing:border-box;
+        `;
+        sDiv.addEventListener('mouseenter', () => {
+            sDiv.style.borderColor = colour;
+            sDiv.style.background  = colour + '28';
+        });
+        sDiv.addEventListener('mouseleave', () => {
+            sDiv.style.borderColor = colour + '40';
+            sDiv.style.background  = colour + '16';
+        });
+        // ── Header ────────────────────────────────────────────────────────────
+        const hdrH   = w > 100 ? 44 : 28;
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding:${w > 100 ? '7px 10px 4px' : '4px 6px'};
+            background:${colour}28; border-bottom:1px solid ${colour}30;
+            height:${hdrH}px; box-sizing:border-box; overflow:hidden;
+        `;
+        if (w > 55) {
+            header.innerHTML = `
+                <div style="font-size:${w > 130 ? 11 : 9}px;font-weight:700;color:${colour};
+                     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">
+                    ${label}
+                </div>
+                ${w > 90 ? `<div style="font-size:9px;color:#a1a1aa;margin-top:2px">
+                    ${pct}%&nbsp;&nbsp;${formatGBP(value, 0)}
+                </div>` : `<div style="font-size:8px;color:#a1a1aa">${pct}%</div>`}
+            `;
+        } else {
+            header.innerHTML = `<div style="font-size:8px;font-weight:700;color:${colour}">${pct}%</div>`;
+        }
+        sDiv.appendChild(header);
+
+        // ── Company sub-tiles ─────────────────────────────────────────────────
+        const compH = h - GAP - hdrH;
+        const compW = w - GAP;
+
+        if (holdings.length && compH > 18 && compW > 18) {
+            const compArea = document.createElement('div');
+            compArea.style.cssText = `position:relative;width:${compW}px;height:${compH}px;overflow:hidden;`;
+
+            const compLayout = binaryTreemap(holdings.map(c => ({ ...c })), 0, 0, compW, compH);
+
+            compLayout.forEach(c => {
+                const cDiv = document.createElement('div');
+                const cPct = value > 0 ? ((c.value / value) * 100).toFixed(1) : '0';
+                cDiv.title = `${c.company} · ${formatGBP(c.value, 0)} · ${cPct}% of sector`;
+                cDiv.style.cssText = `
+                    position:absolute;
+                    left:${c.x + 1}px; top:${c.y + 1}px;
+                    width:${Math.max(c.w - 2, 1)}px; height:${Math.max(c.h - 2, 1)}px;
+                    background:${colour}0e; border:1px solid ${colour}25;
+                    border-radius:5px; overflow:hidden;
+                    display:flex; flex-direction:column;
+                    align-items:center; justify-content:center;
+                    transition:background 0.15s;
+                    box-sizing:border-box;
+                `;
+                if (c.w > 36 && c.h > 22) {
+                    cDiv.innerHTML = `
+                        <span style="font-size:${c.w > 65 ? 10 : 8}px;font-weight:700;color:#e4e4e7;
+                              text-align:center;padding:0 3px;white-space:nowrap;overflow:hidden;
+                              text-overflow:ellipsis;max-width:100%;display:block">
+                            ${c.ticker}
+                        </span>
+                        ${c.h > 40 ? `<span style="font-size:8px;color:#71717a;margin-top:1px">${cPct}%</span>` : ''}
+                    `;
+                }
+                cDiv.addEventListener('mouseenter', () => cDiv.style.background = colour + '28');
+                cDiv.addEventListener('mouseleave', () => cDiv.style.background = colour + '0e');
+                compArea.appendChild(cDiv);
+            });
+
+            sDiv.appendChild(compArea);
+        }
+
+        container.appendChild(sDiv);
+    });
+}
+
+
+// =============================================================================
+// REGION DOUGHNUT — treemap-matched style, no legend, full-width
+// =============================================================================
+function renderRegionDoughnut(sortedRegions, totalRegion) {
+    const wrap = document.getElementById('region-chart-wrap');
+    if (!wrap) return;
+
+    wrap.innerHTML = '';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:24px;';
+
+    const labels        = sortedRegions.map(([k]) => k);
+    const values        = sortedRegions.map(([, v]) => v);
+    const bgColours     = CHART_COLOURS.slice(0, labels.length).map(c => c + '28');
+    const borderColours = CHART_COLOURS.slice(0, labels.length).map(c => c + '99');
+    const hoverColours  = CHART_COLOURS.slice(0, labels.length).map(c => c + '55');
+
+    // Doughnut — fixed size, centred
+    const SZ         = 260;
+    const canvasWrap = document.createElement('div');
+    canvasWrap.style.cssText = `width:${SZ}px;height:${SZ}px;flex-shrink:0;position:relative;`;
+    const canvas = document.createElement('canvas');
+    canvas.id = 'region-chart';
+    canvasWrap.appendChild(canvas);
+    wrap.appendChild(canvasWrap);
+
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data:                 values,
+                backgroundColor:      bgColours,
+                borderColor:          borderColours,
+                borderWidth:          2,
+                hoverBackgroundColor: hoverColours,
+                hoverBorderColor:     CHART_COLOURS.slice(0, labels.length),
+                hoverOffset:          6,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${((ctx.parsed / t) * 100).toFixed(1)}%)`;
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    // Legend stacked below — two-column grid to fill width
+    const legend = document.createElement('div');
+    legend.style.cssText = 'width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;';
+    sortedRegions.forEach(([label, val], i) => {
+        const colour = CHART_COLOURS[i % CHART_COLOURS.length];
+        const pct    = totalRegion > 0 ? ((val / totalRegion) * 100).toFixed(1) : '0.0';
+        const row    = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;';
+        row.innerHTML = `
+            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                <span style="width:9px;height:9px;border-radius:3px;flex-shrink:0;
+                             background:${colour}28;border:1.5px solid ${colour}99;"></span>
+                <span style="font-size:11px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:#e4e4e7;flex-shrink:0">${pct}%</span>
+        `;
+        legend.appendChild(row);
+    });
+    wrap.appendChild(legend);
+}
+
 async function loadAll() {
     const loadingEl = document.getElementById('charts-loading');
     const errorEl   = document.getElementById('charts-error');
@@ -227,56 +450,14 @@ async function loadAll() {
         if (sectorWarn) sectorWarn.classList.toggle('hidden', maxSectorPct < 40);
         if (regionWarn) regionWarn.classList.toggle('hidden', maxRegionPct < 40);
 
-        function makeChartConfig(sorted, total, legendId, drillMap) {
-            const labels  = sorted.map(([k]) => k);
-            const values  = sorted.map(([, v]) => v);
-            const colours = CHART_COLOURS.slice(0, sorted.length);
-
-            const legendEl = document.getElementById(legendId);
-            if (legendEl) {
-                legendEl.innerHTML = sorted.map(([label, val], i) => {
-                    const pct      = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-                    const safeData = JSON.stringify(drillMap[label] || []).replace(/"/g, '&quot;');
-                    return `<div class="flex items-center justify-between gap-2 text-xs cursor-pointer hover:text-white transition-colors"
-                                 onclick="showDrill('${label.replace(/'/g, "\\'")}', ${safeData}, ${total})">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${colours[i]}"></span>
-                            <span class="text-zinc-400 truncate">${label}</span>
-                        </div>
-                        <span class="text-zinc-300 font-semibold flex-shrink-0">${pct}%</span>
-                    </div>`;
-                }).join('');
-            }
-
-            return {
-                type: 'doughnut',
-                data: {
-                    labels,
-                    datasets: [{ data: values, backgroundColor: colours, borderColor: '#0B0E11', borderWidth: 3, hoverOffset: 6 }],
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => {
-                            const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            return `  ${ctx.label}: ${formatGBP(ctx.parsed)} (${((ctx.parsed / t) * 100).toFixed(1)}%)`;
-                        }}},
-                    },
-                    onClick: (_, elements) => {
-                        if (!elements.length) return;
-                        const label = labels[elements[0].index];
-                        showDrill(label, drillMap[label] || [], total);
-                    },
-                },
-            };
-        }
-
-        new Chart(document.getElementById('sector-chart'), makeChartConfig(sortedSectors, totalSector, 'sector-legend', sectorHoldingsMap));
-        new Chart(document.getElementById('region-chart'), makeChartConfig(sortedRegions, totalRegion, 'region-legend', {}));
-
         loadingEl.classList.add('hidden');
         contentEl.style.display = 'block';
+
+        // Render after content is visible so offsetWidth returns the real card width
+        requestAnimationFrame(() => {
+            renderSectorTreemap(sortedSectors, totalSector, sectorHoldingsMap);
+            renderRegionDoughnut(sortedRegions, totalRegion);
+        });
 
     } catch (e) {
         loadingEl.classList.add('hidden');
@@ -285,42 +466,7 @@ async function loadAll() {
 }
 
 
-// =============================================================================
-// DRILL DOWN PANEL
-// =============================================================================
-function showDrill(label, holdings, total) {
-    const panel   = document.getElementById('sector-drill');
-    const titleEl = document.getElementById('sector-drill-title');
-    const bodyEl  = document.getElementById('sector-drill-body');
-    if (!panel || !titleEl || !bodyEl) return;
 
-    const sectorTotal = holdings.reduce((s, h) => s + h.value, 0);
-    const pct         = total > 0 ? ((sectorTotal / total) * 100).toFixed(1) : '0.0';
-    titleEl.textContent = `${label} — ${pct}% of portfolio`;
-
-    const sorted = [...holdings].sort((a, b) => b.value - a.value);
-    bodyEl.innerHTML = sorted.map(h => {
-        const hPct = sectorTotal > 0 ? ((h.value / sectorTotal) * 100).toFixed(1) : '0.0';
-        return `<div class="flex items-center justify-between gap-3 bg-zinc-900/60 rounded-xl px-4 py-3">
-            <div class="flex items-center gap-2 min-w-0">
-                <div class="w-7 h-7 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-zinc-800">
-                    <img src="${LOGO_BASE_URL}${h.ticker}.png"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                         class="w-full h-full object-contain p-0.5" alt="${h.ticker}">
-                    <div class="hidden w-full h-full items-center justify-center text-[9px] font-bold text-zinc-500 bg-zinc-900 uppercase">${h.ticker.substring(0, 2)}</div>
-                </div>
-                <span class="text-zinc-200 text-sm font-medium truncate">${h.company}</span>
-            </div>
-            <div class="text-right flex-shrink-0">
-                <p class="text-white text-sm font-semibold">${formatGBP(h.value, 0)}</p>
-                <p class="text-zinc-500 text-xs">${hPct}%</p>
-            </div>
-        </div>`;
-    }).join('');
-
-    panel.classList.remove('hidden');
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
 
 
 // =============================================================================
