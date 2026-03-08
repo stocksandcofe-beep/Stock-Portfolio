@@ -33,41 +33,31 @@
 
         <!-- Content -->
         <div id="charts-content" style="display:none">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Sector card -->
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-start">
+
+                <!-- Sector Treemap card -->
                 <div class="card p-6">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-zinc-300 font-semibold">Sector Breakdown</h3>
                         <span id="sector-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">&#9888; Concentrated</span>
                     </div>
-                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
-                    <div class="flex gap-6 items-start">
-                        <div class="relative h-[240px] w-[240px] flex-shrink-0">
-                            <canvas id="sector-chart"></canvas>
-                        </div>
-                        <div id="sector-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
-                    </div>
+                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value.</p>
+                    <div id="sector-treemap" class="w-full"></div>
                 </div>
-                <!-- Region card -->
+
+                <!-- Region Doughnut card -->
                 <div class="card p-6">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-zinc-300 font-semibold">Region Breakdown</h3>
                         <span id="region-warning" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">&#9888; Concentrated</span>
                     </div>
-                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value. Click a slice to see holdings.</p>
-                    <div class="flex gap-6 items-start">
-                        <div class="relative h-[240px] w-[240px] flex-shrink-0">
-                            <canvas id="region-chart"></canvas>
-                        </div>
-                        <div id="region-legend" class="flex-1 flex flex-col gap-1.5 pt-1 overflow-y-auto max-h-[240px]"></div>
-                    </div>
+                    <p class="text-zinc-500 text-xs mb-4">Weighted by portfolio value.</p>
+                    <div id="region-chart-wrap" class="w-full"></div>
                 </div>
+
             </div>
-            <!-- Holdings drill-down panel -->
-            <div id="sector-drill" class="hidden card p-6">
-                <h4 id="sector-drill-title" class="text-zinc-300 font-semibold mb-4">Holdings in sector</h4>
-                <div id="sector-drill-body" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-            </div>
+
         </div>
     </main>
 
