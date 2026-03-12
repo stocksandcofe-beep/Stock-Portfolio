@@ -338,6 +338,7 @@ addBtn.addEventListener('click', () => {
 
     portfolioItems.push({ ticker, name, price, mcap, localCurrency: currentLocalCurrency });
     updateCalculatorUI();
+    syncAiButton();
 });
 
 // Add asset manually
@@ -368,6 +369,7 @@ submitManualBtn.addEventListener('click', () => {
     document.getElementById('man-name').focus();
 
     updateCalculatorUI();
+    syncAiButton();
 });
 
 // Parse shorthand strings like "3.2T" or "500B" into raw numbers
@@ -453,6 +455,7 @@ async function updateCalculatorUI() {
 function removeAsset(index) {
     portfolioItems.splice(index, 1);
     updateCalculatorUI();
+    syncAiButton();
 }
 
 // FIX: Investment input is debounced — only recalculates 300ms after typing stops,
@@ -468,3 +471,111 @@ currencySelect.addEventListener('change', () => {
     Object.keys(fxCache).forEach(k => delete fxCache[k]);
     updateCalculatorUI();
 });
+
+// =============================================================================
+// AI ANALYSIS PANEL
+// =============================================================================
+const aiPanel     = document.getElementById('ai-panel');
+const aiOverlay   = document.getElementById('ai-overlay');
+const aiClose     = document.getElementById('ai-panel-close');
+const aiAnalyse   = document.getElementById('ai-analyse-btn');
+const openAiBtn   = document.getElementById('open-ai-panel');
+
+function openAiPanel() {
+    aiPanel.classList.remove('translate-x-full');
+    aiOverlay.classList.remove('hidden');
+    requestAnimationFrame(() => aiOverlay.classList.remove('opacity-0'));
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAiPanel() {
+    aiPanel.classList.add('translate-x-full');
+    aiOverlay.classList.add('opacity-0');
+    setTimeout(() => aiOverlay.classList.add('hidden'), 300);
+    document.body.style.overflow = '';
+}
+
+aiClose.addEventListener('click', closeAiPanel);
+aiOverlay.addEventListener('click', closeAiPanel);
+
+// Show/hide the open-AI button based on portfolio contents
+function syncAiButton() {
+    if (portfolioItems.length > 0) {
+        openAiBtn.classList.remove('opacity-0', 'pointer-events-none');
+    } else {
+        openAiBtn.classList.add('opacity-0', 'pointer-events-none');
+    }
+}
+
+openAiBtn.addEventListener('click', openAiPanel);
+
+function setAiState(state) {
+    document.getElementById('ai-loading').classList.toggle('hidden', state !== 'loading');
+    document.getElementById('ai-loading').classList.toggle('flex',   state === 'loading');
+    document.getElementById('ai-error').classList.toggle('hidden',   state !== 'error');
+    document.getElementById('ai-error').classList.toggle('flex',     state === 'error');
+    document.getElementById('ai-empty').classList.toggle('hidden',   state !== 'empty');
+    document.getElementById('ai-empty').classList.toggle('flex',     state === 'empty');
+    document.getElementById('ai-results').classList.toggle('hidden', state !== 'results');
+}
+
+aiAnalyse.addEventListener('click', async () => {
+    if (!portfolioItems.length) return;
+
+    setAiState('loading');
+    aiAnalyse.disabled = true;
+
+    const totalMcap       = portfolioItems.reduce((s, i) => s + i.mcap, 0);
+    const portfolioCurr   = document.getElementById('calc-currency').value;
+    const totalInvestment = parseFloat(document.getElementById('calc-investment').value) || 0;
+
+    const payload = {
+        investment: totalInvestment,
+        currency:   portfolioCurr,
+        portfolio:  portfolioItems.map(item => ({
+            name:          item.name,
+            ticker:        item.ticker,
+            weight:        ((item.mcap / totalMcap) * 100).toFixed(1),
+            price:         item.price,
+            localCurrency: item.localCurrency,
+        })),
+    };
+
+    try {
+        const res  = await fetch('/.netlify/functions/gemini', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) throw new Error(data.error || 'Unknown error');
+
+        // Snapshot label
+        document.getElementById('ai-snapshot').textContent =
+            `${portfolioItems.length} asset${portfolioItems.length > 1 ? 's' : ''} · ${portfolioCurr} ${totalInvestment.toLocaleString()}`;
+
+        // Parse bullet points — handle lines starting with •, -, *, or **bold**
+        const lines = data.result
+            .split('\n')
+            .map(l => l.replace(/^[•\-\*]+\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').trim())
+            .filter(l => l.length > 0);
+
+        const ul = document.getElementById('ai-bullets');
+        ul.innerHTML = lines.map(line => `
+            <li class="flex gap-3 text-sm text-zinc-300 leading-relaxed">
+                <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                <span>${line}</span>
+            </li>
+        `).join('');
+
+        setAiState('results');
+
+    } catch (e) {
+        document.getElementById('ai-error-text').textContent = e.message || 'Something went wrong. Please try again.';
+        setAiState('error');
+    } finally {
+        aiAnalyse.disabled = false;
+    }
+});
+
