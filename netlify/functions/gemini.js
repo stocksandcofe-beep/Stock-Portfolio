@@ -3,8 +3,8 @@ exports.handler = async function (event) {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const GEMINI_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_KEY) {
+    const GROQ_KEY = process.env.GROQ_API_KEY;
+    if (!GROQ_KEY) {
         return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
     }
 
@@ -41,28 +41,30 @@ Provide a short, honest analysis using bullet points only. Cover:
 Keep it to 6–8 bullet points. Be direct and specific. No preamble, no sign-off.`;
 
     try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
-                }),
-            }
-        );
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${GROQ_KEY}`,
+            },
+            body: JSON.stringify({
+                model:       'llama-3.3-70b-versatile',
+                messages:    [{ role: 'user', content: prompt }],
+                temperature: 0.4,
+                max_tokens:  512,
+            }),
+        });
 
         const data = await res.json();
 
         if (!res.ok) {
             return {
                 statusCode: res.status,
-                body: JSON.stringify({ error: data?.error?.message || 'Gemini API error' }),
+                body: JSON.stringify({ error: data?.error?.message || 'Groq API error' }),
             };
         }
 
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const text = data?.choices?.[0]?.message?.content || '';
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json' },
