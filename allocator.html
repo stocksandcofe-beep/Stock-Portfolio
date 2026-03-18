@@ -146,8 +146,8 @@
                 </div>
  
                 <div class="manual-form-panel collapsed" style="margin-bottom:0">
-                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    
+                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 flex flex-col gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="number" id="man-price" placeholder="Price (in local currency)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
@@ -159,8 +159,10 @@
                                 <option value="EUR">EUR</option>
                             </select>
                         </div>
-                        <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors w-auto justify-self-start">Add</button>
-                    
+                    </div>
+                    <div class="flex justify-end">
+                        <button id="submit-manual" class="bg-emerald-600 text-white px-6 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors">Add</button>
+                    </div>
                 </div>
                 </div><!-- /manual-form-panel -->
  
