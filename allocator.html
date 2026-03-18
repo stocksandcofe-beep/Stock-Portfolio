@@ -146,19 +146,19 @@
                 </div>
 
                 <div class="manual-form-panel collapsed" style="margin-bottom:0">
-                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     
                         <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="number" id="man-price" placeholder="Price (in local currency)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 sm:col-span-2 md:col-span-1">
                             <input type="text" id="man-mcap" placeholder="Mkt Cap / AUM (e.g. 500B)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 flex-1">
                             <select id="man-currency" class="bg-black/40 border border-zinc-800 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-emerald-500">
                                 <option value="USD">USD</option>
                                 <option value="GBP">GBP</option>
                                 <option value="EUR">EUR</option>
                             </select>
-                            <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors">Add</button>
+                            <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors whitespace-nowrap">Add</button>
                         </div>
                     
                 </div>
