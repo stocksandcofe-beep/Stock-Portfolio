@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body style="margin:0;background:#0B0E11;color:#fff;font-family:'Plus Jakarta Sans',sans-serif">
-
+ 
     <main class="overflow-y-auto p-6 md:p-10">
-
+ 
         <header class="flex flex-col md:flex-row md:items-center gap-6 mb-10 w-full">
             <div class="flex-shrink-0">
                 <h1 class="text-3xl font-bold tracking-tight">Asset Allocator</h1>
@@ -34,20 +34,20 @@
                 <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full"></div>
             </div>
         </header>
-
+ 
         <div id="selection-container" class="hidden">
             <h2 id="selected-ticker" class="text-sm font-bold text-emerald-400">---</h2>
             <p id="selected-name" class="text-xs text-zinc-400">No Asset Selected</p>
             <span id="live-price">£0.00</span>
         </div>
-
+ 
         <div class="flex items-center gap-2 mb-4 min-h-[24px]">
             <span id="asset-label" class="text-sky-400 font-bold text-sm"></span>
             <button id="add-to-calc-btn" class="bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-amber-500/20 transition-all opacity-0 pointer-events-none">
                 Add to Calculator
             </button>
         </div>
-
+ 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="card p-6 border-zinc-800/50">
                 <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
@@ -76,7 +76,7 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div class="card p-6 border-zinc-800/50">
                 <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
                     <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i> Company Profile
@@ -108,7 +108,7 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div class="card p-6 border-zinc-800/50 flex flex-col">
                 <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
                     <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i> Market News
@@ -118,7 +118,7 @@
                 </div>
             </div>
         </div>
-
+ 
         <div class="mt-8">
             <div class="card p-6 border-zinc-800/50">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -144,26 +144,26 @@
                         <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 outline-none">
                     </div>
                 </div>
-
+ 
                 <div class="manual-form-panel collapsed" style="margin-bottom:0">
-                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     
                         <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
                         <input type="number" id="man-price" placeholder="Price (in local currency)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                        <div class="flex gap-2 sm:col-span-2 md:col-span-1">
+                        <div class="flex gap-2">
                             <input type="text" id="man-mcap" placeholder="Mkt Cap / AUM (e.g. 500B)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 flex-1">
                             <select id="man-currency" class="bg-black/40 border border-zinc-800 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-emerald-500">
                                 <option value="USD">USD</option>
                                 <option value="GBP">GBP</option>
                                 <option value="EUR">EUR</option>
                             </select>
-                            <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors whitespace-nowrap">Add</button>
                         </div>
+                        <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors">Add</button>
                     
                 </div>
                 </div><!-- /manual-form-panel -->
-
+ 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
@@ -186,14 +186,14 @@
             </div>
         </div>
     </main>
-
-
+ 
+ 
     <!-- AI Analysis overlay -->
     <div id="ai-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
-
+ 
     <!-- AI Analysis slide-out panel -->
     <div id="ai-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#111318] border-l border-zinc-800 z-50 flex flex-col translate-x-full transition-transform duration-300 ease-in-out">
-
+ 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-5 border-b border-zinc-800 flex-shrink-0">
             <div class="flex items-center gap-3">
@@ -209,23 +209,23 @@
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
-
+ 
         <!-- Content -->
         <div id="ai-panel-content" class="flex-1 overflow-y-auto px-6 py-6">
-
+ 
             <!-- Loading state -->
             <div id="ai-loading" class="hidden flex-col items-center justify-center h-full gap-4 text-center">
                 <div class="w-10 h-10 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"></div>
                 <p class="text-zinc-400 text-sm">Analysing your portfolio...</p>
                 <p class="text-zinc-600 text-xs">This usually takes a few seconds</p>
             </div>
-
+ 
             <!-- Error state -->
             <div id="ai-error" class="hidden items-center gap-3 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
                 <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
                 <p id="ai-error-text" class="text-rose-400 text-xs">Something went wrong. Please try again.</p>
             </div>
-
+ 
             <!-- Empty state -->
             <div id="ai-empty" class="flex flex-col items-center justify-center h-full gap-3 text-center">
                 <div class="w-12 h-12 rounded-full bg-zinc-800/50 flex items-center justify-center">
@@ -234,7 +234,7 @@
                 <p class="text-zinc-400 text-sm font-medium">Ready to analyse</p>
                 <p class="text-zinc-600 text-xs max-w-[220px]">Add at least one asset to your portfolio then click Analyse.</p>
             </div>
-
+ 
             <!-- Results -->
             <div id="ai-results" class="hidden">
                 <div class="flex items-center gap-2 mb-5">
@@ -244,9 +244,9 @@
                 <ul id="ai-bullets" class="space-y-3"></ul>
                 <p class="text-zinc-600 text-[10px] mt-6 leading-relaxed">AI-generated analysis is for informational purposes only and does not constitute financial advice.</p>
             </div>
-
+ 
         </div>
-
+ 
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-zinc-800 flex-shrink-0">
             <button id="ai-analyse-btn" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
@@ -254,9 +254,9 @@
                 Analyse Portfolio
             </button>
         </div>
-
+ 
     </div>
-
+ 
     <script src="JS/allocator.js"></script>
     <script>
         lucide.createIcons();
