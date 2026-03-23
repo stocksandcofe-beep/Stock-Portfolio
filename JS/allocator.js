@@ -1,16 +1,15 @@
 // =============================================================================
 // CONSTANTS & STATE
 // =============================================================================
-const FINNHUB_KEY = 'd5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g';
-const searchInput = document.getElementById('asset-search');
-const resultsDiv  = document.getElementById('search-results');
+const FINNHUB_KEY = "d5ikb29r01qrgjmcpo80d5ikb29r01qrgjmcpo8g";
+const searchInput = document.getElementById("asset-search");
+const resultsDiv = document.getElementById("search-results");
 
-let allocatorSocket      = null;
-let lastAllocPrice       = 0;
-let searchTimeout        = null;
-let calcDebounceTimer    = null; // debounce for investment input
-let currentLocalCurrency = 'USD';
-
+let allocatorSocket = null;
+let lastAllocPrice = 0;
+let searchTimeout = null;
+let calcDebounceTimer = null; // debounce for investment input
+let currentLocalCurrency = "USD";
 
 // =============================================================================
 // FX RATES — Frankfurter API, cached per portfolio currency
@@ -18,135 +17,151 @@ let currentLocalCurrency = 'USD';
 const fxCache = {};
 
 async function getFxRates(portfolioCurrency) {
-    if (fxCache[portfolioCurrency]) return fxCache[portfolioCurrency];
+  if (fxCache[portfolioCurrency]) return fxCache[portfolioCurrency];
 
-    try {
-        const res   = await fetch(`https://api.frankfurter.app/latest?from=${portfolioCurrency}`);
-        const data  = await res.json();
-        const rates = { ...data.rates, [portfolioCurrency]: 1.0 };
-        fxCache[portfolioCurrency] = rates;
-        return rates;
-    } catch (e) {
-        console.warn('FX fetch failed:', e);
-        return { [portfolioCurrency]: 1.0 };
-    }
+  try {
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?from=${portfolioCurrency}`,
+    );
+    const data = await res.json();
+    const rates = { ...data.rates, [portfolioCurrency]: 1.0 };
+    fxCache[portfolioCurrency] = rates;
+    return rates;
+  } catch (e) {
+    console.warn("FX fetch failed:", e);
+    return { [portfolioCurrency]: 1.0 };
+  }
 }
-
 
 // =============================================================================
 // CURRENCY FORMATTERS
 // =============================================================================
 function formatLocalCurrency(value, currencyCode) {
-    return new Intl.NumberFormat('en-GB', {
-        style: 'currency', currency: currencyCode,
-        minimumFractionDigits: 2, maximumFractionDigits: 2,
-    }).format(value);
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 function formatPrice(value) {
-    return formatLocalCurrency(value, currentLocalCurrency);
+  return formatLocalCurrency(value, currentLocalCurrency);
 }
-
 
 // =============================================================================
 // 1. SEARCH
 // =============================================================================
-searchInput.addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    const query = searchInput.value.trim().toUpperCase();
-    if (query.length < 2) { resultsDiv.classList.add('hidden'); return; }
-    searchTimeout = setTimeout(() => fetchResults(query), 300);
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimeout);
+  const query = searchInput.value.trim().toUpperCase();
+  if (query.length < 2) {
+    resultsDiv.classList.add("hidden");
+    return;
+  }
+  searchTimeout = setTimeout(() => fetchResults(query), 300);
 });
 
 async function fetchResults(query) {
-    try {
-        const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${FINNHUB_KEY}`);
-        const data = await response.json();
-        if (data.result) displaySearchResults(data.result.slice(0, 6));
-    } catch (e) {
-        console.error('Search error:', e);
-    }
+  try {
+    const response = await fetch(
+      `https://finnhub.io/api/v1/search?q=${query}&token=${FINNHUB_KEY}`,
+    );
+    const data = await response.json();
+    if (data.result) displaySearchResults(data.result.slice(0, 6));
+  } catch (e) {
+    console.error("Search error:", e);
+  }
 }
 
 function displaySearchResults(assets) {
-    resultsDiv.innerHTML = '';
-    resultsDiv.classList.remove('hidden');
-    assets.forEach(asset => {
-        const item = document.createElement('div');
-        item.className = 'flex items-center justify-between p-4 hover:bg-emerald-500/10 cursor-pointer border-b border-zinc-800/50 last:border-0 transition-colors group';
-        item.innerHTML = `
+  resultsDiv.innerHTML = "";
+  resultsDiv.classList.remove("hidden");
+  assets.forEach((asset) => {
+    const item = document.createElement("div");
+    item.className =
+      "flex items-center justify-between p-4 hover:bg-emerald-500/10 cursor-pointer border-b border-zinc-800/50 last:border-0 transition-colors group";
+    item.innerHTML = `
             <div class="flex flex-col">
                 <span class="text-white font-bold group-hover:text-emerald-400">${asset.symbol}</span>
                 <span class="text-zinc-500 text-xs truncate max-w-[200px]">${asset.description}</span>
             </div>
-            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-bold">${asset.type || 'Stock'}</span>
+            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-bold">${asset.type || "Stock"}</span>
         `;
-        item.onclick = () => selectAsset(asset.symbol, asset.description);
-        resultsDiv.appendChild(item);
-    });
+    item.onclick = () => selectAsset(asset.symbol, asset.description);
+    resultsDiv.appendChild(item);
+  });
 }
-
 
 // =============================================================================
 // 2. ASSET SELECTION
 // =============================================================================
 async function selectAsset(ticker, name) {
-    resultsDiv.classList.add('hidden');
-    searchInput.value = '';
+  resultsDiv.classList.add("hidden");
+  searchInput.value = "";
 
-    document.getElementById('selected-ticker').textContent = ticker;
-    document.getElementById('selected-name').textContent   = name;
-    document.getElementById('asset-label').textContent     = `${name} (${ticker})`;
+  document.getElementById("selected-ticker").textContent = ticker;
+  document.getElementById("selected-name").textContent = name;
+  document.getElementById("asset-label").textContent = `${name} (${ticker})`;
 
-    window.priceMultiplier = ticker.endsWith('.L') ? 0.01 : 1.0;
+  window.priceMultiplier = ticker.endsWith(".L") ? 0.01 : 1.0;
 
-    const safeFetch = async (fn, label) => {
-        try { await fn(ticker); }
-        catch (e) { console.warn(`${label} failed:`, e); }
-    };
+  const safeFetch = async (fn, label) => {
+    try {
+      await fn(ticker);
+    } catch (e) {
+      console.warn(`${label} failed:`, e);
+    }
+  };
 
-    // All five fetches fire simultaneously — financials also runs Finnhub+Yahoo in parallel internally
-    await Promise.all([
-        safeFetch(fetchQuotes,     'Quotes'),
-        safeFetch(fetchFinancials, 'Financials'),
-        safeFetch(fetchProfile,    'Profile'),
-        safeFetch(fetchNews,       'News'),
-        safeFetch(initWebSocket,   'WebSocket'),
-    ]);
+  // All five fetches fire simultaneously — financials also runs Finnhub+Yahoo in parallel internally
+  await Promise.all([
+    safeFetch(fetchQuotes, "Quotes"),
+    safeFetch(fetchFinancials, "Financials"),
+    safeFetch(fetchProfile, "Profile"),
+    safeFetch(fetchNews, "News"),
+    safeFetch(initWebSocket, "WebSocket"),
+  ]);
 }
-
 
 // =============================================================================
 // 3. QUOTES
 // =============================================================================
 async function fetchQuotes(symbol) {
-    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
-    const d   = await res.json();
-    const m   = window.priceMultiplier || 1.0;
+  const res = await fetch(
+    `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`,
+  );
+  const d = await res.json();
+  const m = window.priceMultiplier || 1.0;
 
-    if (symbol.endsWith('.L'))                                                           currentLocalCurrency = 'GBP';
-    else if (symbol.endsWith('.PA') || symbol.endsWith('.AS') || symbol.endsWith('.DE')) currentLocalCurrency = 'EUR';
-    else                                                                                 currentLocalCurrency = 'USD';
+  if (symbol.endsWith(".L")) currentLocalCurrency = "GBP";
+  else if (
+    symbol.endsWith(".PA") ||
+    symbol.endsWith(".AS") ||
+    symbol.endsWith(".DE")
+  )
+    currentLocalCurrency = "EUR";
+  else currentLocalCurrency = "USD";
 
-    document.getElementById('metric-price').textContent = formatPrice(d.c * m);
+  document.getElementById("metric-price").textContent = formatPrice(d.c * m);
 
-    const prevCloseEl = document.getElementById('metric-pc');
-    if (prevCloseEl) prevCloseEl.textContent = formatPrice(d.pc * m);
+  const prevCloseEl = document.getElementById("metric-pc");
+  if (prevCloseEl) prevCloseEl.textContent = formatPrice(d.pc * m);
 
-    const hloEl = document.getElementById('metric-hlo');
-    if (hloEl) hloEl.textContent = `${formatPrice(d.h * m)} / ${formatPrice(d.l * m)} / ${formatPrice(d.o * m)}`;
+  const hloEl = document.getElementById("metric-hlo");
+  if (hloEl)
+    hloEl.textContent = `${formatPrice(d.h * m)} / ${formatPrice(d.l * m)} / ${formatPrice(d.o * m)}`;
 
-    document.getElementById('metric-change').innerHTML = `
-        <span class="${d.d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-            ${d.d >= 0 ? '+' : ''}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
+  document.getElementById("metric-change").innerHTML = `
+        <span class="${d.d >= 0 ? "text-emerald-400" : "text-rose-400"}">
+            ${d.d >= 0 ? "+" : ""}${(d.d * m).toFixed(2)} (${d.dp.toFixed(2)}%)
         </span>`;
 
-    lastAllocPrice = d.c * m;
+  lastAllocPrice = d.c * m;
 
-    // Store volume for use in fetchFinancials
-    window.lastQuoteVolume = d.v ?? null;
+  // Store volume for use in fetchFinancials
+  window.lastQuoteVolume = d.v ?? null;
 }
-
 
 // =============================================================================
 // 4. FINANCIALS
@@ -155,231 +170,296 @@ async function fetchQuotes(symbol) {
 // doubling the wait time on every asset selection.
 // =============================================================================
 async function fetchFinancials(symbol) {
-    const formatValue    = (val) => val != null ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A';
-    const formatBillions = (val) => val != null ? (val / 1000).toFixed(2) + 'B' : 'N/A';
+  const formatValue = (val) =>
+    val != null
+      ? val.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : "N/A";
+  const formatBillions = (val) =>
+    val != null ? (val / 1000).toFixed(2) + "B" : "N/A";
 
-    // Both requests fire at the same time
-    const [finnhubResult, yahooResult] = await Promise.allSettled([
-        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`).then(r => r.json()),
-        fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=summaryDetail,defaultKeyStatistics,financialData,price`).then(r => r.json()),
-    ]);
+  // Both requests fire at the same time
+  const [finnhubResult, yahooResult] = await Promise.allSettled([
+    fetch(
+      `https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_KEY}`,
+    ).then((r) => r.json()),
+    fetch(
+      `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=summaryDetail,defaultKeyStatistics,financialData,price`,
+    ).then((r) => r.json()),
+  ]);
 
-    const m  = finnhubResult.status === 'fulfilled' ? (finnhubResult.value?.metric || null) : null;
-    let   yf = null;
+  const m =
+    finnhubResult.status === "fulfilled"
+      ? finnhubResult.value?.metric || null
+      : null;
+  let yf = null;
 
-    // Yahoo as fallback for fields Finnhub may miss
-    if (yahooResult.status === 'fulfilled') {
-        try {
-            const result = yahooResult.value?.quoteSummary?.result?.[0] || {};
-            const sd = result?.summaryDetail        || {};
-            const ks = result?.defaultKeyStatistics || {};
-            yf = {
-                divYield: sd?.dividendYield?.raw || sd?.trailingAnnualDividendYield?.raw || null,
-                pe:       sd?.trailingPE?.raw    || ks?.forwardPE?.raw                  || null,
-                peg:      ks?.pegRatio?.raw      || null,
-                beta:     sd?.beta?.raw          || null,
-                mcap:     sd?.marketCap?.raw     || null,
-                high52:   sd?.fiftyTwoWeekHigh?.raw || null,
-                low52:    sd?.fiftyTwoWeekLow?.raw  || null,
-            };
-        } catch (e) {
-            console.warn('Yahoo parse failed:', e);
-        }
+  // Yahoo as fallback for fields Finnhub may miss
+  if (yahooResult.status === "fulfilled") {
+    try {
+      const result = yahooResult.value?.quoteSummary?.result?.[0] || {};
+      const sd = result?.summaryDetail || {};
+      const ks = result?.defaultKeyStatistics || {};
+      yf = {
+        divYield:
+          sd?.dividendYield?.raw ||
+          sd?.trailingAnnualDividendYield?.raw ||
+          null,
+        pe: sd?.trailingPE?.raw || ks?.forwardPE?.raw || null,
+        peg: ks?.pegRatio?.raw || null,
+        beta: sd?.beta?.raw || null,
+        mcap: sd?.marketCap?.raw || null,
+        high52: sd?.fiftyTwoWeekHigh?.raw || null,
+        low52: sd?.fiftyTwoWeekLow?.raw || null,
+      };
+    } catch (e) {
+      console.warn("Yahoo parse failed:", e);
     }
+  }
 
-    // Finnhub primary, Yahoo fills nulls
-    const mcap     = m?.marketCapitalization ?? (yf?.mcap ? yf.mcap / 1_000_000 : null);
-    const divYield = m?.dividendYieldIndicatedAnnual || m?.dividendYield || m?.dividendYieldNormalizedAnnual || yf?.divYield || null;
-    const pe       = m?.peBasicExclExtraTTM ?? yf?.pe   ?? null;
-    const peg      = m?.pegRatio            ?? yf?.peg  ?? null;
-    const beta     = m?.beta                ?? yf?.beta ?? null;
-    const high52   = m?.['52WeekHigh']      ?? yf?.high52 ?? null;
-    const low52    = m?.['52WeekLow']       ?? yf?.low52  ?? null;
-    const volume   = window.lastQuoteVolume ?? null;
+  // Finnhub primary, Yahoo fills nulls
+  const mcap =
+    m?.marketCapitalization ?? (yf?.mcap ? yf.mcap / 1_000_000 : null);
+  const divYield =
+    m?.dividendYieldIndicatedAnnual ||
+    m?.dividendYield ||
+    m?.dividendYieldNormalizedAnnual ||
+    yf?.divYield ||
+    null;
+  const pe = m?.peBasicExclExtraTTM ?? yf?.pe ?? null;
+  const peg = m?.pegRatio ?? yf?.peg ?? null;
+  const beta = m?.beta ?? yf?.beta ?? null;
+  const high52 = m?.["52WeekHigh"] ?? yf?.high52 ?? null;
+  const low52 = m?.["52WeekLow"] ?? yf?.low52 ?? null;
+  const volume = window.lastQuoteVolume ?? null;
 
-    document.getElementById('metric-mcap').textContent = formatBillions(mcap);
-    document.getElementById('metric-div').textContent  = divYield != null ? `${(divYield * 100 > 1 ? divYield : divYield * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('metric-pe').textContent   = formatValue(pe);
-    document.getElementById('metric-peg').textContent  = formatValue(peg);
-    document.getElementById('metric-52w').textContent  = (high52 && low52) ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}` : 'N/A';
-    document.getElementById('metric-beta').textContent = formatValue(beta);
-    document.getElementById('metric-volume').textContent = volume != null ? volume.toLocaleString() : 'N/A';
+  document.getElementById("metric-mcap").textContent = formatBillions(mcap);
+  document.getElementById("metric-div").textContent =
+    divYield != null
+      ? `${(divYield * 100 > 1 ? divYield : divYield * 100).toFixed(2)}%`
+      : "N/A";
+  document.getElementById("metric-pe").textContent = formatValue(pe);
+  document.getElementById("metric-peg").textContent = formatValue(peg);
+  document.getElementById("metric-52w").textContent =
+    high52 && low52
+      ? `${formatLocalCurrency(high52, currentLocalCurrency)} / ${formatLocalCurrency(low52, currentLocalCurrency)}`
+      : "N/A";
+  document.getElementById("metric-beta").textContent = formatValue(beta);
+  document.getElementById("metric-volume").textContent =
+    volume != null ? volume.toLocaleString() : "N/A";
 }
-
 
 // =============================================================================
 // 5. WEBSOCKET — live price stream
 // =============================================================================
 function initWebSocket(symbol) {
-    if (allocatorSocket) allocatorSocket.close();
-    allocatorSocket = new WebSocket(`wss://ws.finnhub.io?token=${FINNHUB_KEY}`);
-    allocatorSocket.onopen = () => {
-        allocatorSocket.send(JSON.stringify({ type: 'subscribe', symbol }));
-    };
-    allocatorSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'trade') updatePriceUI(data.data[0].p);
-    };
+  if (allocatorSocket) allocatorSocket.close();
+  allocatorSocket = new WebSocket(`wss://ws.finnhub.io?token=${FINNHUB_KEY}`);
+  allocatorSocket.onopen = () => {
+    allocatorSocket.send(JSON.stringify({ type: "subscribe", symbol }));
+  };
+  allocatorSocket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "trade") updatePriceUI(data.data[0].p);
+  };
 }
 
 function updatePriceUI(price) {
-    const m = window.priceMultiplier || 1.0;
-    lastAllocPrice = price * m;
-    const priceEl = document.getElementById('live-price');
-    if (priceEl) priceEl.textContent = formatPrice(lastAllocPrice);
+  const m = window.priceMultiplier || 1.0;
+  lastAllocPrice = price * m;
+  const priceEl = document.getElementById("live-price");
+  if (priceEl) priceEl.textContent = formatPrice(lastAllocPrice);
 }
-
 
 // =============================================================================
 // 6. NEWS
 // =============================================================================
 async function fetchNews(symbol) {
-    const today = new Date().toISOString().split('T')[0];
-    const res   = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${today}&to=${today}&token=${FINNHUB_KEY}`);
-    const news  = await res.json();
+  const today = new Date().toISOString().split("T")[0];
+  const res = await fetch(
+    `https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${today}&to=${today}&token=${FINNHUB_KEY}`,
+  );
+  const news = await res.json();
 
-    const container = document.getElementById('news-container');
-    container.innerHTML = news.length
-        ? ''
-        : '<p class="text-zinc-600 italic text-xs">No recent news found.</p>';
+  const container = document.getElementById("news-container");
+  container.innerHTML = news.length
+    ? ""
+    : '<p class="text-zinc-600 italic text-xs">No recent news found.</p>';
 
-    news.slice(0, 5).forEach(item => {
-        const article = document.createElement('div');
-        article.className = 'border-b border-zinc-800/50 pb-3 last:border-0';
-        article.innerHTML = `
+  news.slice(0, 5).forEach((item) => {
+    const article = document.createElement("div");
+    article.className = "border-b border-zinc-800/50 pb-3 last:border-0";
+    article.innerHTML = `
             <a href="${item.url}" target="_blank" class="hover:text-emerald-400 transition-colors">
                 <p class="text-xs font-bold leading-tight mb-1">${item.headline}</p>
             </a>
-            <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p class="text-[10px] text-zinc-500 uppercase">${item.source} • ${new Date(item.datetime * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
         `;
-        container.appendChild(article);
-    });
+    container.appendChild(article);
+  });
 }
-
 
 // =============================================================================
 // 7. COMPANY PROFILE
 // =============================================================================
 async function fetchProfile(symbol) {
-    const res  = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_KEY}`);
-    const data = await res.json();
+  const res = await fetch(
+    `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_KEY}`,
+  );
+  const data = await res.json();
 
-    if (!data.name) return;
+  if (!data.name) return;
 
-    if (data.currency) currentLocalCurrency = data.currency.toUpperCase();
+  if (data.currency) currentLocalCurrency = data.currency.toUpperCase();
 
-    document.getElementById('profile-industry').textContent = data.finnhubIndustry || '-';
-    document.getElementById('profile-country').textContent  = data.country  || '-';
-    document.getElementById('profile-exchange').textContent = data.exchange || '-';
-    document.getElementById('profile-website').innerHTML    = `<a href="${data.weburl}" target="_blank" class="text-emerald-400 hover:underline">Visit Site</a>`;
+  document.getElementById("profile-industry").textContent =
+    data.finnhubIndustry || "-";
+  document.getElementById("profile-country").textContent = data.country || "-";
+  document.getElementById("profile-exchange").textContent =
+    data.exchange || "-";
+  document.getElementById("profile-website").innerHTML =
+    `<a href="${data.weburl}" target="_blank" class="text-emerald-400 hover:underline">Visit Site</a>`;
 }
-
 
 // =============================================================================
 // 8. CALCULATOR — FX-aware portfolio allocation table
 // =============================================================================
 let portfolioItems = [];
 
-const calcTableBody   = document.getElementById('calc-table-body');
-const calcEmptyRow    = document.getElementById('calc-empty-row');
-const addBtn          = document.getElementById('add-to-calc-btn');
-const investmentInput = document.getElementById('calc-investment');
-const currencySelect  = document.getElementById('calc-currency');
-const manualForm      = document.getElementById('manual-form');
-const toggleBtn       = document.getElementById('toggle-manual-form');
-const submitManualBtn = document.getElementById('submit-manual');
+const calcTableBody = document.getElementById("calc-table-body");
+const calcEmptyRow = document.getElementById("calc-empty-row");
+const addBtn = document.getElementById("add-to-calc-btn");
+const investmentInput = document.getElementById("calc-investment");
+const currencySelect = document.getElementById("calc-currency");
+const manualForm = document.getElementById("manual-form");
+const toggleBtn = document.getElementById("toggle-manual-form");
+const submitManualBtn = document.getElementById("submit-manual");
 
 // Show "Add to Calculator" button only when an asset is selected
 const tickerObserver = new MutationObserver(() => {
-    const ticker = document.getElementById('selected-ticker').innerText;
-    if (ticker && ticker !== '---') {
-        addBtn.classList.remove('opacity-0', 'pointer-events-none');
-    } else {
-        addBtn.classList.add('opacity-0', 'pointer-events-none');
-    }
+  const ticker = document.getElementById("selected-ticker").innerText;
+  if (ticker && ticker !== "---") {
+    addBtn.classList.remove("opacity-0", "pointer-events-none");
+  } else {
+    addBtn.classList.add("opacity-0", "pointer-events-none");
+  }
 });
-tickerObserver.observe(document.getElementById('selected-ticker'), { childList: true });
+tickerObserver.observe(document.getElementById("selected-ticker"), {
+  childList: true,
+});
 
 // Toggle manual form — smooth accordion slide with original button style
-toggleBtn.addEventListener('click', () => {
-    const panel   = toggleBtn.closest('.card').querySelector('.manual-form-panel');
-    const chevron = toggleBtn.querySelector('.manual-form-chevron');
-    const isOpen  = !panel.classList.contains('collapsed');
-    panel.classList.toggle('collapsed', isOpen);
-    if (chevron) chevron.classList.toggle('rotated', !isOpen);
-    if (isOpen) {
-        // closing
-        toggleBtn.innerHTML = '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron"></i>';
-        toggleBtn.classList.remove('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
-        toggleBtn.classList.add('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
-    } else {
-        // opening
-        toggleBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i> Cancel <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron rotated"></i>';
-        toggleBtn.classList.add('text-rose-400', 'border-rose-500/50', 'hover:text-rose-300');
-        toggleBtn.classList.remove('text-zinc-400', 'hover:text-emerald-400', 'hover:border-emerald-500/50');
-    }
-    lucide.createIcons();
+toggleBtn.addEventListener("click", () => {
+  const panel = toggleBtn.closest(".card").querySelector(".manual-form-panel");
+  const chevron = toggleBtn.querySelector(".manual-form-chevron");
+  const isOpen = !panel.classList.contains("collapsed");
+  panel.classList.toggle("collapsed", isOpen);
+  if (chevron) chevron.classList.toggle("rotated", !isOpen);
+  if (isOpen) {
+    // closing
+    toggleBtn.innerHTML =
+      '<i data-lucide="plus" class="w-3 h-3"></i> Manual Add <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron"></i>';
+    toggleBtn.classList.remove(
+      "text-rose-400",
+      "border-rose-500/50",
+      "hover:text-rose-300",
+    );
+    toggleBtn.classList.add(
+      "text-zinc-400",
+      "hover:text-emerald-400",
+      "hover:border-emerald-500/50",
+    );
+  } else {
+    // opening
+    toggleBtn.innerHTML =
+      '<i data-lucide="x" class="w-3 h-3"></i> Cancel <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron rotated"></i>';
+    toggleBtn.classList.add(
+      "text-rose-400",
+      "border-rose-500/50",
+      "hover:text-rose-300",
+    );
+    toggleBtn.classList.remove(
+      "text-zinc-400",
+      "hover:text-emerald-400",
+      "hover:border-emerald-500/50",
+    );
+  }
+  lucide.createIcons();
 });
 
 // Add asset from search
-addBtn.addEventListener('click', () => {
-    const ticker   = document.getElementById('selected-ticker').innerText.trim();
-    const name     = document.getElementById('selected-name').innerText.trim();
-    const priceStr = document.getElementById('metric-price').innerText.trim();
-    const mcapStr  = document.getElementById('metric-mcap').innerText.trim();
+addBtn.addEventListener("click", () => {
+  const ticker = document.getElementById("selected-ticker").innerText.trim();
+  const name = document.getElementById("selected-name").innerText.trim();
+  const priceStr = document.getElementById("metric-price").innerText.trim();
+  const mcapStr = document.getElementById("metric-mcap").innerText.trim();
 
-    const price = parseFloat(priceStr.replace(/[^0-9.-]+/g, '')) || 0;
-    const mcap  = parseMcapValue(mcapStr);
+  const price = parseFloat(priceStr.replace(/[^0-9.-]+/g, "")) || 0;
+  const mcap = parseMcapValue(mcapStr);
 
-    if (!ticker || ticker === '---') return;
-    if (price === 0) { alert('Price data has not loaded yet. Please wait a moment and try again.'); return; }
-    if (mcap  === 0) { alert('Market cap data has not loaded yet. Please wait a moment and try again.'); return; }
-    if (portfolioItems.find(item => item.ticker === ticker)) return;
+  if (!ticker || ticker === "---") return;
+  if (price === 0) {
+    alert("Price data has not loaded yet. Please wait a moment and try again.");
+    return;
+  }
+  if (mcap === 0) {
+    alert(
+      "Market cap data has not loaded yet. Please wait a moment and try again.",
+    );
+    return;
+  }
+  if (portfolioItems.find((item) => item.ticker === ticker)) return;
 
-    portfolioItems.push({ ticker, name, price, mcap, localCurrency: currentLocalCurrency });
-    updateCalculatorUI();
-    syncAiButton();
+  portfolioItems.push({
+    ticker,
+    name,
+    price,
+    mcap,
+    localCurrency: currentLocalCurrency,
+  });
+  updateCalculatorUI();
+  syncAiButton();
 });
 
 // Add asset manually
-submitManualBtn.addEventListener('click', () => {
-    const name      = document.getElementById('man-name').value.trim();
-    const ticker    = document.getElementById('man-ticker').value.trim();
-    const price     = parseFloat(document.getElementById('man-price').value);
-    const mcapRaw   = document.getElementById('man-mcap').value.trim();
-    const localCurr = document.getElementById('man-currency').value;
+submitManualBtn.addEventListener("click", () => {
+  const name = document.getElementById("man-name").value.trim();
+  const ticker = document.getElementById("man-ticker").value.trim();
+  const price = parseFloat(document.getElementById("man-price").value);
+  const mcapRaw = document.getElementById("man-mcap").value.trim();
+  const localCurr = document.getElementById("man-currency").value;
 
-    if (!name || !ticker || isNaN(price) || !mcapRaw) {
-        alert('Please fill in all fields correctly.');
-        return;
-    }
+  if (!name || !ticker || isNaN(price) || !mcapRaw) {
+    alert("Please fill in all fields correctly.");
+    return;
+  }
 
-    portfolioItems.push({
-        ticker: ticker.toUpperCase(),
-        name, price,
-        mcap:          parseMcapValue(mcapRaw.toUpperCase()),
-        localCurrency: localCurr,
-    });
+  portfolioItems.push({
+    ticker: ticker.toUpperCase(),
+    name,
+    price,
+    mcap: parseMcapValue(mcapRaw.toUpperCase()),
+    localCurrency: localCurr,
+  });
 
-    // Clear fields but keep the form open so the user can add more assets
-    document.getElementById('man-name').value   = '';
-    document.getElementById('man-ticker').value = '';
-    document.getElementById('man-price').value  = '';
-    document.getElementById('man-mcap').value   = '';
-    document.getElementById('man-name').focus();
+  // Clear fields but keep the form open so the user can add more assets
+  document.getElementById("man-name").value = "";
+  document.getElementById("man-ticker").value = "";
+  document.getElementById("man-price").value = "";
+  document.getElementById("man-mcap").value = "";
+  document.getElementById("man-name").focus();
 
-    updateCalculatorUI();
-    syncAiButton();
+  updateCalculatorUI();
+  syncAiButton();
 });
 
 // Parse shorthand strings like "3.2T" or "500B" into raw numbers
 function parseMcapValue(str) {
-    if (!str) return 0;
-    const num = parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
-    if (str.includes('T')) return num * 1_000_000_000_000;
-    if (str.includes('B')) return num * 1_000_000_000;
-    if (str.includes('M')) return num * 1_000_000;
-    return num;
+  if (!str) return 0;
+  const num = parseFloat(str.replace(/[^0-9.-]+/g, "")) || 0;
+  if (str.includes("T")) return num * 1_000_000_000_000;
+  if (str.includes("B")) return num * 1_000_000_000;
+  if (str.includes("M")) return num * 1_000_000;
+  return num;
 }
 
 // Rebuild the allocation table with FX-aware share calculations
@@ -387,49 +467,53 @@ function parseMcapValue(str) {
 // FIX: lucide.createIcons() is called once after all rows are in the DOM
 // FIX: FX rates fetched BEFORE clearing rows to avoid blank-table flicker during async wait
 async function updateCalculatorUI() {
-    if (portfolioItems.length === 0) {
-        calcTableBody.querySelectorAll('.asset-row').forEach(row => row.remove());
-        calcEmptyRow.style.display = 'table-row';
-        return;
-    }
+  if (portfolioItems.length === 0) {
+    calcTableBody.querySelectorAll(".asset-row").forEach((row) => row.remove());
+    calcEmptyRow.style.display = "table-row";
+    return;
+  }
 
-    const portfolioCurrency = currencySelect.value;
-    const totalMcap         = portfolioItems.reduce((acc, item) => acc + item.mcap, 0);
-    const totalInvestment   = parseFloat(investmentInput.value) || 0;
+  const portfolioCurrency = currencySelect.value;
+  const totalMcap = portfolioItems.reduce((acc, item) => acc + item.mcap, 0);
+  const totalInvestment = parseFloat(investmentInput.value) || 0;
 
-    // Fetch FX rates FIRST — before touching the DOM — so the table is never
-    // visibly empty while waiting for the async response
-    const fxRates = await getFxRates(portfolioCurrency);
+  // Fetch FX rates FIRST — before touching the DOM — so the table is never
+  // visibly empty while waiting for the async response
+  const fxRates = await getFxRates(portfolioCurrency);
 
-    // Now safe to clear and rebuild
-    calcTableBody.querySelectorAll('.asset-row').forEach(row => row.remove());
-    calcEmptyRow.style.display = 'none';
+  // Now safe to clear and rebuild
+  calcTableBody.querySelectorAll(".asset-row").forEach((row) => row.remove());
+  calcEmptyRow.style.display = "none";
 
-    // Build all rows off-DOM then append once to avoid repeated reflows
-    const fragment = document.createDocumentFragment();
+  // Build all rows off-DOM then append once to avoid repeated reflows
+  const fragment = document.createDocumentFragment();
 
-    for (const [index, item] of portfolioItems.entries()) {
-        const weight                    = item.mcap / totalMcap;
-        const targetInPortfolioCurrency = totalInvestment * weight;
-        const fxRate                    = item.localCurrency === portfolioCurrency
-            ? 1.0
-            : (fxRates[item.localCurrency] || 1.0);
-        const targetInLocalCurrency     = targetInPortfolioCurrency * fxRate;
-        const shares                    = item.price > 0 ? Math.floor(targetInLocalCurrency / item.price) : 0;
+  for (const [index, item] of portfolioItems.entries()) {
+    const weight = item.mcap / totalMcap;
+    const targetInPortfolioCurrency = totalInvestment * weight;
+    const fxRate =
+      item.localCurrency === portfolioCurrency
+        ? 1.0
+        : fxRates[item.localCurrency] || 1.0;
+    const targetInLocalCurrency = targetInPortfolioCurrency * fxRate;
+    const shares =
+      item.price > 0 ? Math.floor(targetInLocalCurrency / item.price) : 0;
 
-        const fxTooltip = item.localCurrency !== portfolioCurrency
-            ? `<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+    const fxTooltip =
+      item.localCurrency !== portfolioCurrency
+        ? `<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                    1 ${portfolioCurrency} = ${fxRate.toFixed(4)} ${item.localCurrency}
                </div>`
-            : '';
+        : "";
 
-        const row = document.createElement('tr');
-        row.className = 'asset-row border-b border-zinc-800/30 hover:bg-zinc-900/40 transition-colors';
-        row.innerHTML = `
+    const row = document.createElement("tr");
+    row.className =
+      "asset-row border-b border-zinc-800/30 hover:bg-zinc-900/40 transition-colors";
+    row.innerHTML = `
             <td class="py-4 px-2 text-white font-medium">${item.name}</td>
             <td class="py-4 text-center text-xs text-zinc-400">${item.ticker}</td>
             <td class="py-4 text-center text-sm text-zinc-300 relative group">
-                <span class="${item.localCurrency !== portfolioCurrency ? 'cursor-help' : ''}">${formatLocalCurrency(item.price, item.localCurrency)}</span>
+                <span class="${item.localCurrency !== portfolioCurrency ? "cursor-help" : ""}">${formatLocalCurrency(item.price, item.localCurrency)}</span>
                 ${fxTooltip}
             </td>
             <td class="py-4 text-center">
@@ -444,138 +528,496 @@ async function updateCalculatorUI() {
                 </button>
             </td>
         `;
-        fragment.appendChild(row);
-    }
+    fragment.appendChild(row);
+  }
 
-    // Single DOM write + single icon scan
-    calcTableBody.appendChild(fragment);
-    lucide.createIcons();
+  // Single DOM write + single icon scan
+  calcTableBody.appendChild(fragment);
+  lucide.createIcons();
 }
 
 function removeAsset(index) {
-    portfolioItems.splice(index, 1);
-    updateCalculatorUI();
-    syncAiButton();
+  portfolioItems.splice(index, 1);
+  updateCalculatorUI();
+  syncAiButton();
 }
 
 // FIX: Investment input is debounced — only recalculates 300ms after typing stops,
 // not on every single keystroke
-investmentInput.addEventListener('input', () => {
-    clearTimeout(calcDebounceTimer);
-    calcDebounceTimer = setTimeout(updateCalculatorUI, 300);
+investmentInput.addEventListener("input", () => {
+  clearTimeout(calcDebounceTimer);
+  calcDebounceTimer = setTimeout(updateCalculatorUI, 300);
 });
 
 // FIX: Currency change now clears the ENTIRE cache so fresh rates are always
 // fetched for the new currency. Previously it deleted the wrong (new) key.
-currencySelect.addEventListener('change', () => {
-    Object.keys(fxCache).forEach(k => delete fxCache[k]);
-    updateCalculatorUI();
+currencySelect.addEventListener("change", () => {
+  Object.keys(fxCache).forEach((k) => delete fxCache[k]);
+  updateCalculatorUI();
 });
 
 // =============================================================================
 // AI ANALYSIS PANEL
 // =============================================================================
-const aiPanel     = document.getElementById('ai-panel');
-const aiOverlay   = document.getElementById('ai-overlay');
-const aiClose     = document.getElementById('ai-panel-close');
-const aiAnalyse   = document.getElementById('ai-analyse-btn');
-const openAiBtn   = document.getElementById('open-ai-panel');
+const aiPanel = document.getElementById("ai-panel");
+const aiOverlay = document.getElementById("ai-overlay");
+const aiClose = document.getElementById("ai-panel-close");
+const aiAnalyse = document.getElementById("ai-analyse-btn");
+const openAiBtn = document.getElementById("open-ai-panel");
+const openSimulateBtn = document.getElementById("open-simulate-panel");
 
 function openAiPanel() {
-    aiPanel.classList.remove('translate-x-full');
-    aiOverlay.classList.remove('hidden');
-    requestAnimationFrame(() => aiOverlay.classList.remove('opacity-0'));
-    document.body.style.overflow = 'hidden';
+  aiPanel.classList.remove("translate-x-full");
+  aiOverlay.classList.remove("hidden");
+  requestAnimationFrame(() => aiOverlay.classList.remove("opacity-0"));
+  document.body.style.overflow = "hidden";
 }
 
 function closeAiPanel() {
-    aiPanel.classList.add('translate-x-full');
-    aiOverlay.classList.add('opacity-0');
-    setTimeout(() => aiOverlay.classList.add('hidden'), 300);
-    document.body.style.overflow = '';
+  aiPanel.classList.add("translate-x-full");
+  aiOverlay.classList.add("opacity-0");
+  setTimeout(() => aiOverlay.classList.add("hidden"), 300);
+  document.body.style.overflow = "";
 }
 
-aiClose.addEventListener('click', closeAiPanel);
-aiOverlay.addEventListener('click', closeAiPanel);
+aiClose.addEventListener("click", closeAiPanel);
+aiOverlay.addEventListener("click", closeAiPanel);
 
 // Show/hide the open-AI button based on portfolio contents
 function syncAiButton() {
-    if (portfolioItems.length > 0) {
-        openAiBtn.classList.remove('opacity-0', 'pointer-events-none');
-    } else {
-        openAiBtn.classList.add('opacity-0', 'pointer-events-none');
-    }
+  if (portfolioItems.length > 0) {
+    openAiBtn.classList.remove("opacity-0", "pointer-events-none");
+    openSimulateBtn.classList.remove("opacity-0", "pointer-events-none");
+  } else {
+    openAiBtn.classList.add("opacity-0", "pointer-events-none");
+    openSimulateBtn.classList.add("opacity-0", "pointer-events-none");
+  }
 }
 
-openAiBtn.addEventListener('click', openAiPanel);
+openAiBtn.addEventListener("click", openAiPanel);
 
 function setAiState(state) {
-    document.getElementById('ai-loading').classList.toggle('hidden', state !== 'loading');
-    document.getElementById('ai-loading').classList.toggle('flex',   state === 'loading');
-    document.getElementById('ai-error').classList.toggle('hidden',   state !== 'error');
-    document.getElementById('ai-error').classList.toggle('flex',     state === 'error');
-    document.getElementById('ai-empty').classList.toggle('hidden',   state !== 'empty');
-    document.getElementById('ai-empty').classList.toggle('flex',     state === 'empty');
-    document.getElementById('ai-results').classList.toggle('hidden', state !== 'results');
+  document
+    .getElementById("ai-loading")
+    .classList.toggle("hidden", state !== "loading");
+  document
+    .getElementById("ai-loading")
+    .classList.toggle("flex", state === "loading");
+  document
+    .getElementById("ai-error")
+    .classList.toggle("hidden", state !== "error");
+  document
+    .getElementById("ai-error")
+    .classList.toggle("flex", state === "error");
+  document
+    .getElementById("ai-empty")
+    .classList.toggle("hidden", state !== "empty");
+  document
+    .getElementById("ai-empty")
+    .classList.toggle("flex", state === "empty");
+  document
+    .getElementById("ai-results")
+    .classList.toggle("hidden", state !== "results");
 }
 
-aiAnalyse.addEventListener('click', async () => {
-    if (!portfolioItems.length) return;
+aiAnalyse.addEventListener("click", async () => {
+  if (!portfolioItems.length) return;
 
-    setAiState('loading');
-    aiAnalyse.disabled = true;
+  setAiState("loading");
+  aiAnalyse.disabled = true;
 
-    const totalMcap       = portfolioItems.reduce((s, i) => s + i.mcap, 0);
-    const portfolioCurr   = document.getElementById('calc-currency').value;
-    const totalInvestment = parseFloat(document.getElementById('calc-investment').value) || 0;
+  const totalMcap = portfolioItems.reduce((s, i) => s + i.mcap, 0);
+  const portfolioCurr = document.getElementById("calc-currency").value;
+  const totalInvestment =
+    parseFloat(document.getElementById("calc-investment").value) || 0;
 
-    const payload = {
-        investment: totalInvestment,
-        currency:   portfolioCurr,
-        portfolio:  portfolioItems.map(item => ({
-            name:          item.name,
-            ticker:        item.ticker,
-            weight:        ((item.mcap / totalMcap) * 100).toFixed(1),
-            price:         item.price,
-            localCurrency: item.localCurrency,
-        })),
-    };
+  const payload = {
+    investment: totalInvestment,
+    currency: portfolioCurr,
+    portfolio: portfolioItems.map((item) => ({
+      name: item.name,
+      ticker: item.ticker,
+      weight: ((item.mcap / totalMcap) * 100).toFixed(1),
+      price: item.price,
+      localCurrency: item.localCurrency,
+    })),
+  };
 
-    try {
-        const res  = await fetch('/.netlify/functions/gemini', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
-        });
-        const data = await res.json();
+  try {
+    const res = await fetch("/.netlify/functions/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
 
-        if (!res.ok || data.error) throw new Error(data.error || 'Unknown error');
+    if (!res.ok || data.error) throw new Error(data.error || "Unknown error");
 
-        // Snapshot label
-        document.getElementById('ai-snapshot').textContent =
-            `${portfolioItems.length} asset${portfolioItems.length > 1 ? 's' : ''} · ${portfolioCurr} ${totalInvestment.toLocaleString()}`;
+    // Snapshot label
+    document.getElementById("ai-snapshot").textContent =
+      `${portfolioItems.length} asset${portfolioItems.length > 1 ? "s" : ""} · ${portfolioCurr} ${totalInvestment.toLocaleString()}`;
 
-        // Parse bullet points — handle lines starting with •, -, *, or **bold**
-        const lines = data.result
-            .split('\n')
-            .map(l => l.replace(/^[•\-\*]+\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').trim())
-            .filter(l => l.length > 0);
+    // Parse bullet points — handle lines starting with •, -, *, or **bold**
+    const lines = data.result
+      .split("\n")
+      .map((l) =>
+        l
+          .replace(/^[•\-\*]+\s*/, "")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .trim(),
+      )
+      .filter((l) => l.length > 0);
 
-        const ul = document.getElementById('ai-bullets');
-        ul.innerHTML = lines.map(line => `
+    const ul = document.getElementById("ai-bullets");
+    ul.innerHTML = lines
+      .map(
+        (line) => `
             <li class="flex gap-3 text-sm text-zinc-300 leading-relaxed">
                 <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
                 <span>${line}</span>
             </li>
-        `).join('');
+        `,
+      )
+      .join("");
 
-        setAiState('results');
-
-    } catch (e) {
-        document.getElementById('ai-error-text').textContent = e.message || 'Something went wrong. Please try again.';
-        setAiState('error');
-    } finally {
-        aiAnalyse.disabled = false;
-    }
+    setAiState("results");
+  } catch (e) {
+    document.getElementById("ai-error-text").textContent =
+      e.message || "Something went wrong. Please try again.";
+    setAiState("error");
+  } finally {
+    aiAnalyse.disabled = false;
+  }
 });
 
+// =============================================================================
+// PORTFOLIO SIMULATOR
+// =============================================================================
+const simPanel = document.getElementById("sim-panel");
+const simOverlay = document.getElementById("sim-overlay");
+const simClose = document.getElementById("sim-panel-close");
+const simRunBtn = document.getElementById("sim-run-btn");
+const openSimBtn = document.getElementById("open-simulate-panel");
+
+let simChart = null;
+
+// Default start date to 3 years ago
+(function setDefaultDate() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 3);
+  document.getElementById("sim-start-date").value = d
+    .toISOString()
+    .split("T")[0];
+})();
+
+function openSimPanel() {
+  // Sync investment display from allocator input
+  const currency = document.getElementById("calc-currency").value;
+  const amount =
+    parseFloat(document.getElementById("calc-investment").value) || 0;
+  document.getElementById("sim-investment-display").textContent =
+    new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+
+  simPanel.classList.remove("translate-x-full");
+  simOverlay.classList.remove("hidden");
+  requestAnimationFrame(() => simOverlay.classList.remove("opacity-0"));
+  document.body.style.overflow = "hidden";
+  lucide.createIcons();
+}
+
+function closeSimPanel() {
+  simPanel.classList.add("translate-x-full");
+  simOverlay.classList.add("opacity-0");
+  setTimeout(() => simOverlay.classList.add("hidden"), 300);
+  document.body.style.overflow = "";
+}
+
+openSimBtn.addEventListener("click", openSimPanel);
+simClose.addEventListener("click", closeSimPanel);
+simOverlay.addEventListener("click", (e) => {
+  // Only close if clicking the overlay, not the panel
+  if (e.target === simOverlay) closeSimPanel();
+});
+
+function setSimState(state) {
+  document
+    .getElementById("sim-empty")
+    .classList.toggle("hidden", state !== "empty");
+  document
+    .getElementById("sim-empty")
+    .classList.toggle("flex", state === "empty");
+  document
+    .getElementById("sim-loading")
+    .classList.toggle("hidden", state !== "loading");
+  document
+    .getElementById("sim-loading")
+    .classList.toggle("flex", state === "loading");
+  document
+    .getElementById("sim-error")
+    .classList.toggle("hidden", state !== "error");
+  document
+    .getElementById("sim-error")
+    .classList.toggle("flex", state === "error");
+  document
+    .getElementById("sim-results")
+    .classList.toggle("hidden", state !== "results");
+  document
+    .getElementById("sim-results")
+    .classList.toggle("flex", state === "results");
+}
+
+async function fetchHistoricalData(ticker, startTimestamp) {
+  try {
+    const res = await fetch("/.netlify/functions/historical", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker, startTimestamp }),
+    });
+    const data = await res.json();
+    if (!data.points || !data.points.length) return null;
+    return data.points.map((p) => ({ date: new Date(p.date), close: p.close }));
+  } catch (e) {
+    return null;
+  }
+}
+
+function normaliseToInvestment(dataPoints, investment) {
+  if (!dataPoints.length) return [];
+  const base = dataPoints[0].close;
+  return dataPoints.map((d) => ({
+    date: d.date,
+    value: (d.close / base) * investment,
+  }));
+}
+
+function alignDates(portfolioSeries, benchmarkSeries) {
+  // Use portfolio dates as reference, find nearest benchmark value
+  const benchMap = new Map(
+    benchmarkSeries.map((d) => [d.date.toISOString().slice(0, 7), d.value]),
+  );
+  return portfolioSeries.map((d) => ({
+    date: d.date,
+    portfolio: d.value,
+    benchmark: benchMap.get(d.date.toISOString().slice(0, 7)) ?? null,
+  }));
+}
+
+simRunBtn.addEventListener("click", async () => {
+  const startDateVal = document.getElementById("sim-start-date").value;
+  if (!startDateVal) {
+    document.getElementById("sim-error-text").textContent =
+      "Please select a start date.";
+    setSimState("error");
+    return;
+  }
+
+  const startDate = new Date(startDateVal);
+  const startTimestamp = Math.floor(startDate.getTime() / 1000);
+  const investment =
+    parseFloat(document.getElementById("calc-investment").value) || 10000;
+  const benchmarkTick = document.getElementById("sim-benchmark").value;
+  const totalMcap = portfolioItems.reduce((s, i) => s + i.mcap, 0);
+
+  setSimState("loading");
+  simRunBtn.disabled = true;
+
+  try {
+    // Fetch historical data for each asset + optional benchmark
+    const fetchPromises = portfolioItems.map((item) =>
+      fetchHistoricalData(item.ticker, startTimestamp),
+    );
+    if (benchmarkTick)
+      fetchPromises.push(fetchHistoricalData(benchmarkTick, startTimestamp));
+
+    const results = await Promise.all(fetchPromises);
+
+    const assetResults = results.slice(0, portfolioItems.length);
+    const benchmarkData = benchmarkTick ? results[results.length - 1] : null;
+
+    // Track missing assets
+    const missingAssets = [];
+    portfolioItems.forEach((item, i) => {
+      if (!assetResults[i] || !assetResults[i].length)
+        missingAssets.push(item.ticker);
+    });
+
+    // Build weighted portfolio series
+    // Find common date range across all valid assets
+    const validResults = assetResults
+      .map((r, i) => ({ data: r, weight: portfolioItems[i].mcap / totalMcap }))
+      .filter((r) => r.data && r.data.length > 0);
+
+    if (!validResults.length)
+      throw new Error(
+        "No historical data available for any asset in your portfolio.",
+      );
+
+    // Use shortest date array as reference
+    const minLen = Math.min(...validResults.map((r) => r.data.length));
+    const refDates = validResults[0].data.slice(-minLen).map((d) => d.date);
+
+    // Weighted value at each date
+    const portfolioValues = refDates.map((_, di) => {
+      return validResults.reduce((sum, r) => {
+        const slice = r.data.slice(-minLen);
+        const baseClose = slice[0].close;
+        const curClose = slice[di].close;
+        return sum + (curClose / baseClose) * investment * r.weight;
+      }, 0);
+    });
+
+    const portfolioSeries = refDates.map((date, i) => ({
+      date,
+      value: portfolioValues[i],
+    }));
+
+    // Benchmark series normalised to same investment
+    let benchmarkSeries = null;
+    if (benchmarkData && benchmarkData.length) {
+      benchmarkSeries = normaliseToInvestment(benchmarkData, investment);
+    }
+
+    // Align
+    const aligned = benchmarkSeries
+      ? alignDates(portfolioSeries, benchmarkSeries)
+      : portfolioSeries.map((d) => ({ ...d, benchmark: null }));
+
+    // Summary stats
+    const startVal = portfolioSeries[0].value;
+    const endVal = portfolioSeries[portfolioSeries.length - 1].value;
+    const totalReturn = (((endVal - startVal) / startVal) * 100).toFixed(1);
+    const years =
+      (portfolioSeries[portfolioSeries.length - 1].date -
+        portfolioSeries[0].date) /
+      (1000 * 60 * 60 * 24 * 365.25);
+    const cagr = (Math.pow(endVal / startVal, 1 / years) - 1) * 100;
+    const currencyCode = document.getElementById("calc-currency").value;
+    const fmt = (v) =>
+      new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: currencyCode,
+        maximumFractionDigits: 0,
+      }).format(v);
+    const positive = parseFloat(totalReturn) >= 0;
+
+    // Summary cards
+    document.getElementById("sim-summary-cards").innerHTML = `
+            <div class="card p-4 flex flex-col gap-1">
+                <span class="text-zinc-500 text-[10px] uppercase font-bold">Final Value</span>
+                <span class="text-white font-bold text-lg">${fmt(endVal)}</span>
+                <span class="text-zinc-500 text-[10px]">Started at ${fmt(startVal)}</span>
+            </div>
+            <div class="card p-4 flex flex-col gap-1">
+                <span class="text-zinc-500 text-[10px] uppercase font-bold">Total Return</span>
+                <span class="font-bold text-lg ${positive ? "text-emerald-400" : "text-rose-400"}">${positive ? "+" : ""}${totalReturn}%</span>
+                <span class="text-zinc-500 text-[10px]">Over ${years.toFixed(1)} years</span>
+            </div>
+            <div class="card p-4 flex flex-col gap-1">
+                <span class="text-zinc-500 text-[10px] uppercase font-bold">CAGR</span>
+                <span class="font-bold text-lg ${cagr >= 0 ? "text-emerald-400" : "text-rose-400"}">${cagr >= 0 ? "+" : ""}${cagr.toFixed(1)}%</span>
+                <span class="text-zinc-500 text-[10px]">Annual growth rate</span>
+            </div>
+        `;
+
+    // Chart
+    const labels = aligned.map((d) =>
+      d.date.toLocaleDateString("en-GB", { month: "short", year: "2-digit" }),
+    );
+    const datasets = [
+      {
+        label: "Your Portfolio",
+        data: aligned.map((d) => d.portfolio.toFixed(2)),
+        borderColor: "#10b981",
+        backgroundColor: "#10b98120",
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: true,
+        tension: 0.3,
+      },
+    ];
+
+    if (benchmarkTick && aligned[0].benchmark !== null) {
+      const benchLabels = {
+        SPY: "S&P 500",
+        QQQ: "Nasdaq 100",
+        DIA: "Dow Jones",
+      };
+      datasets.push({
+        label: benchLabels[benchmarkTick] || benchmarkTick,
+        data: aligned.map((d) => d.benchmark?.toFixed(2) ?? null),
+        borderColor: "#6366f1",
+        backgroundColor: "transparent",
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.3,
+        spanGaps: true,
+      });
+    }
+
+    if (simChart) simChart.destroy();
+    simChart = new Chart(document.getElementById("sim-chart"), {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top",
+            labels: {
+              color: "#a1a1aa",
+              font: { size: 11 },
+              boxWidth: 12,
+              padding: 16,
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: "#71717a", font: { size: 10 }, maxTicksLimit: 12 },
+            grid: { color: "#27272a40" },
+          },
+          y: {
+            ticks: {
+              color: "#71717a",
+              font: { size: 10 },
+              callback: (v) => fmt(v),
+            },
+            grid: { color: "#27272a40" },
+          },
+        },
+      },
+    });
+
+    // Missing assets warning
+    const missingEl = document.getElementById("sim-missing-assets");
+    if (missingAssets.length) {
+      document.getElementById("sim-missing-text").textContent =
+        `⚠ No historical data found for: ${missingAssets.join(", ")}. These assets were excluded from the simulation.`;
+      missingEl.classList.remove("hidden");
+    } else {
+      missingEl.classList.add("hidden");
+    }
+
+    setSimState("results");
+    lucide.createIcons();
+  } catch (e) {
+    document.getElementById("sim-error-text").textContent =
+      e.message || "Failed to fetch historical data. Please try again.";
+    setSimState("error");
+  } finally {
+    simRunBtn.disabled = false;
+  }
+});
