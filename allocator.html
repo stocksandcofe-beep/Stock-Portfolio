@@ -1,265 +1,583 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Asset Allocator</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body style="margin:0;background:#0B0E11;color:#fff;font-family:'Plus Jakarta Sans',sans-serif">
- 
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body
+    style="
+      margin: 0;
+      background: #0b0e11;
+      color: #fff;
+      font-family: &quot;Plus Jakarta Sans&quot;, sans-serif;
+    "
+  >
     <main class="overflow-y-auto p-6 md:p-10">
- 
-        <header class="flex flex-col md:flex-row md:items-center gap-6 mb-10 w-full">
-            <div class="flex-shrink-0">
-                <h1 class="text-3xl font-bold tracking-tight">Asset Allocator</h1>
-                <p class="text-zinc-400 mt-1">Plan and rebalance your portfolio targets.</p>
-            </div>
-            <div class="grow relative">
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-emerald-400 transition-colors">
-                        <i data-lucide="search" class="w-5 h-5"></i>
-                    </div>
-                    <label for="asset-search" class="sr-only">Search assets</label>
-                    <input
-                        type="text"
-                        id="asset-search"
-                        placeholder="Search company, ticker, or ETF..."
-                        class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    >
-                </div>
-                <div id="search-results" class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full"></div>
-            </div>
-        </header>
- 
-        <div id="selection-container" class="hidden">
-            <h2 id="selected-ticker" class="text-sm font-bold text-emerald-400">---</h2>
-            <p id="selected-name" class="text-xs text-zinc-400">No Asset Selected</p>
-            <span id="live-price">£0.00</span>
+      <header
+        class="flex flex-col md:flex-row md:items-center gap-6 mb-10 w-full"
+      >
+        <div class="flex-shrink-0">
+          <h1 class="text-3xl font-bold tracking-tight">Asset Allocator</h1>
+          <p class="text-zinc-400 mt-1">
+            Plan and rebalance your portfolio targets.
+          </p>
         </div>
- 
-        <div class="flex items-center gap-2 mb-4 min-h-[24px]">
-            <span id="asset-label" class="text-sky-400 font-bold text-sm"></span>
-            <button id="add-to-calc-btn" class="bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-amber-500/20 transition-all opacity-0 pointer-events-none">
-                Add to Calculator
-            </button>
+        <div class="grow relative">
+          <div class="relative group">
+            <div
+              class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-emerald-400 transition-colors"
+            >
+              <i data-lucide="search" class="w-5 h-5"></i>
+            </div>
+            <label for="asset-search" class="sr-only">Search assets</label>
+            <input
+              type="text"
+              id="asset-search"
+              placeholder="Search company, ticker, or ETF..."
+              class="w-full bg-zinc-900/50 border border-zinc-800 text-white text-sm rounded-2xl block pl-12 p-4 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+            />
+          </div>
+          <div
+            id="search-results"
+            class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl absolute z-50 w-full"
+          ></div>
         </div>
- 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="card p-6 border-zinc-800/50">
-                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
-                    <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i> Daily Quotes
-                </h3>
-                <div class="space-y-4 text-xs">
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
-                        <span class="text-zinc-400">Current Price:</span>
-                        <span id="metric-price" class="text-white text-xs">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
-                        <span class="text-zinc-400">Change & % Change:</span>
-                        <span id="metric-change" class="text-white text-xs">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
-                        <span class="text-zinc-400">High / Low / Open:</span>
-                        <span id="metric-hlo" class="text-white text-right text-xs">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-2">
-                        <span class="text-zinc-400">Previous Close:</span>
-                        <span id="metric-pc" class="text-white text-xs">---</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-zinc-400">52-Week High / Low:</span>
-                        <span id="metric-52w" class="text-white text-right text-xs">---</span>
-                    </div>
-                </div>
+      </header>
+
+      <div id="selection-container" class="hidden">
+        <h2 id="selected-ticker" class="text-sm font-bold text-emerald-400">
+          ---
+        </h2>
+        <p id="selected-name" class="text-xs text-zinc-400">
+          No Asset Selected
+        </p>
+        <span id="live-price">£0.00</span>
+      </div>
+
+      <div class="flex items-center gap-2 mb-4 min-h-[24px]">
+        <span id="asset-label" class="text-sky-400 font-bold text-sm"></span>
+        <button
+          id="add-to-calc-btn"
+          class="bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-amber-500/20 transition-all opacity-0 pointer-events-none"
+        >
+          Add to Calculator
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="card p-6 border-zinc-800/50">
+          <h3
+            class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"
+          >
+            <i data-lucide="line-chart" class="w-4 h-4 text-emerald-500"></i>
+            Daily Quotes
+          </h3>
+          <div class="space-y-4 text-xs">
+            <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+              <span class="text-zinc-400">Current Price:</span>
+              <span id="metric-price" class="text-white text-xs">---</span>
             </div>
- 
-            <div class="card p-6 border-zinc-800/50">
-                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
-                    <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i> Company Profile
-                </h3>
-                <div class="space-y-3 text-xs">
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
-                        <span class="text-zinc-400">Market Cap:</span>
-                        <span id="metric-mcap" class="text-white">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
-                        <span class="text-zinc-400">Dividend Yield:</span>
-                        <span id="metric-div" class="text-white">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
-                        <span class="text-zinc-400">PE Ratio:</span>
-                        <span id="metric-pe" class="text-white">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
-                        <span class="text-zinc-400">PEG:</span>
-                        <span id="metric-peg" class="text-white">---</span>
-                    </div>
-                    <div class="flex justify-between border-b border-zinc-800/50 pb-1">
-                        <span class="text-zinc-400">Beta:</span>
-                        <span id="metric-beta" class="text-white">---</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-zinc-400">Volume:</span>
-                        <span id="metric-volume" class="text-white">---</span>
-                    </div>
-                </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+              <span class="text-zinc-400">Change & % Change:</span>
+              <span id="metric-change" class="text-white text-xs">---</span>
             </div>
- 
-            <div class="card p-6 border-zinc-800/50 flex flex-col">
-                <h3 class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2">
-                    <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i> Market News
-                </h3>
-                <div id="news-container" class="flex-1 overflow-y-auto max-h-[380px] space-y-4 pr-2">
-                    <p class="text-zinc-500 italic text-xs">Search an asset to see news headlines...</p>
-                </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+              <span class="text-zinc-400">High / Low / Open:</span>
+              <span id="metric-hlo" class="text-white text-right text-xs"
+                >---</span
+              >
             </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-2">
+              <span class="text-zinc-400">Previous Close:</span>
+              <span id="metric-pc" class="text-white text-xs">---</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-zinc-400">52-Week High / Low:</span>
+              <span id="metric-52w" class="text-white text-right text-xs"
+                >---</span
+              >
+            </div>
+          </div>
         </div>
- 
-        <div class="mt-8">
-            <div class="card p-6 border-zinc-800/50">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <div>
-                        <h3 class="text-zinc-400 text-xs font-bold uppercase flex items-center gap-2">
-                            <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i> Investment Allocator
-                        </h3>
-                        <p class="text-zinc-400 text-[10px] mt-1 italic">Weighting shares by Market Cap / AUM relative to total portfolio.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button id="open-ai-panel" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 pointer-events-none" aria-label="Analyse portfolio with AI">
-                            <i data-lucide="sparkles" class="w-3 h-3"></i> AI Analysis
-                        </button>
-                        <button id="toggle-manual-form" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all">
-                            <i data-lucide="plus" class="w-3 h-3"></i> Manual Add
-                            <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 manual-form-chevron"></i>
-                        </button>
-                        <select id="calc-currency" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white outline-none">
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="GBP" selected>GBP (£)</option>
-                        </select>
-                        <input type="number" id="calc-investment" value="100000" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 outline-none">
-                    </div>
-                </div>
- 
-                <div class="manual-form-panel collapsed" style="margin-bottom:0">
-                <div id="manual-form" class="p-4 rounded-xl bg-black/20 border border-zinc-800/50">
-                    <div class="grid gap-3" style="grid-template-columns: 2fr 1fr 1fr 2fr auto">
-                        <input type="text" id="man-name" placeholder="Asset Name (e.g. S&P 500 ETF)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                        <input type="text" id="man-ticker" placeholder="Ticker" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                        <input type="number" id="man-price" placeholder="Price" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                        <div class="flex gap-2">
-                            <input type="text" id="man-mcap" placeholder="Mkt Cap / AUM (e.g. 500B)" class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 flex-1">
-                            <select id="man-currency" class="bg-black/40 border border-zinc-800 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-emerald-500">
-                                <option value="USD">USD</option>
-                                <option value="GBP">GBP</option>
-                                <option value="EUR">EUR</option>
-                            </select>
-                        </div>
-                        <button id="submit-manual" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors whitespace-nowrap">Add</button>
-                    </div>
-                </div>
-                </div><!-- /manual-form-panel -->
- 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800">
-                                <th class="pb-3 px-2">Company / ETF</th>
-                                <th class="pb-3 text-center">Ticker</th>
-                                <th class="pb-3 text-center">Price</th>
-                                <th class="pb-3 text-center">Weight %</th>
-                                <th class="pb-3 text-right">Target Shares</th>
-                                <th class="pb-3 text-right w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="calc-table-body" class="text-sm">
-                            <tr id="calc-empty-row">
-                                <td colspan="6" class="py-10 text-center text-zinc-500 italic">No assets added. Search above or use Manual Add to begin.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+
+        <div class="card p-6 border-zinc-800/50">
+          <h3
+            class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"
+          >
+            <i data-lucide="building-2" class="w-4 h-4 text-emerald-500"></i>
+            Company Profile
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+              <span class="text-zinc-400">Market Cap:</span>
+              <span id="metric-mcap" class="text-white">---</span>
             </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+              <span class="text-zinc-400">Dividend Yield:</span>
+              <span id="metric-div" class="text-white">---</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+              <span class="text-zinc-400">PE Ratio:</span>
+              <span id="metric-pe" class="text-white">---</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+              <span class="text-zinc-400">PEG:</span>
+              <span id="metric-peg" class="text-white">---</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800/50 pb-1">
+              <span class="text-zinc-400">Beta:</span>
+              <span id="metric-beta" class="text-white">---</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-zinc-400">Volume:</span>
+              <span id="metric-volume" class="text-white">---</span>
+            </div>
+          </div>
         </div>
-    </main>
- 
- 
-    <!-- AI Analysis overlay -->
-    <div id="ai-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
- 
-    <!-- AI Analysis slide-out panel -->
-    <div id="ai-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#111318] border-l border-zinc-800 z-50 flex flex-col translate-x-full transition-transform duration-300 ease-in-out">
- 
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-5 border-b border-zinc-800 flex-shrink-0">
+
+        <div class="card p-6 border-zinc-800/50 flex flex-col">
+          <h3
+            class="text-zinc-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"
+          >
+            <i data-lucide="newspaper" class="w-4 h-4 text-emerald-500"></i>
+            Market News
+          </h3>
+          <div
+            id="news-container"
+            class="flex-1 overflow-y-auto max-h-[380px] space-y-4 pr-2"
+          >
+            <p class="text-zinc-500 italic text-xs">
+              Search an asset to see news headlines...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <div class="card p-6 border-zinc-800/50">
+          <div
+            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6"
+          >
+            <div>
+              <h3
+                class="text-zinc-400 text-xs font-bold uppercase flex items-center gap-2"
+              >
+                <i
+                  data-lucide="calculator"
+                  class="w-4 h-4 text-emerald-500"
+                ></i>
+                Investment Allocator
+              </h3>
+              <p class="text-zinc-400 text-[10px] mt-1 italic">
+                Weighting shares by Market Cap / AUM relative to total
+                portfolio.
+              </p>
+            </div>
             <div class="flex items-center gap-3">
-                <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
-                </div>
-                <div>
-                    <h2 class="text-white font-semibold text-sm">AI Portfolio Analysis</h2>
-                    <p class="text-zinc-500 text-[10px]">Powered by Groq</p>
-                </div>
+              <button
+                id="open-ai-panel"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 pointer-events-none"
+                aria-label="Analyse portfolio with AI"
+              >
+                <i data-lucide="sparkles" class="w-3 h-3"></i> AI Analysis
+              </button>
+              <button
+                id="open-simulate-panel"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 pointer-events-none"
+                aria-label="Simulate portfolio performance"
+              >
+                <i data-lucide="chart-line" class="w-3 h-3"></i> Simulate
+              </button>
+              <button
+                id="toggle-manual-form"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"
+              >
+                <i data-lucide="plus" class="w-3 h-3"></i> Manual Add
+                <i
+                  data-lucide="chevron-down"
+                  class="w-3 h-3 transition-transform duration-300 manual-form-chevron"
+                ></i>
+              </button>
+              <select
+                id="calc-currency"
+                class="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP" selected>GBP (£)</option>
+              </select>
+              <input
+                type="number"
+                id="calc-investment"
+                value="100000"
+                class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white w-32 outline-none"
+              />
             </div>
-            <button id="ai-panel-close" class="text-zinc-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-zinc-800">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+          </div>
+
+          <div class="manual-form-panel collapsed" style="margin-bottom: 0">
+            <div
+              id="manual-form"
+              class="p-4 rounded-xl bg-black/20 border border-zinc-800/50"
+            >
+              <div
+                class="grid gap-3"
+                style="grid-template-columns: 2fr 1fr 1fr 2fr auto"
+              >
+                <input
+                  type="text"
+                  id="man-name"
+                  placeholder="Asset Name (e.g. S&P 500 ETF)"
+                  class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                />
+                <input
+                  type="text"
+                  id="man-ticker"
+                  placeholder="Ticker"
+                  class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                />
+                <input
+                  type="number"
+                  id="man-price"
+                  placeholder="Price"
+                  class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                />
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="man-mcap"
+                    placeholder="Mkt Cap / AUM (e.g. 500B)"
+                    class="bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 flex-1"
+                  />
+                  <select
+                    id="man-currency"
+                    class="bg-black/40 border border-zinc-800 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <button
+                  id="submit-manual"
+                  class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-500 transition-colors whitespace-nowrap"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- /manual-form-panel -->
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr
+                  class="text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800"
+                >
+                  <th class="pb-3 px-2">Company / ETF</th>
+                  <th class="pb-3 text-center">Ticker</th>
+                  <th class="pb-3 text-center">Price</th>
+                  <th class="pb-3 text-center">Weight %</th>
+                  <th class="pb-3 text-right">Target Shares</th>
+                  <th class="pb-3 text-right w-10"></th>
+                </tr>
+              </thead>
+              <tbody id="calc-table-body" class="text-sm">
+                <tr id="calc-empty-row">
+                  <td
+                    colspan="6"
+                    class="py-10 text-center text-zinc-500 italic"
+                  >
+                    No assets added. Search above or use Manual Add to begin.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
- 
-        <!-- Content -->
-        <div id="ai-panel-content" class="flex-1 overflow-y-auto px-6 py-6">
- 
-            <!-- Loading state -->
-            <div id="ai-loading" class="hidden flex-col items-center justify-center h-full gap-4 text-center">
-                <div class="w-10 h-10 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"></div>
-                <p class="text-zinc-400 text-sm">Analysing your portfolio...</p>
-                <p class="text-zinc-600 text-xs">This usually takes a few seconds</p>
-            </div>
- 
-            <!-- Error state -->
-            <div id="ai-error" class="hidden items-center gap-3 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
-                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
-                <p id="ai-error-text" class="text-rose-400 text-xs">Something went wrong. Please try again.</p>
-            </div>
- 
-            <!-- Empty state -->
-            <div id="ai-empty" class="flex flex-col items-center justify-center h-full gap-3 text-center">
-                <div class="w-12 h-12 rounded-full bg-zinc-800/50 flex items-center justify-center">
-                    <i data-lucide="sparkles" class="w-5 h-5 text-zinc-500"></i>
-                </div>
-                <p class="text-zinc-400 text-sm font-medium">Ready to analyse</p>
-                <p class="text-zinc-600 text-xs max-w-[220px]">Add at least one asset to your portfolio then click Analyse.</p>
-            </div>
- 
-            <!-- Results -->
-            <div id="ai-results" class="hidden">
-                <div class="flex items-center gap-2 mb-5">
-                    <span class="text-xs text-zinc-500">Portfolio snapshot</span>
-                    <span id="ai-snapshot" class="text-xs text-zinc-400 font-medium"></span>
-                </div>
-                <ul id="ai-bullets" class="space-y-3"></ul>
-                <p class="text-zinc-600 text-[10px] mt-6 leading-relaxed">AI-generated analysis is for informational purposes only and does not constitute financial advice.</p>
-            </div>
- 
+      </div>
+    </main>
+
+    <!-- AI Analysis overlay -->
+    <div
+      id="ai-overlay"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"
+    ></div>
+
+    <!-- AI Analysis slide-out panel -->
+    <div
+      id="ai-panel"
+      class="fixed top-0 right-0 h-full w-full max-w-md bg-[#111318] border-l border-zinc-800 z-50 flex flex-col translate-x-full transition-transform duration-300 ease-in-out"
+    >
+      <!-- Header -->
+      <div
+        class="flex items-center justify-between px-6 py-5 border-b border-zinc-800 flex-shrink-0"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"
+          >
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
+          </div>
+          <div>
+            <h2 class="text-white font-semibold text-sm">
+              AI Portfolio Analysis
+            </h2>
+            <p class="text-zinc-500 text-[10px]">Powered by Groq</p>
+          </div>
         </div>
- 
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-zinc-800 flex-shrink-0">
-            <button id="ai-analyse-btn" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                Analyse Portfolio
-            </button>
+        <button
+          id="ai-panel-close"
+          class="text-zinc-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-zinc-800"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div id="ai-panel-content" class="flex-1 overflow-y-auto px-6 py-6">
+        <!-- Loading state -->
+        <div
+          id="ai-loading"
+          class="hidden flex-col items-center justify-center h-full gap-4 text-center"
+        >
+          <div
+            class="w-10 h-10 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"
+          ></div>
+          <p class="text-zinc-400 text-sm">Analysing your portfolio...</p>
+          <p class="text-zinc-600 text-xs">This usually takes a few seconds</p>
         </div>
- 
+
+        <!-- Error state -->
+        <div
+          id="ai-error"
+          class="hidden items-center gap-3 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3"
+        >
+          <i
+            data-lucide="alert-circle"
+            class="w-4 h-4 text-rose-400 flex-shrink-0"
+          ></i>
+          <p id="ai-error-text" class="text-rose-400 text-xs">
+            Something went wrong. Please try again.
+          </p>
+        </div>
+
+        <!-- Empty state -->
+        <div
+          id="ai-empty"
+          class="flex flex-col items-center justify-center h-full gap-3 text-center"
+        >
+          <div
+            class="w-12 h-12 rounded-full bg-zinc-800/50 flex items-center justify-center"
+          >
+            <i data-lucide="sparkles" class="w-5 h-5 text-zinc-500"></i>
+          </div>
+          <p class="text-zinc-400 text-sm font-medium">Ready to analyse</p>
+          <p class="text-zinc-600 text-xs max-w-[220px]">
+            Add at least one asset to your portfolio then click Analyse.
+          </p>
+        </div>
+
+        <!-- Results -->
+        <div id="ai-results" class="hidden">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="text-xs text-zinc-500">Portfolio snapshot</span>
+            <span
+              id="ai-snapshot"
+              class="text-xs text-zinc-400 font-medium"
+            ></span>
+          </div>
+          <ul id="ai-bullets" class="space-y-3"></ul>
+          <p class="text-zinc-600 text-[10px] mt-6 leading-relaxed">
+            AI-generated analysis is for informational purposes only and does
+            not constitute financial advice.
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-zinc-800 flex-shrink-0">
+        <button
+          id="ai-analyse-btn"
+          class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+        >
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          Analyse Portfolio
+        </button>
+      </div>
     </div>
- 
+
+    <!-- Simulate overlay -->
+    <div
+      id="sim-overlay"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"
+    ></div>
+
+    <!-- Simulate slide-out panel -->
+    <div
+      id="sim-panel"
+      class="fixed top-0 right-0 h-full w-full max-w-2xl bg-[#111318] border-l border-zinc-800 z-50 flex flex-col translate-x-full transition-transform duration-300 ease-in-out"
+    >
+      <!-- Header -->
+      <div
+        class="flex items-center justify-between px-6 py-5 border-b border-zinc-800 flex-shrink-0"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"
+          >
+            <i
+              data-lucide="chart-line"
+              class="w-3.5 h-3.5 text-emerald-400"
+            ></i>
+          </div>
+          <div>
+            <h2 class="text-white font-semibold text-sm">
+              Portfolio Simulator
+            </h2>
+            <p class="text-zinc-500 text-[10px]">
+              Historical performance based on your allocation
+            </p>
+          </div>
+        </div>
+        <button
+          id="sim-panel-close"
+          class="text-zinc-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-zinc-800"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Inputs bar -->
+      <div class="px-6 py-4 border-b border-zinc-800 flex-shrink-0">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="text-zinc-500 text-[10px] uppercase font-bold"
+              >Start Date</label
+            >
+            <input
+              type="date"
+              id="sim-start-date"
+              class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-zinc-500 text-[10px] uppercase font-bold"
+              >Benchmark</label
+            >
+            <select
+              id="sim-benchmark"
+              class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500 transition-colors"
+            >
+              <option value="">No Benchmark</option>
+              <option value="SPY">S&amp;P 500 (SPY)</option>
+              <option value="QQQ">Nasdaq 100 (QQQ)</option>
+              <option value="DIA">Dow Jones (DIA)</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-zinc-500 text-[10px] uppercase font-bold"
+              >Investment</label
+            >
+            <div
+              class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-400"
+              id="sim-investment-display"
+            >
+              —
+            </div>
+          </div>
+        </div>
+        <button
+          id="sim-run-btn"
+          class="mt-3 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold py-2.5 rounded-xl transition-colors"
+        >
+          <i data-lucide="play" class="w-3.5 h-3.5"></i> Run Simulation
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 overflow-y-auto px-6 py-6">
+        <!-- Empty state -->
+        <div
+          id="sim-empty"
+          class="flex flex-col items-center justify-center h-full gap-3 text-center"
+        >
+          <div
+            class="w-12 h-12 rounded-full bg-zinc-800/50 flex items-center justify-center"
+          >
+            <i data-lucide="chart-line" class="w-5 h-5 text-zinc-500"></i>
+          </div>
+          <p class="text-zinc-400 text-sm font-medium">Ready to simulate</p>
+          <p class="text-zinc-600 text-xs max-w-[240px]">
+            Select a start date and click Run Simulation to see how your
+            portfolio would have performed.
+          </p>
+        </div>
+
+        <!-- Loading state -->
+        <div
+          id="sim-loading"
+          class="hidden flex-col items-center justify-center h-full gap-4 text-center"
+        >
+          <div
+            class="w-10 h-10 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"
+          ></div>
+          <p class="text-zinc-400 text-sm">Fetching historical data...</p>
+          <p class="text-zinc-600 text-xs">This may take a few seconds</p>
+        </div>
+
+        <!-- Error state -->
+        <div
+          id="sim-error"
+          class="hidden items-center gap-3 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3"
+        >
+          <i
+            data-lucide="alert-circle"
+            class="w-4 h-4 text-rose-400 flex-shrink-0"
+          ></i>
+          <p id="sim-error-text" class="text-rose-400 text-xs">
+            Something went wrong. Please try again.
+          </p>
+        </div>
+
+        <!-- Results -->
+        <div id="sim-results" class="hidden flex-col gap-6">
+          <!-- Summary cards -->
+          <div class="grid grid-cols-3 gap-3" id="sim-summary-cards"></div>
+
+          <!-- Chart -->
+          <div class="card p-4">
+            <canvas id="sim-chart" height="280"></canvas>
+          </div>
+
+          <!-- Assets with no data warning -->
+          <div
+            id="sim-missing-assets"
+            class="hidden bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3"
+          >
+            <p class="text-amber-400 text-xs" id="sim-missing-text"></p>
+          </div>
+
+          <p class="text-zinc-600 text-[10px] leading-relaxed">
+            Simulation uses monthly closing prices from Yahoo Finance. Past
+            performance is not indicative of future results.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <script src="JS/allocator.js"></script>
     <script>
-        lucide.createIcons();
+      lucide.createIcons();
     </script>
-</body>
+  </body>
 </html>
